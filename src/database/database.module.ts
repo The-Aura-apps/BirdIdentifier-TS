@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Observation } from '../observations/entities/observation.entity';
 import { ObservationsModule } from 'src/observations/observations.module';
+import { Bird } from 'src/birds/entities/bird.entity';
+import { Upload } from 'src/uploads/entities/upload.entity';
 @Module({
     imports: [
         TypeOrmModule.forRoot({
@@ -11,7 +13,7 @@ import { ObservationsModule } from 'src/observations/observations.module';
             username: 'postgres',
             password: 'youshellpass',
             database: 'bird-identifier',
-            entities: [Observation],
+            entities: [Observation, Bird, Upload],
             synchronize: true, // Mack True When Released
         }),
     ],

@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Upload } from './entities/upload.entity';
 import { ObservationsService } from 'src/observations/observations.service';
-import { CreateObservationDto } from 'src/observations/dto/create-observation.dto';
 import * as crypto from 'crypto';
 
 
@@ -16,7 +15,6 @@ export class UploadsService {
   ) {}
 
   async handleUpload(file: Express.Multer.File, deviceId: string, type: 'image' | 'audio') {
-
     if (!file) throw new Error('No file Provided');
 
     const checksum = crypto.createHash('sha256').update(file.buffer).digest('hex');
@@ -26,27 +24,24 @@ export class UploadsService {
       fileName: file.originalname,
       mimeType: file.mimetype,
       fileData: file.buffer,
-      createdAt: new Date(),
       checksum,
     });
+    
     const savedFile = await this.uploadRepo.save(upload);
 
     // Link it with an observation
     const observation = await this.observationService.create({
       deviceId,
       type,
-      uploadId: savedFile.id
+      uploadId: upload.id,
     })
 
-
-    return 
+    return { savedFile, observation}
   }
 
   async getFile(id: number): Promise<Upload> {
     const file = await this.uploadRepo.findOne({ where: { id } });
-    if (!file) {
-      throw new NotFoundException(`File with id ${id} not found`);
-    }
+    if (!file) throw new NotFoundException(`File with id ${id} not found`);
     return file;
   }
 }

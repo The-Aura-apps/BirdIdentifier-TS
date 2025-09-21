@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Observation } from './entities/observation.entity';
-import { CreateObservationDto } from './dto/create-observation.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BirdsService } from 'src/birds/birds.service';
-import { Birds } from 'src/birds/entities/bird.entity';
 import { AiService } from 'src/ai/ai.service';
+import { CreateObservationDto } from './dto/create-observation.dto';
+import { Upload } from 'src/uploads/entities/upload.entity';
 
 @Injectable()
 export class ObservationsService {
@@ -19,64 +19,51 @@ export class ObservationsService {
 
   // Create Observation from API input (client)
   async create(dto: CreateObservationDto ): Promise<Observation>{
-    let observation = this.observationsRepo.create({
-      ...dto,    
-      status: 'pending',
-      createdAt: new Date(), 
-      updatedAt: new Date()
-    });
-
-  observation = await this.observationsRepo.save(observation);
-
-  this.processObservation(observation);
-    return observation;
-  }
-
-
-  //Internal method for UploadsService
-  async createObservation(data: Partial<Observation>): Promise<Observation> {
     const observation = this.observationsRepo.create({
-      ...data,
-      status: 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      deviceId: dto.deviceId,
+      type: dto.type,
+      upload: { id: dto.uploadId } as Upload,  // link without loading full entity ,
+      status: 'pending',                       // UploadsService → call with uploadId, bservationsService → convert uploadId → upload relation
     });
 
-    const saved = await this.observationsRepo.save(observation);
+  const saved = await this.observationsRepo.save(observation);
 
-    // Trigger AI for processing
-    this.processObservation(saved);
-
-    return saved;
+  this.processObservation(saved.id);
+  
+  return saved;
   }
 
-  //AI processing for an observation
-  private async processObservation(observation: Observation){
+  //AI processing for an observation   
+  private async processObservation(id: string){   //observation: Observation   --> id: string
+    const observation = await this.observationsRepo.findOne({
+      where: { id },
+      relations: ['upload'],
+    });
+    if (!observation) return;
+
     try {
+
         //Ask AI for scientific name
       const scientificName = await this.aiService.identifyBird(
-        observation.fileUrl,
+        observation.upload.fileData,
         observation.type,
       );
 
       //Ensure bird exists in DB
-      const bird = await  this.birdService.findByScientificName(scientificName);
+      const bird = await  this.birdService.findOrCreate(scientificName);
             
       //Update Observation with result
       observation.status = 'completed';
       observation.result = scientificName;
-      (observation as any).birdId = bird?.id;
-      observation.updatedAt = new Date();
+      observation.bird = bird; 
       await this.observationsRepo.save(observation);
-      
     } catch(error){
-        observation.status = 'failed';
-        observation.updatedAt = new Date();
-        await this.observationsRepo.save(observation)
+      observation.status = 'failed';
+      await this.observationsRepo.save(observation);
     }
   }
 
-  async findAll(): Promise<Observation[]>{      // [\]
+  async findAll(): Promise<Observation[]>{
     return await this.observationsRepo.find();
   }
 

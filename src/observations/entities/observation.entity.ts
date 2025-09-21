@@ -1,36 +1,40 @@
+import { Bird } from "src/birds/entities/bird.entity";
 import { Upload } from "src/uploads/entities/upload.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn,UpdateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Observation {
-  createObservation(arg0: { id: `${string}-${string}-${string}-${string}-${string}`; filePath: string; type: string; status: string; createdAt: Date; }) {
-    throw new Error('Method not implemented.');
-  }
+  
   @PrimaryGeneratedColumn('uuid')
   id: string; // UUID
 
   @Column()
   deviceId: string;
 
-  @Column()
-  fileUrl: string;
+  // @Column()
+  // fileUrl: string;
 
   @Column()
   type: 'image' | 'audio';
   
   @Column({ default: 'pending' })
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'pending_identification';
+  status: 'pending' | 'processing' | 'completed' | 'failed' ;
 
-  @ManyToOne(() => Upload)
-  @JoinColumn({ name: 'upload_id' })
+  @ManyToOne(() => Upload, upload => upload.observations, { nullable: false, eager: true })
   upload: Upload;
-  
+
+  @ManyToOne(() => Bird, (bird) => bird.observations, { nullable: true, eager: true })
+  bird: Bird;
+
   @Column({nullable: true})
   result?: string; // AI result
+
+  // @Column()
+  // uploadId: number;
 
   @CreateDateColumn()
   createdAt: Date;
 
-  @CreateDateColumn()
+  @UpdateDateColumn() 
   updatedAt: Date;
 }
