@@ -1,5 +1,6 @@
 import { Observation } from 'src/observations/entities/observation.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity('uploads')
 export class Upload {
@@ -7,13 +8,14 @@ export class Upload {
   id: number; 
 
   @Column()
-  fileName: string;
+  file_name: string;
 
   @Column()
-  mimeType: string;
+  mime_type: string;
 
+  @Exclude()
   @Column({ type: 'bytea' }) // store in PostgreSQL for MVP later swich to S3
-  fileData: Buffer;
+  file_data: Buffer;
 
   @Column({ nullable: true })
   checksum: string;

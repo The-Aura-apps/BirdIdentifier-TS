@@ -17,10 +17,11 @@ export class UploadsController {
     return this.uploadsService.handleUpload(file, deviceId, type);
   }
 
-@Get(':id')
-  async getFile(@Param('id') id: string, @Res() res: Response) {
-    const file = await this.uploadsService.getFile(Number(id));
-    res.set('Content-Type', file.mimeType);
-    res.send(file.fileData);
+  @Get(':id')
+  async downloadFile(@Param('id') id: number, @Res() res: Response) {
+    const file = await this.uploadsService.getFile(id);
+    res.setHeader('Content-Type', file.mime_type);
+    res.setHeader('Content-Disposition', `attachment; filename=${file.file_name}`);
+    res.send(file.file_data);
   }
 }

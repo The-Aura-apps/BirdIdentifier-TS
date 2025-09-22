@@ -21,9 +21,9 @@ export class UploadsService {
 
     // save file
     const upload = this.uploadRepo.create({
-      fileName: file.originalname,
-      mimeType: file.mimetype,
-      fileData: file.buffer,
+      file_name: file.originalname,
+      mime_type: file.mimetype,
+      file_data: file.buffer,
       checksum,
     });
     
@@ -42,6 +42,7 @@ export class UploadsService {
   async getFile(id: number): Promise<Upload> {
     const file = await this.uploadRepo.findOne({ where: { id } });
     if (!file) throw new NotFoundException(`File with id ${id} not found`);
+
     return file;
   }
 }
