@@ -1,7 +1,7 @@
 
 export interface IdentificationResult {
-    scientificName: string;
-    confidence: number;
+  scientificName: string;
+  confidence: number;
 }
 
 
@@ -41,5 +41,14 @@ export interface BirdInfo {
 
 
 export interface BirdAiRespone {
-
+  status: 'identified' | 'uncertain' | 'failed'; 
+  confidence?: number;                          
+  result?: BirdInfo;                            
+  error?: string;                               
 }
+
+/* export type BirdAiRespone =
+  | { status: 'identified'; confidence: number; result: BirdInfo }
+  | { status: 'uncertain'; confidence?: number }
+  | { status: 'failed'; error?: string };
+ */

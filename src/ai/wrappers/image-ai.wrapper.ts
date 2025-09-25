@@ -4,7 +4,7 @@ import { IdentificationResult } from "../types";
 
 @Injectable()
 export class ImageAiWrapper {
-  async identify(file: Express.Multer.File): Promise<IdentificationResult> {
+  async identify(file: Buffer): Promise<IdentificationResult> {
     // ToDo  API call
 
     return {

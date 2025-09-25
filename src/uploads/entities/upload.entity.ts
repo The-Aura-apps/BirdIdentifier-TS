@@ -11,7 +11,7 @@ export class Upload {
   file_name: string;
 
   @Column()
-  mime_type: string;
+  mime_type: 'image' | 'audio';
 
   @Exclude()
   @Column({ type: 'bytea' }) // store in PostgreSQL for MVP later swich to S3

@@ -26,8 +26,8 @@ export class Observation {
   @ManyToOne(() => Bird, (bird) => bird.observations, { nullable: true, eager: true })
   bird: Bird;
 
-  @Column({nullable: true})
-  result?: string; // AI result
+  @Column({ type: 'jsonb', nullable: true })
+  result: any; // AI result
 
   // @Column()
   // uploadId: number;

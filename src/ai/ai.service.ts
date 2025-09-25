@@ -12,7 +12,7 @@ export class AiService {
     private readonly birdInfo: BirdInfoWrapper,
   ) {}
 
-    async process(fileData: Express.Multer.File, type: 'image'| 'audio'): Promise<BirdAiRespone>{
+    async process(fileData: Buffer, type: 'image'| 'audio'): Promise<BirdAiRespone>{
       let identification: IdentificationResult;
 
       if (type === 'image') {
@@ -23,12 +23,16 @@ export class AiService {
 
       // confidence check
       if (!identification || identification.confidence < 0.7) {
-        return { status: 'uncertain'}
+      return { status: 'uncertain', confidence: identification?.confidence };
       }
 
           // gather info
       const info: BirdInfo = await this.birdInfo.fetchInfo(identification.scientificName);
 
-      return { status: 'identityed', result: info}
+      return { 
+          status: 'identified',
+          confidence: identification.confidence,
+          result: info,
+        }
   }   
 }
