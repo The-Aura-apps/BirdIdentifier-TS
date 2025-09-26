@@ -29,7 +29,7 @@ export class ObservationsService {
 
     const saved = await this.observationsRepo.save(observation);
 
-    this.processObservation(saved.id);
+    await this.processObservation(saved.id); //concorent or not 
 
     return saved;
   }
@@ -39,26 +39,38 @@ export class ObservationsService {
     aiRespone: BirdAiRespone,
   ): Promise<void> {
     try {
-      if (aiRespone === 'identified' && aiRespone.result) {
+      observation.result = aiRespone;
 
-        // Ensure bird exist in DB
-        const bird = await this.birdService.findOrCreate(aiRespone.result.scientificName)
+      switch (aiRespone.status) {
+        case 'identified': {
+          // Ensure bird exist in DB
+          const bird = await this.birdService.findOrCreate(aiRespone.result.scientificName);
 
-        observation.status = 'completed';
-        observation.result = aiRespone.result.scientificName;
-        observation.bird = bird;
-        await this.observationsRepo.save(observation);
-      
-      } else {
-        observation.status = 'failed';
-        observation.result = null; //change later
-        await this.observationsRepo.save(observation);
+          observation.status = 'completed'; // pipeline completed
+          observation.bird = bird;
+          break;
+        }
+
+        case 'uncertain': {
+          observation.status = 'completed'; // pipeline completed, but AI uncertain
+          observation.bird = null;
+          break;
+        }
+
+        case 'failed': {
+          observation.status = 'failed'; // pipeline failed
+          observation.bird = null;
+          break;
+        }
       }
-    } catch(error) {
+
+      await this.observationsRepo.save(observation);
+    } catch (error) {
       observation.status = 'failed';
+      observation.result = { status: 'failed', error: (error as Error).message };
       await this.observationsRepo.save(observation);
     }
-    }
+  }
 
   //AI processing for an observation   
   private async processObservation(id: string) {   //observation: Observation   --> id: string

@@ -1,6 +1,7 @@
 import { Bird } from "src/birds/entities/bird.entity";
 import { Upload } from "src/uploads/entities/upload.entity";
 import { Column, CreateDateColumn,UpdateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import type { BirdAiRespone } from "src/ai/types";
 
 @Entity()
 export class Observation {
@@ -23,11 +24,11 @@ export class Observation {
   @ManyToOne(() => Upload, upload => upload.observations, { nullable: false, eager: true })
   upload: Upload;
 
-  @ManyToOne(() => Bird, (bird) => bird.observations, { nullable: true, eager: true })
-  bird: Bird;
+  @ManyToOne(() => Bird, (bird) => bird.observations, { nullable: false, eager: true })
+  bird: Bird | null;
 
-  @Column({ type: 'jsonb', nullable: true })
-  result: any; // AI result
+  @Column({ type: 'jsonb', nullable: true }) // check nulleble
+  result: BirdAiRespone |null; // AI result
 
   // @Column()
   // uploadId: number;
