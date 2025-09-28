@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Upload } from './entities/upload.entity';
 import { ObservationsService } from 'src/observations/observations.service';
 import * as crypto from 'crypto';
+import { FileUploadDto } from './dto/upload.dto';
 
 
 @Injectable()
@@ -14,15 +15,15 @@ export class UploadsService {
     private readonly observationService: ObservationsService,
   ) {}
 
-  async handleUpload(file: Express.Multer.File, deviceId: string, type: 'image' | 'audio') {
-    if (!file) throw new Error('No file Provided');
+  async handleUpload(file: FileUploadDto, deviceId: string, type: 'image' | 'audio') {
+    if (!file || !file.buffer) throw new Error('No file Provided');
 
     const checksum = crypto.createHash('sha256').update(file.buffer).digest('hex');
 
     // save file
     const upload = this.uploadRepo.create({
-      file_name: file.originalname,
-      mime_type: file.mimetype,
+      file_name: file.fileName,
+      mime_type: file.mimeType,
       file_data: file.buffer,
       checksum,
     });

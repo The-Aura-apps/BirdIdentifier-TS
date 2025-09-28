@@ -2,19 +2,28 @@ import { Controller, Post, UploadedFile, UseInterceptors, Get, Param, Res, Body 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadsService } from './uploads.service';
 import type { Response } from 'express';
+import type { FileUploadDto } from './dto/upload.dto';
 
 @Controller('uploads')
 export class UploadsController {
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(private readonly uploadsService: UploadsService) { }
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: FileUploadDto,
     @Body('deviceId') deviceId: string,
     @Body('type') type: 'image' | 'audio'
   ) {
-    return this.uploadsService.handleUpload(file, deviceId, type);
+    return this.uploadsService.handleUpload(
+      {
+        fileName: file.fileName,
+        mimeType: file.mimeType,
+        buffer: file.buffer,
+      },
+      deviceId,
+      type,
+    );
   }
 
   @Get(':id')

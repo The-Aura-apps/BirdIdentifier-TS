@@ -5,12 +5,11 @@ import { BirdsModule } from './birds/birds.module';
 import { ObservationsModule } from './observations/observations.module';
 import { AiModule } from './ai/ai.module';
 import { DatabaseModule } from './database/database.module';
-import { WebsocketModule } from './websocket/websocket.module';
 import { CommonModule } from './common/common.module';
 import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
-  imports: [BirdsModule, ObservationsModule, AiModule, DatabaseModule, WebsocketModule, CommonModule, UploadsModule],
+  imports: [BirdsModule, ObservationsModule, AiModule, DatabaseModule, CommonModule, UploadsModule, ],
   controllers: [AppController],
   providers: [AppService],
 })
