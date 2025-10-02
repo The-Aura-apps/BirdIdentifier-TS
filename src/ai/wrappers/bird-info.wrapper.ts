@@ -25,7 +25,8 @@ export class BirdInfoWrapper {
   async fetchInfo(scientificName: string): Promise<BirdInfo> {
     const prompt = `
     Provide detailed information about the bird "${scientificName}" in strict JSON format.
-    Structure:
+    Only JSON, no explanations.
+    Structure example:
     {
       "scientificName": "...",
       "commonName": "...",
@@ -58,11 +59,17 @@ export class BirdInfoWrapper {
         throw new Error('Invalid JSON from OpenAI API');
       }
 
-      // basic Partial validation
-      if (!data.scientificName || !data.commonName) {
-        Logger.warn(`Incomplete bird info for: ${scientificName}`);
-      }
+      // basic Partial validation with more fields
+      const warnings: string[] = [];
+      if (!data.scientificName) warnings.push('scientificName missing');
+      if (!data.commonName) warnings.push('commonName missing');
+      if (!data.features?.sizeAndShape) warnings.push('features.sizeAndShape missing');
+      if (!data.photos?.male && !data.photos?.female) warnings.push('photos missing');
 
+      if (warnings.length) {
+        Logger.warn(`Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`);
+      }
+      
       return data;
 
     } catch (err) {
