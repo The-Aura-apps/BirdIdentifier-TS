@@ -7,9 +7,10 @@ import { AiModule } from './ai/ai.module';
 import { DatabaseModule } from './database/database.module';
 import { CommonModule } from './common/common.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
-  imports: [BirdsModule, ObservationsModule, AiModule, DatabaseModule, CommonModule, UploadsModule, ],
+  imports: [BirdsModule, ObservationsModule, AiModule, DatabaseModule, CommonModule, UploadsModule, NotificationModule, ],
   controllers: [AppController],
   providers: [AppService],
 })

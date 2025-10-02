@@ -3,7 +3,6 @@ import { AudioAiWrapper } from './wrappers/audio-ai.wrapper';
 import { ImageAiWrapper } from './wrappers/image-ai.wrapper';
 import { BirdInfoWrapper } from './wrappers/bird-info.wrapper';
 import { BirdAiRespone, IdentificationResult, BirdInfo } from './types';
-import { error } from 'console';
 
 @Injectable()
 export class AiService {
@@ -14,16 +13,13 @@ export class AiService {
   ) { }
 
   async process(fileData: Buffer, type: 'image' | 'audio'): Promise<BirdAiRespone> {
-    let identification: IdentificationResult;
-
     try {
-      identification =
-        type === 'image'
-          ? await this.imageAi.identify(fileData)
-          : await this.audioAi.identify(fileData);
+      const identification = await (type === 'image'
+      ? this.imageAi.identify(fileData)
+      : this.audioAi.identify(fileData));
 
       if (!identification) {
-        return { status: 'failed', error: 'AI retuned no result' };
+        return { status: 'failed', error: 'No result from AI' };
       }
 
       if (identification.confidence < 0.7) {

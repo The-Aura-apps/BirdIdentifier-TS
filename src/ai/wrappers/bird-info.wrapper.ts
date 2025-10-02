@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { OpenAI} from ""; //
+import { OpenAI} from "openai"; //
 import { BirdInfo } from "../types";
 import { json } from "stream/consumers";
 

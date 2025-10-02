@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { AppService } from 'src/app.service';
-import { ApnsService } from '../apns/apns.service';
+import { ApnsService } from './apns.service';
 
 @Injectable()
-export class NotificationsService {
+export class NotificationService {
     constructor(private readonly apnsService: ApnsService) { }
 
     async sendWelcomeReminder(deviceToken: string) {

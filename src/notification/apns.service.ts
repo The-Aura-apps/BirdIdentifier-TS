@@ -4,7 +4,7 @@ import * as apn from '@parse/node-apn';
 @Injectable()
 export class ApnsService {
   private readonly logger = new Logger(ApnsService.name);
-  private readonly apnProvider : apn.Provider;
+  private readonly apnProvider: apn.Provider;
 
   constructor() {
     this.apnProvider = new apn.Provider({
