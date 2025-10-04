@@ -27,7 +27,7 @@ export class Observation {
   upload: Upload;
 
   @ManyToOne(() => Bird, (bird) => bird.observations, {
-    nullable: false,
+    nullable: true,
     eager: true,
   })
   bird: Bird | null;

@@ -22,15 +22,15 @@ export class ObservationsService {
     const observation = this.observationsRepo.create({
       deviceId: dto.deviceId,
       type: dto.type,
-      upload: { id: dto.uploadId } as Upload, // link without loading full entity ,
+      upload: { id: dto.uploadId } as Upload, // link without loading full entity ,  // ← Partial object, not full Upload
       status: 'pending', // UploadsService → call with uploadId, bservationsService → convert uploadId → upload relation
     });
 
-    const saved = await this.observationsRepo.save(observation);
+    const saved = await this.observationsRepo.save(observation); // Saves to DB
 
-    await this.processObservation(saved.id); //concorent or not
+    /* await */ this.processObservation(saved.id); //Remove 'await' (fire and forget)
 
-    return saved;
+    return saved; // Returns immediately (doesn't wait for AI)
   }
 
   private async updateResult(
@@ -38,7 +38,7 @@ export class ObservationsService {
     aiRespone: BirdAiResponse,
   ): Promise<void> {
     try {
-      observation.result = aiRespone;
+      observation.result = aiRespone; // Stores full AI response as JSON
 
       switch (aiRespone.status) {
         case 'identified': {
@@ -48,13 +48,13 @@ export class ObservationsService {
           );
 
           observation.status = 'completed'; // pipeline completed
-          observation.bird = bird;
+          observation.bird = bird; // Links to Bird entity
           break;
         }
 
         case 'uncertain': {
           observation.status = 'completed'; // pipeline completed, but AI uncertain
-          observation.bird = null;
+          observation.bird = null; // No bird linked
           break;
         }
 
@@ -78,10 +78,11 @@ export class ObservationsService {
 
   //AI processing for an observation
   private async processObservation(id: string) {
+    // Loads the observation WITH the full upload data (including file_data buffer)
     //observation: Observation   --> id: string
     const observation = await this.observationsRepo.findOne({
       where: { id },
-      relations: ['upload'],
+      relations: ['upload'], // ← Now loads full Upload entity
     });
     if (!observation) return;
 
@@ -92,7 +93,7 @@ export class ObservationsService {
         observation.type,
       );
 
-      await this.updateResult(observation, aiResponse);
+      await this.updateResult(observation, aiResponse); // Updates with AI results
     } catch (error) {
       observation.status = 'failed';
       await this.observationsRepo.save(observation);
