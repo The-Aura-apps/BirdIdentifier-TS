@@ -34,7 +34,7 @@ export class UploadsService {
     const observation = await this.observationService.create({
       deviceId,
       type,
-      uploadId: upload.id,
+      uploadId: savedFile.id,
     })
 
     return { savedFile, observation}

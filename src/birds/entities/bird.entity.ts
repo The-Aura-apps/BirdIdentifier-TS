@@ -3,17 +3,16 @@ import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedCol
 
 @Entity('birds')
 export class Bird {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: false })
+  @Column({ nullable: true })
   commonName: string;
 
   @Column({ unique: true })
   @Index()
   scientificName: string;
-  
+
   @Column('jsonb', { nullable: true })
   photos?: {
     male?: string;

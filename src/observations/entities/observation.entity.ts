@@ -1,11 +1,10 @@
 import { Bird } from "src/birds/entities/bird.entity";
 import { Upload } from "src/uploads/entities/upload.entity";
 import { Column, CreateDateColumn,UpdateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import type { BirdAiRespone } from "src/ai/types";
+import type { BirdAiResponse } from 'src/ai/types';
 
 @Entity()
 export class Observation {
-  
   @PrimaryGeneratedColumn('uuid')
   id: string; // UUID
 
@@ -17,18 +16,24 @@ export class Observation {
 
   @Column()
   type: 'image' | 'audio';
-  
-  @Column({ default: 'pending' })
-  status: 'pending' | 'processing' | 'completed' | 'failed' ;
 
-  @ManyToOne(() => Upload, upload => upload.observations, { nullable: false, eager: true })
+  @Column({ default: 'pending' })
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+
+  @ManyToOne(() => Upload, (upload) => upload.observations, {
+    nullable: false,
+    eager: true,
+  })
   upload: Upload;
 
-  @ManyToOne(() => Bird, (bird) => bird.observations, { nullable: false, eager: true })
+  @ManyToOne(() => Bird, (bird) => bird.observations, {
+    nullable: false,
+    eager: true,
+  })
   bird: Bird | null;
 
   @Column({ type: 'jsonb', nullable: true }) // check nulleble
-  result: BirdAiRespone |null; // AI result
+  result: BirdAiResponse | null; // AI result
 
   // @Column()
   // uploadId: number;
@@ -36,6 +41,6 @@ export class Observation {
   @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn() 
+  @UpdateDateColumn()
   updatedAt: Date;
 }

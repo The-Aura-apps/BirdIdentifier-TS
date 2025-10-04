@@ -6,6 +6,6 @@ import { BirdInfoWrapper } from './wrappers/bird-info.wrapper';
 
 @Module({
   providers: [AiService, ImageAiWrapper, AudioAiWrapper, BirdInfoWrapper],
-  exports: [AiService], 
+  exports: [AiService],
 })
 export class AiModule {}

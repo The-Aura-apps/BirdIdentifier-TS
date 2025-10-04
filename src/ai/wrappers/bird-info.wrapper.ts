@@ -6,20 +6,18 @@ import { json } from "stream/consumers";
 @Injectable()
 export class BirdInfoWrapper {
   private client: OpenAI;
+  private readonly logger = new Logger(BirdInfoWrapper.name);
 
-  constructor(client?: OpenAI) {
-    if (client) {
-      this.client = client;
-      Logger.log("Using injected OpenAI client.");
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        Logger.error("OPENAI_API_KEY is not set. Bird info fetching will fail!");
-        throw new Error("OPENAI_API_KEY not found in environment variables.");
-      }
-      this.client = new OpenAI({ apiKey });
-      Logger.log("OpenAI client initialized successfully.");
+  constructor() {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      this.logger.error(
+        'OPENAI_API_KEY is not set. Bird info fetching will fail!',
+      );
+      throw new Error('OPENAI_API_KEY not found in environment variables.');
     }
+    this.client = new OpenAI({ apiKey });
+    this.logger.log('OpenAI client initialized successfully.');
   }
 
   async fetchInfo(scientificName: string): Promise<BirdInfo> {
@@ -55,7 +53,10 @@ export class BirdInfoWrapper {
       try {
         data = JSON.parse(content);
       } catch (parseErr) {
-        Logger.error(`JSON parsing failed for bird: ${scientificName}`, parseErr);
+        Logger.error(
+          `JSON parsing failed for bird: ${scientificName}`,
+          parseErr,
+        );
         throw new Error('Invalid JSON from OpenAI API');
       }
 
@@ -63,15 +64,18 @@ export class BirdInfoWrapper {
       const warnings: string[] = [];
       if (!data.scientificName) warnings.push('scientificName missing');
       if (!data.commonName) warnings.push('commonName missing');
-      if (!data.features?.sizeAndShape) warnings.push('features.sizeAndShape missing');
-      if (!data.photos?.male && !data.photos?.female) warnings.push('photos missing');
+      if (!data.features?.sizeAndShape)
+        warnings.push('features.sizeAndShape missing');
+      if (!data.photos?.male && !data.photos?.female)
+        warnings.push('photos missing');
 
       if (warnings.length) {
-        Logger.warn(`Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`);
+        Logger.warn(
+          `Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`,
+        );
       }
-      
-      return data;
 
+      return data;
     } catch (err) {
       Logger.error(`Failed to fetch info for ${scientificName}`, err);
       throw err;

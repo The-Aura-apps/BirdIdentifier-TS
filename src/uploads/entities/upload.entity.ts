@@ -5,7 +5,7 @@ import { Exclude } from 'class-transformer';
 @Entity('uploads')
 export class Upload {
   @PrimaryGeneratedColumn()
-  id: number; 
+  id: number;
 
   @Column()
   file_name: string;
@@ -13,11 +13,11 @@ export class Upload {
   @Column()
   mime_type: string;
 
-  @Column() // ADDED NEW
+  @Column()
   type: 'image' | 'audio';
 
   @Exclude()
-  @Column({ type: 'bytea' }) // store in PostgreSQL for MVP later swich to S3
+  @Column({ type: 'bytea' }) // store in PostgreSQL for MVP later swich tocloude one
   file_data: Buffer;
 
   @Column({ nullable: true })
@@ -25,7 +25,7 @@ export class Upload {
 
   @OneToMany(() => Observation, (observation) => observation.upload)
   observations: Observation[];
-  
+
   @CreateDateColumn()
   createdAt: Date;
 }

@@ -6,7 +6,7 @@ import { BirdsService } from 'src/birds/birds.service';
 import { AiService } from 'src/ai/ai.service';
 import { CreateObservationDto } from './dto/create-observation.dto';
 import { Upload } from 'src/uploads/entities/upload.entity';
-import { BirdAiRespone } from 'src/ai/types';
+import { BirdAiResponse } from 'src/ai/types';
 
 @Injectable()
 export class ObservationsService {
@@ -17,26 +17,25 @@ export class ObservationsService {
     private readonly birdService: BirdsService,
   ) {}
 
-
   // Create Observation from API input (client)
   async create(dto: CreateObservationDto): Promise<Observation> {
     const observation = this.observationsRepo.create({
       deviceId: dto.deviceId,
       type: dto.type,
-      upload: { id: dto.uploadId } as Upload,  // link without loading full entity ,
-      status: 'pending',                       // UploadsService → call with uploadId, bservationsService → convert uploadId → upload relation
+      upload: { id: dto.uploadId } as Upload, // link without loading full entity ,
+      status: 'pending', // UploadsService → call with uploadId, bservationsService → convert uploadId → upload relation
     });
 
     const saved = await this.observationsRepo.save(observation);
 
-    await this.processObservation(saved.id); //concorent or not 
+    await this.processObservation(saved.id); //concorent or not
 
     return saved;
   }
 
   private async updateResult(
     observation: Observation,
-    aiRespone: BirdAiRespone,
+    aiRespone: BirdAiResponse,
   ): Promise<void> {
     try {
       observation.result = aiRespone;
@@ -44,7 +43,9 @@ export class ObservationsService {
       switch (aiRespone.status) {
         case 'identified': {
           // Ensure bird exist in DB
-          const bird = await this.birdService.findOrCreate(aiRespone.result.scientificName);
+          const bird = await this.birdService.findOrCreate(
+            aiRespone.result.scientificName,
+          );
 
           observation.status = 'completed'; // pipeline completed
           observation.bird = bird;
@@ -67,13 +68,17 @@ export class ObservationsService {
       await this.observationsRepo.save(observation);
     } catch (error) {
       observation.status = 'failed';
-      observation.result = { status: 'failed', error: (error as Error).message };
+      observation.result = {
+        status: 'failed',
+        error: (error as Error).message,
+      };
       await this.observationsRepo.save(observation);
     }
   }
 
-  //AI processing for an observation   
-  private async processObservation(id: string) {   //observation: Observation   --> id: string
+  //AI processing for an observation
+  private async processObservation(id: string) {
+    //observation: Observation   --> id: string
     const observation = await this.observationsRepo.findOne({
       where: { id },
       relations: ['upload'],
@@ -106,7 +111,10 @@ export class ObservationsService {
     return observation;
   }
 
-  async update(id: string, partial: Partial<Observation>): Promise<Observation> {
+  async update(
+    id: string,
+    partial: Partial<Observation>,
+  ): Promise<Observation> {
     const obs = await this.findOne(id);
     Object.assign(obs, partial, { updatedAt: new Date() });
     return this.observationsRepo.save(obs);
@@ -114,7 +122,6 @@ export class ObservationsService {
 
   async remove(id: string): Promise<void> {
     const obs = await this.findOne(id);
-    await this.observationsRepo.remove(obs)
+    await this.observationsRepo.remove(obs);
   }
-
 }

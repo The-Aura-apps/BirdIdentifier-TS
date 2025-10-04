@@ -1,50 +1,105 @@
-// ai/wrappers/audio-ai.wrapper.ts
-import { Injectable } from "@nestjs/common";
-import { IdentificationResult } from "../types";
-import { promises as fs } from "fs";
-import { spawn } from "child_process";
-import * as path from "path";
+import { Injectable, Logger } from '@nestjs/common';
+import { IdentificationResult } from '../types';
+import { promises as fs } from 'fs';
+import { spawn } from 'child_process';
+import * as path from 'path';
 
 @Injectable()
 export class AudioAiWrapper {
+  private readonly logger = new Logger(AudioAiWrapper.name);
+
   async identify(file: Buffer): Promise<IdentificationResult> {
-    const inputDir = path.resolve("./tmp");
-    const inputFile = path.join(inputDir, "birdnet_input.wav");
-    const outputFile = path.join(inputDir, "birdnet_output.json");
+    const inputDir = path.resolve('./tmp');
+    const timestamp = Date.now();
+    const inputFile = path.join(inputDir, `birdnet_input_${timestamp}.wav`);
+    const outputFile = path.join(inputDir, `birdnet_output_${timestamp}.json`);
 
-    await fs.mkdir(inputDir, { recursive: true });
-    await fs.writeFile(inputFile, file);
+    try {
+      // Create tmp directory if it doesn't exist
+      await fs.mkdir(inputDir, { recursive: true });
 
-    const dockerCmd = [
-      "run",
-      "--rm",
-      "-v", `${inputDir}:/workspace`,
-      "birdnet", // <-- image name
-      "python3", "-m", "birdnet_analyzer",
-      "--i", "/workspace/birdnet_input.wav",
-      "--o", "/workspace/birdnet_output.json",
-      "--format", "json"
-    ];
+      // Write audio buffer to file
+      await fs.writeFile(inputFile, file);
+      this.logger.log(`Audio file saved: ${inputFile}`);
 
-    await new Promise<void>((resolve, reject) => {
-      const proc = spawn("docker", dockerCmd, { stdio: "inherit" });
-      proc.on("error", reject);
-      proc.on("close", code => {
-        code === 0 ? resolve() : reject(new Error(`BirdNET exited ${code}`));
+      // Run Docker container
+      const dockerCmd = [
+        'run',
+        '--rm',
+        '-v',
+        `${inputDir}:/workspace`,
+        'birdnet',
+        'python3',
+        '-m',
+        'birdnet_analyzer',
+        '--i',
+        `/workspace/birdnet_input_${timestamp}.wav`,
+        '--o',
+        `/workspace/birdnet_output_${timestamp}.json`,
+        '--format',
+        'json',
+      ];
+
+      this.logger.log('Running BirdNET analysis...');
+      await this.runDocker(dockerCmd);
+
+      // Read results
+      const raw = await fs.readFile(outputFile, 'utf-8');
+      const detections = JSON.parse(raw);
+
+      if (!Array.isArray(detections) || detections.length === 0) {
+        this.logger.warn('No birds detected in audio');
+        return { scientificName: '', confidence: 0 };
+      }
+
+      // Get best detection
+      const best = detections.sort((a, b) => b.confidence - a.confidence)[0];
+
+      this.logger.log(
+        `Identified: ${best.scientific_name} (${best.confidence})`,
+      );
+
+      return {
+        scientificName: best.scientific_name ?? '',
+        confidence: Number(best.confidence ?? 0),
+      };
+    } catch (error) {
+      this.logger.error(`BirdNET analysis failed: ${error.message}`);
+      return { scientificName: '', confidence: 0 };
+    } finally {
+      // Clean up files
+      await this.cleanup(inputFile, outputFile);
+    }
+  }
+
+  private runDocker(dockerCmd: string[]): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const proc = spawn('docker', dockerCmd, { stdio: 'inherit' });
+
+      proc.on('error', (err) => {
+        this.logger.error(`Docker spawn error: ${err.message}`);
+        reject(err);
+      });
+
+      proc.on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`BirdNET exited with code ${code}`));
+        }
       });
     });
+  }
 
-    const raw = await fs.readFile(outputFile, "utf-8");
-    const detections = JSON.parse(raw);
-
-    if (!Array.isArray(detections) || detections.length === 0) {
-      return { scientificName: "", confidence: 0 };
+  private async cleanup(...files: string[]): Promise<void> {
+    for (const file of files) {
+      try {
+        await fs.unlink(file);
+        this.logger.log(`Cleaned up: ${file}`);
+      } catch (err) {
+        // File might not exist, that's okay
+        this.logger.warn(`Could not delete ${file}: ${err.message}`);
+      }
     }
-
-    const best = detections.sort((a, b) => b.confidence - a.confidence)[0];
-    return {
-      scientificName: best.scientific_name ?? "",
-      confidence: Number(best.confidence ?? 0),
-    };
   }
 }

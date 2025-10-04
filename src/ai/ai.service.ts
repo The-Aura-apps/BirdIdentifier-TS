@@ -10,9 +10,12 @@ export class AiService {
     private readonly imageAi: ImageAiWrapper,
     private readonly audioAi: AudioAiWrapper,
     private readonly birdInfo: BirdInfoWrapper,
-  ) { }
+  ) {}
 
-  async process(fileData: Buffer, type: 'image' | 'audio'): Promise<BirdAiResponse> {
+  async process(
+    fileData: Buffer,
+    type: 'image' | 'audio',
+  ): Promise<BirdAiResponse> {
     try {
       const identification = await (type === 'image'
         ? this.imageAi.identify(fileData)
@@ -29,7 +32,7 @@ export class AiService {
       }
 
       if (identification.confidence < 0.7) {
-        return { status: 'uncertain', confidence }
+        return { status: 'uncertain', confidence };
       }
 
       // gather info
@@ -41,7 +44,10 @@ export class AiService {
         return {
           status: 'identified',
           confidence,
-          result: { scientificName: identification.scientificName, commonName: '' } as BirdInfo
+          result: {
+            scientificName: identification.scientificName,
+            commonName: '',
+          } as BirdInfo,
         };
       }
 
@@ -50,9 +56,8 @@ export class AiService {
         confidence,
         result: info,
       };
-
     } catch (err) {
-      return { status: 'failed', error: (err as Error).message }
+      return { status: 'failed', error: (err as Error).message };
     }
   }
 }
