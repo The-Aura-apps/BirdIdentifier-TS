@@ -1,5 +1,13 @@
 import { Observation } from 'src/observations/entities/observation.entity';
-import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('birds')
 export class Bird {
@@ -9,8 +17,8 @@ export class Bird {
   @Column({ nullable: true })
   commonName: string;
 
-  @Column({ unique: true })
   @Index()
+  @Column({ unique: true })
   scientificName: string;
 
   @Column('jsonb', { nullable: true })

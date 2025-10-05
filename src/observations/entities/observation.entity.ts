@@ -1,8 +1,26 @@
-import { Bird } from "src/birds/entities/bird.entity";
-import { Upload } from "src/uploads/entities/upload.entity";
-import { Column, CreateDateColumn,UpdateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Bird } from 'src/birds/entities/bird.entity';
+import { Upload } from 'src/uploads/entities/upload.entity';
+import {
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Index,
+} from 'typeorm';
 import type { BirdAiResponse } from 'src/ai/types';
 
+export enum ObservationStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
+@Index(['deviceId', 'createdAt']) // For device history queries
+@Index(['status']) // For filtering by status
 @Entity()
 export class Observation {
   @PrimaryGeneratedColumn('uuid')
@@ -14,16 +32,23 @@ export class Observation {
   // @Column()
   // fileUrl: string;
 
-  @Column()
+  @Column({ type: 'varchar', length: 10 })
   type: 'image' | 'audio';
 
-  @Column({ default: 'pending' })
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  @Column({
+    type: 'varchar',
+    default: ObservationStatus.PENDING,
+  })
+  status: ObservationStatus;
+
+  @Column()
+  uploadId: number; // Add this for better queries
 
   @ManyToOne(() => Upload, (upload) => upload.observations, {
     nullable: false,
-    eager: true,
+    eager: false,
   })
+  @JoinColumn({ name: 'uploadId' }) // Explicit mapping
   upload: Upload;
 
   @ManyToOne(() => Bird, (bird) => bird.observations, {
