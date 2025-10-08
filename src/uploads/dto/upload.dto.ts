@@ -1,5 +1,13 @@
-export interface FileUploadDto {
-    fileName: string,
-    mimeType: string,
-    buffer: Buffer,
+import { IsString, IsNotEmpty } from "class-validator";
+
+export class FileUploadDto {
+    @IsString()
+    @IsNotEmpty()
+    originalname: string;
+
+    @IsString()
+    @IsNotEmpty()
+    mimetype: string;
+
+    buffer: Buffer;
 }

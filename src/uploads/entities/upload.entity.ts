@@ -1,28 +1,28 @@
-import { Observation } from 'src/observations/entities/observation.entity';
+import { Observation } from "src/observations/entities/observation.entity";
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  OneToMany,
-  Index,
-} from 'typeorm';
-import { Exclude } from 'class-transformer';
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    OneToMany,
+    Index,
+} from "typeorm";
+import { Exclude } from "class-transformer";
 
-@Entity('uploads')
+@Entity("uploads")
 export class Upload {
-  @PrimaryGeneratedColumn()
-  id: number;
+    @PrimaryGeneratedColumn()
+    id: number;
 
-  @Column()
-  file_name: string;
+    @Column()
+    file_name: string;
 
-  @Column()
-  mime_type: string;
+    @Column()
+    mime_type: string;
 
-  @Column({ type: 'varchar', length: 10 })
-  type: 'image' | 'audio';
-  /*
+    @Column({ type: "varchar", length: 10 })
+    type: "image" | "audio";
+    /*
   // CHANGE: Store URL instead of buffer
   @Column({ nullable: true })
   storage_url: string; // S3/CloudFlare R2/GCS URL
@@ -38,17 +38,17 @@ export class Upload {
   file_size: number; // Track size for monitoring
   */
 
-  @Exclude()
-  @Column({ type: 'bytea' }) // store in PostgreSQL for MVP later swich tocloude one
-  file_data: Buffer;
+    @Exclude()
+    @Column({ type: "bytea" }) // store in PostgreSQL for MVP later swich tocloude one
+    file_data: Buffer;
 
-  @Index() // Add index for faster duplicate detection
-  @Column({ unique: true, nullable: false })
-  checksum: string;
+    @Index() // Add index for faster duplicate detection
+    @Column({ unique: true, nullable: false })
+    checksum: string;
 
-  @OneToMany(() => Observation, (observation) => observation.upload)
-  observations: Observation[];
+    @OneToMany(() => Observation, (observation) => observation.upload)
+    observations: Observation[];
 
-  @CreateDateColumn()
-  createdAt: Date;
+    @CreateDateColumn()
+    createdAt: Date;
 }
