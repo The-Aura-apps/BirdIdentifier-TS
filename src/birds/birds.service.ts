@@ -10,6 +10,8 @@ import { Bird } from "./entities/bird.entity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UpdateBirdDto } from "./dto/update-bird.dto";
+import { BirdInfoWrapper } from "src/ai/wrappers/bird-info.wrapper";
+import { BirdInfo } from "src/ai/types";
 
 @Injectable()
 export class BirdsService {
@@ -18,6 +20,7 @@ export class BirdsService {
     constructor(
         @InjectRepository(Bird)
         private readonly birdRepo: Repository<Bird>,
+        private readonly birdInfoWrapper: BirdInfoWrapper,
     ) {}
 
     /**
@@ -106,6 +109,7 @@ export class BirdsService {
         // Check for scientific name conflict if updating it
         if (
             updateBirdDto &&
+            updateBirdDto.scientificName &&
             updateBirdDto.scientificName !== bird.scientificName
         ) {
             const existing = await this.birdRepo.findOne({
@@ -125,7 +129,6 @@ export class BirdsService {
 
         Object.assign(bird, updateBirdDto, { updateAt: new Date() });
         const update = await this.birdRepo.save(bird);
-
         this.logger.log(`Bird update: ${id} - ${update.scientificName}`);
         return update;
     }
@@ -171,6 +174,42 @@ export class BirdsService {
             bird = await this.birdRepo.save(bird);
             this.logger.log(
                 `Bird created: ${bird.id} - ${bird.scientificName}`,
+            );
+        }
+        // Check if bird data is incomplete (missing any key fields)
+        if (
+            !bird.commonName ||
+            bird.commonName === "Unknown" ||
+            !bird.photos ||
+            !bird.features ||
+            !bird.ecology ||
+            !bird.geography ||
+            !bird.education
+        ) {
+            this.logger.log(`Enriching bird data for: ${normalizedName}`);
+            try {
+                const birdInfo: BirdInfo =
+                    await this.birdInfoWrapper.fetchInfo(normalizedName);
+                this.logger.log(
+                    `Fetched bird info: ${JSON.stringify(birdInfo, null, 2)}`,
+                );
+                bird = await this.update(bird.id, {
+                    commonName: birdInfo.commonName || "Unknown",
+                    photos: birdInfo.photos || {},
+                    features: birdInfo.features || {},
+                    ecology: birdInfo.ecology || {},
+                    geography: birdInfo.geography || {},
+                    education: birdInfo.education || { coolFacts: [] },
+                });
+            } catch (err) {
+                this.logger.error(
+                    `Failed to enrich bird data for ${normalizedName}: ${err.message}`,
+                );
+                // Continue with existing bird data to avoid blocking
+            }
+        } else {
+            this.logger.log(
+                `Bird data already complete for: ${normalizedName}`,
             );
         }
         return bird;

@@ -13,17 +13,17 @@ import {
 import type { BirdAiResponse } from "src/ai/types";
 
 export enum ObservationStatus {
-    PENDING = "pending",
-    PROCESSING = "processing",
-    COMPLETED = "completed",
-    FAILED = "failed",
+    PENDING = 'pending',
+    PROCESSING = 'processing',
+    COMPLETED = 'completed',
+    FAILED = 'failed',
 }
 
-@Index(["deviceId", "createdAt"]) // For device history queries
-@Index(["status"]) // For filtering by status
+@Index(['deviceId', 'createdAt']) // For device history queries
+@Index(['status']) // For filtering by status
 @Entity()
 export class Observation {
-    @PrimaryGeneratedColumn("uuid")
+    @PrimaryGeneratedColumn('uuid')
     id: string; // UUID
 
     @Column()
@@ -32,8 +32,8 @@ export class Observation {
     // @Column()
     // fileUrl: string;
 
-    @Column({ type: "varchar", length: 10 })
-    type: "image" | "audio";
+    @Column({ type: 'varchar', length: 10 })
+    type: "image" | 'audio';
 
     @Column({
         type: "varchar",

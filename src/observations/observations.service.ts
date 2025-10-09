@@ -34,12 +34,13 @@ export class ObservationsService {
                 ObservationStatus.COMPLETED,
                 ObservationStatus.FAILED,
             ],
-            // COMPLETED and FAILED are terminal states - no transitions allowed
         };
         return validTransitions[from]?.includes(to) ?? false;
     }
 
-    // Create Observation from API input (client)
+    /**
+     * Create an observation from API input
+     */
     async create(dto: CreateObservationDto): Promise<Observation> {
         this.logger.log(`Creating observation for device: ${dto.deviceId}`);
 
@@ -62,22 +63,22 @@ export class ObservationsService {
         });
         return saved;
     }
-
+    /**
+     * Update observation with AI results
+     */
     private async updateResult(
         observation: Observation,
         aiResponse: BirdAiResponse,
     ): Promise<void> {
-        observation.result = aiResponse;
-
         if (aiResponse.status === "identified") {
             const bird = await this.birdService.findOrCreate(
                 aiResponse.result.scientificName,
-            );
+            ); // This now enriches bird data
             observation.status = ObservationStatus.COMPLETED;
             observation.bird = bird;
         } else {
             observation.status =
-                aiResponse.status === "uncertain"
+                aiResponse.status === 'uncertain'
                     ? ObservationStatus.COMPLETED
                     : ObservationStatus.FAILED;
             observation.bird = null;
@@ -86,15 +87,15 @@ export class ObservationsService {
         await this.observationsRepo.save(observation);
     }
 
-    //AI processing for an observation
+    /**
+     * Process observation with AI
+     */
     private async processObservation(id: string) {
         this.logger.log(`Processing observation: ${id}`);
 
-        // Loads the observation WITH the full upload data (including file_data buffer)
-        //observation: Observation   --> id: string
         const observation = await this.observationsRepo.findOne({
             where: { id },
-            relations: ["upload"], // ← Now loads full Upload entity
+            relations: ["upload"],
         });
 
         if (!observation) {
@@ -102,7 +103,6 @@ export class ObservationsService {
             return;
         }
 
-        // Prevent re-processing
         if (observation.status !== ObservationStatus.PENDING) {
             this.logger.warn(
                 `Observation ${id} already processed, status: ${observation.status}`,
@@ -113,13 +113,13 @@ export class ObservationsService {
         try {
             observation.status = ObservationStatus.PROCESSING;
             await this.observationsRepo.save(observation);
-            //Ask AI for scientific name
+
             const aiResponse = await this.aiService.process(
                 observation.upload.file_data,
                 observation.type,
             );
 
-            await this.updateResult(observation, aiResponse); // Updates with AI results
+            await this.updateResult(observation, aiResponse);
             this.logger.log(`Observation processed successfully: ${id}`);
         } catch (err) {
             this.logger.error(
@@ -132,22 +132,15 @@ export class ObservationsService {
     }
 
     async findAll(): Promise<Observation[]> {
-        return await this.observationsRepo.find();
+        return await this.observationsRepo.find({
+            relations: ["bird"],
+        });
     }
-
-    /*   async findAll(): Promise<Observation[]> {
-    return await this.observationsRepo.find({
-      order: { createdAt: 'DESC' },
-      take: 100, // Limit for MVP performance
-      relations: ['bird'], // Load bird but not upload
-    });
-  } */
 
     async findByDevice(deviceId: string): Promise<Observation[]> {
         return await this.observationsRepo.find({
             where: { deviceId },
-            //order: { createdAt: 'DESC' },
-            relations: ["bird"], // Only load bird, not upload
+            relations: ["bird"],
         });
     }
 
@@ -159,14 +152,12 @@ export class ObservationsService {
         return observation;
     }
 
-    //Update observation (with status transition validation)
     async update(
         id: string,
         partial: Partial<Observation>,
     ): Promise<Observation> {
         const obs = await this.findOne(id);
 
-        // Validate status transition if status is being updated
         if (partial.status && partial.status !== obs.status) {
             if (!this.validateStatusTransition(obs.status, partial.status)) {
                 throw new BadRequestException(
@@ -175,10 +166,9 @@ export class ObservationsService {
             }
         }
 
-        // Prevent manual updates to certain fields
         delete partial["id"];
         delete partial["createdAt"];
-        delete partial["uploadId"]; // FK should not be changed manually
+        delete partial["uploadId"];
 
         Object.assign(obs, partial, { updatedAt: new Date() });
         return this.observationsRepo.save(obs);

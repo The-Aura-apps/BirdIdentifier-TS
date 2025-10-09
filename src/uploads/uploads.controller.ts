@@ -18,11 +18,11 @@ export class UploadsController {
     constructor(private readonly uploadsService: UploadsService) {}
 
     @Post()
-    @UseInterceptors(FileInterceptor("file"))
+    @UseInterceptors(FileInterceptor('file'))
     async uploadFile(
         @UploadedFile() file: FileUploadDto,
-        @Body("deviceId") deviceId: string,
-        @Body("type") type: "image" | "audio",
+        @Body('deviceId') deviceId: string,
+        @Body('type') type: 'image' | 'audio',
     ) {
         return this.uploadsService.handleUpload(
             {
@@ -36,11 +36,11 @@ export class UploadsController {
     }
 
     @Get(":id")
-    async downloadFile(@Param("id") id: number, @Res() res: Response) {
+    async downloadFile(@Param('id') id: number, @Res() res: Response) {
         const file = await this.uploadsService.getFile(id);
-        res.setHeader("Content-Type", file.mime_type);
+        res.setHeader('Content-Type', file.mime_type);
         res.setHeader(
-            "Content-Disposition",
+            'Content-Disposition',
             `attachment; filename=${file.file_name}`,
         );
         res.send(file.file_data);
