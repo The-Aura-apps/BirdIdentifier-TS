@@ -7,11 +7,11 @@ import {
 import { Observation, ObservationStatus } from "./entities/observation.entity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import { BirdsService } from "src/birds/birds.service";
-import { AiService } from "src/ai/ai.service";
+import { BirdsService } from "src/modules/birds/birds.service";
+import { AiService } from "src/modules/ai/ai.service";
 import { CreateObservationDto } from "./dto/create-observation.dto";
-import { Upload } from "src/uploads/entities/upload.entity";
-import { BirdAiResponse } from "src/ai/types";
+import { Upload } from "src/modules/uploads/entities/upload.entity";
+import { BirdAiResponse } from "src/modules/ai/types";
 
 @Injectable()
 export class ObservationsService {

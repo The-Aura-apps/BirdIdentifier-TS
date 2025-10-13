@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Observation } from "../observations/entities/observation.entity";
-import { ObservationsModule } from "src/observations/observations.module";
-import { Bird } from "src/birds/entities/bird.entity";
-import { Upload } from "src/uploads/entities/upload.entity";
+import { Observation } from "../modules/observations/entities/observation.entity";
+import { ObservationsModule } from "src/modules/observations/observations.module";
+import { Bird } from "src/modules/birds/entities/bird.entity";
+import { Upload } from "src/modules/uploads/entities/upload.entity";
 @Module({
     imports: [
         TypeOrmModule.forRoot({

@@ -1,5 +1,5 @@
-import { Bird } from "src/birds/entities/bird.entity";
-import { Upload } from "src/uploads/entities/upload.entity";
+import { Bird } from "src/modules/birds/entities/bird.entity";
+import { Upload } from "src/modules/uploads/entities/upload.entity";
 import {
     Column,
     CreateDateColumn,
@@ -10,7 +10,7 @@ import {
     PrimaryGeneratedColumn,
     Index,
 } from "typeorm";
-import type { BirdAiResponse } from "src/ai/types";
+import type { BirdAiResponse } from "src/modules/ai/types";
 
 export enum ObservationStatus {
     PENDING = 'pending',

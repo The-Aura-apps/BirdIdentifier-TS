@@ -97,7 +97,7 @@ Important:
 
             const content = response.choices?.[0]?.message?.content;
             if (!content) {
-                //  Logger.warn(`No content returned for bird: ${scientificName}`);
+                Logger.warn(`No content returned for bird: ${scientificName}`);
                 throw new Error("Empty response from OpenAI API");
             }
 
@@ -105,6 +105,9 @@ Important:
             let data: BirdInfo;
             try {
                 data = JSON.parse(content);
+                this.logger.log(
+                    `Received bird info: ${JSON.stringify(data, null, 2)}`,
+                );
             } catch (parseErr) {
                 Logger.error(
                     `JSON parsing failed for bird: ${normalizedName}`,
@@ -149,11 +152,32 @@ Important:
             warnings.push("commonName missing");
         }
         // Ensure nested objects exist
-        if (!data.photos) data.photos = {};
-        if (!data.features) data.features = {};
-        if (!data.ecology) data.ecology = {};
-        if (!data.geography) data.geography = {};
-        if (!data.education) data.education = {};
+        if (!data.photos) data.photos = { male: "", female: "" };
+        if (!data.features)
+            data.features = {
+                sizeAndShape: "",
+                colorPattern: "",
+                billShape: "",
+                markings: "",
+            };
+        if (!data.ecology)
+            data.ecology = { habitat: "", behavior: "", diet: "" };
+        if (!data.geography)
+            data.geography = {
+                rangeMap: "",
+                yearRound: "",
+                breeding: "",
+                wintering: "",
+                migration: "",
+                seasonality: "",
+            };
+        if (!data.education)
+            data.education = {
+                conservation: "",
+                nesting: "",
+                eggs: "",
+                coolFacts: [],
+            };
 
         // Ensure coolFacts is an array
         if (!Array.isArray(data.education.coolFacts)) {
@@ -169,30 +193,17 @@ Important:
     }
 
     /**
-    // * Get cached bird info if not expired
+     * Get cached bird info if not expired
      * @param scientificName Name to check in cache
      * @returns Cached BirdInfo or null
      */
     // private getCached(scientificName: string): BirdInfo | null {
-    //   const cached = this.cache.get(scientificName);
-    //   if (!cached) return null;
-    //   return cached.data;
-    // }
-    //  /**
-    //  * Clear cache (useful for testing)
-    //  */
-    // clearCache(): void {
-    //   this.cache.clear();
-    //   this.logger.log('Bird info cache cleared');
-    // }
-
-    // /**
-    //  * Get cache statistics
-    //  */
-    // getCacheStats(): { size: number; entries: string[] } {
-    //   return {
-    //     size: this.cache.size,
-    //     entries: Array.from(this.cache.keys()),
-    //   };
+    //     const cached = this.cache.get(scientificName);
+    //     if (!cached) return null;
+    //     if (Date.now() - cached.timestamp > this.CACHE_TTL) {
+    //         this.cache.delete(scientificName);
+    //         return null;
+    //     }
+    //     return cached.data;
     // }
 }

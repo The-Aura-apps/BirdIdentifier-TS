@@ -3,8 +3,8 @@ import { ObservationsController } from "./observations.controller";
 import { ObservationsService } from "./observations.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Observation } from "./entities/observation.entity";
-import { BirdsModule } from "src/birds/birds.module";
-import { AiModule } from "src/ai/ai.module";
+import { BirdsModule } from "src/modules/birds/birds.module";
+import { AiModule } from "src/modules/ai/ai.module";
 
 @Module({
     imports: [TypeOrmModule.forFeature([Observation]), BirdsModule, AiModule],

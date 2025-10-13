@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { UploadsController } from "./uploads.controller";
 import { UploadsService } from "./uploads.service";
-import { ObservationsModule } from "src/observations/observations.module";
+import { ObservationsModule } from "src/modules/observations/observations.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Upload } from "./entities/upload.entity";
 

@@ -10,8 +10,8 @@ import { Bird } from "./entities/bird.entity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UpdateBirdDto } from "./dto/update-bird.dto";
-import { BirdInfoWrapper } from "src/ai/wrappers/bird-info.wrapper";
-import { BirdInfo } from "src/ai/types";
+import { BirdInfoWrapper } from "src/modules/ai/wrappers/bird-info.wrapper";
+import { BirdInfo } from "src/modules/ai/types";
 
 @Injectable()
 export class BirdsService {
@@ -164,11 +164,23 @@ export class BirdsService {
             where: { scientificName: normalizedName },
         });
 
+        let birdInfo: BirdInfo | null = null;
+        try {
+            birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
+            this.logger.log(
+                `Fetched bird info: ${JSON.stringify(birdInfo, null, 2)}`,
+            );
+        } catch (err) {
+            this.logger.error(
+                `Failed to fetch bird info for ${normalizedName}: ${err.message}`,
+            );
+        }
+
         if (!bird) {
             this.logger.log(`Creating new bird record: ${normalizedName}`);
             bird = this.birdRepo.create({
                 scientificName: normalizedName,
-                commonName: "Unknown", // Will be enriched later
+                commonName: birdInfo?.commonName || 'Unknown', // Will be enriched later
             });
 
             bird = await this.birdRepo.save(bird);
@@ -179,7 +191,7 @@ export class BirdsService {
         // Check if bird data is incomplete (missing any key fields)
         if (
             !bird.commonName ||
-            bird.commonName === "Unknown" ||
+            bird.commonName === 'Unknown' ||
             !bird.photos ||
             !bird.features ||
             !bird.ecology ||
@@ -194,7 +206,7 @@ export class BirdsService {
                     `Fetched bird info: ${JSON.stringify(birdInfo, null, 2)}`,
                 );
                 bird = await this.update(bird.id, {
-                    commonName: birdInfo.commonName || "Unknown",
+                    commonName: birdInfo.commonName || 'Unknown',
                     photos: birdInfo.photos || {},
                     features: birdInfo.features || {},
                     ecology: birdInfo.ecology || {},

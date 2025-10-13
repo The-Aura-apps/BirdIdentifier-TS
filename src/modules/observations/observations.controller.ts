@@ -48,4 +48,6 @@ export class ObservationsController {
     delete(@Param("id") id: string): Promise<void> {
         return this.observationsService.remove(id);
     }
+
+
 }
