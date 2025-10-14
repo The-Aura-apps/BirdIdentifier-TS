@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Upload } from "./entities/upload.entity";
-import { ObservationsService } from "src/modules/observations/observations.service";
+import { ObservationsService } from "src/modules/observation/observations/observations.service";
 import * as crypto from "crypto";
 import { FileUploadDto } from "./dto/upload.dto";
 

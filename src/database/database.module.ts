@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Observation } from "../modules/observations/entities/observation.entity";
 import { ObservationsModule } from "src/modules/observations/observations.module";
-import { Bird } from "src/modules/birds/entities/bird.entity";
+import { Bird } from "src/modules/bird/birds/entities/bird.entity";
 import { Upload } from "src/modules/uploads/entities/upload.entity";
 @Module({
     imports: [

@@ -1,4 +1,4 @@
-import { Observation } from "src/modules/observations/entities/observation.entity";
+import { Observation } from "src/modules/observation/observations/entities/observation.entity";
 import {
     Entity,
     PrimaryGeneratedColumn,
