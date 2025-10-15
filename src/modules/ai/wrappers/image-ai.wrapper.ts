@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { IdentificationResult } from "../types";
-import OpenAI from "openai";
-import sharp from "sharp"; // Added for image format conversion
+import { Injectable, Logger } from '@nestjs/common';
+import { IdentificationResult } from '../types';
+import OpenAI from 'openai';
+import sharp from 'sharp'; // Added for image format conversion
 
 @Injectable()
 export class ImageAiWrapper {
@@ -13,16 +13,14 @@ export class ImageAiWrapper {
     constructor() {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {
-            this.logger.error(
-                "OPENAI_API_KEY not set in environment variables",
-            );
-            throw new Error("OPENAI_API_KEY is required");
+            this.logger.error('OPENAI_API_KEY not set in environment variables');
+            throw new Error('OPENAI_API_KEY is required');
         }
         this.client = new OpenAI({
             apiKey,
             timeout: this.REQUEST_TIMEOUT,
         });
-        this.logger.log("OpenAI client initialized for image analysis");
+        this.logger.log('OpenAI client initialized for image analysis');
     }
 
     /**
@@ -34,12 +32,12 @@ export class ImageAiWrapper {
         const format = await sharp(buffer)
             .metadata()
             .then((meta) => meta.format?.toLowerCase());
-        const supported = ["jpeg", "png", "gif", "webp", "heic"];
+        const supported = ['jpeg', 'png', 'gif', 'webp', 'heic'];
         if (!supported.includes(format)) {
             throw new Error(`Unsupported image format: ${format}`);
         }
 
-        if (format === "jpeg") {
+        if (format === 'jpeg') {
             return buffer;
         }
 
@@ -62,16 +60,14 @@ export class ImageAiWrapper {
             }
 
             if (file.length === 0) {
-                throw new Error("Empty image buffer provided");
+                throw new Error('Empty image buffer provided');
             }
 
             // Convert to base64 for OpenAI API
-            const base64Image = file.toString("base64");
+            const base64Image = file.toString('base64');
             const mimeType = this.detectMimeType(file);
 
-            this.logger.log(
-                `Processing image (${file.length} bytes, ${mimeType})`,
-            );
+            this.logger.log(`Processing image (${file.length} bytes, ${mimeType})`);
 
             const prompt = `You are an expert ornithologist. Analyze this bird image and identify the species.
 
@@ -89,14 +85,14 @@ Rules:
 
             // Call GPT-4o-mini
             const response = await this.client.chat.completions.create({
-                model: "gpt-4o-mini",
+                model: 'gpt-4o-mini',
                 messages: [
                     {
-                        role: "user",
+                        role: 'user',
                         content: [
-                            { type: "text", text: prompt },
+                            { type: 'text', text: prompt },
                             {
-                                type: "image_url",
+                                type: 'image_url',
                                 image_url: {
                                     url: `data:${mimeType};base64,${base64Image}`,
                                 },
@@ -104,14 +100,14 @@ Rules:
                         ],
                     },
                 ],
-                response_format: { type: "json_object" },
+                response_format: { type: 'json_object' },
                 max_tokens: 300, //Extend if needed
             });
 
             // Parse JSON safely
             const content = response.choices?.[0]?.message?.content;
             if (!content) {
-                throw new Error("Empty response from OpenAI API");
+                throw new Error('Empty response from OpenAI API');
             }
 
             // Parse and validate JSON
@@ -119,19 +115,16 @@ Rules:
             try {
                 data = JSON.parse(content);
             } catch (prsErr) {
-                this.logger.error(
-                    "Failed to pars OpenAI JSON response",
-                    content,
-                );
-                throw new Error("Invalid JSON from AI");
+                this.logger.error('Failed to pars OpenAI JSON response', content);
+                throw new Error('Invalid JSON from AI');
             }
 
             // Validate and normalize data
-            if (typeof data.scientificName !== "string") {
-                throw new Error("Invalid scientificName in AI response");
+            if (typeof data.scientificName !== 'string') {
+                throw new Error('Invalid scientificName in AI response');
             }
 
-            if (typeof data.confidence !== "number") {
+            if (typeof data.confidence !== 'number') {
                 data.confidence = 0;
             }
 
@@ -139,15 +132,12 @@ Rules:
             data.confidence = Math.max(0, Math.min(1, data.confidence));
 
             this.logger.log(
-                `Image identified: ${data.scientificName || "Unknown"} (${data.confidence})`,
+                `Image identified: ${data.scientificName || 'Unknown'} (${data.confidence})`,
             );
 
             return data;
         } catch (err) {
-            this.logger.error(
-                `Image AI identification failed: ${err.message}`,
-                err.stack,
-            );
+            this.logger.error(`Image AI identification failed: ${err.message}`, err.stack);
             throw err; // Propagate error instead of returning default
         }
     }
@@ -158,29 +148,19 @@ Rules:
     private detectMimeType(buffer: Buffer): string {
         // Check file signatures (magic numbers)
         if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
-            return "image/jpeg";
+            return 'image/jpeg';
         }
-        if (
-            buffer[0] === 0x89 &&
-            buffer[1] === 0x50 &&
-            buffer[2] === 0x4e &&
-            buffer[3] === 0x47
-        ) {
-            return "image/png";
+        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+            return 'image/png';
         }
         if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
-            return "image/gif";
+            return 'image/gif';
         }
-        if (
-            buffer[0] === 0x52 &&
-            buffer[1] === 0x49 &&
-            buffer[2] === 0x46 &&
-            buffer[3] === 0x46
-        ) {
-            return "image/webp";
+        if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) {
+            return 'image/webp';
         }
 
         // Default fallback
-        return "image/jpeg";
+        return 'image/jpeg';
     }
 }

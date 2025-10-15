@@ -1,4 +1,4 @@
-import { Observation } from "src/modules/observation/observations/entities/observation.entity";
+import { Observation } from 'src/modules/observation/observations/entities/observation.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -6,10 +6,10 @@ import {
     CreateDateColumn,
     OneToMany,
     Index,
-} from "typeorm";
-import { Exclude } from "class-transformer";
+} from 'typeorm';
+import { Exclude } from 'class-transformer';
 
-@Entity("uploads")
+@Entity('uploads')
 export class Upload {
     @PrimaryGeneratedColumn()
     id: number;
@@ -20,8 +20,8 @@ export class Upload {
     @Column()
     mime_type: string;
 
-    @Column({ type: "varchar", length: 10 })
-    type: "image" | "audio";
+    @Column({ type: 'varchar', length: 10 })
+    type: 'image' | 'audio';
     /*
   // CHANGE: Store URL instead of buffer
   @Column({ nullable: true })
@@ -39,7 +39,7 @@ export class Upload {
   */
 
     @Exclude()
-    @Column({ type: "bytea" }) // store in PostgreSQL for MVP later swich tocloude one
+    @Column({ type: 'bytea' }) // store in PostgreSQL for MVP later swich tocloude one
     file_data: Buffer;
 
     @Index() // Add index for faster duplicate detection

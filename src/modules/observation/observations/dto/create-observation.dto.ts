@@ -1,4 +1,4 @@
-import { IsString, IsUUID, IsIn, IsUrl, IsNumber } from "class-validator";
+import { IsString, IsUUID, IsIn, IsUrl, IsNumber } from 'class-validator';
 
 export class CreateObservationDto {
     // can later add   @IsValidDeviceId()
@@ -8,6 +8,6 @@ export class CreateObservationDto {
     @IsNumber()
     uploadId: number; // FK column, Stored directly as a number in your Observation table.
 
-    @IsIn(["image", "audio"])
-    type: "image" | "audio";
+    @IsIn(['image', 'audio'])
+    type: 'image' | 'audio';
 }

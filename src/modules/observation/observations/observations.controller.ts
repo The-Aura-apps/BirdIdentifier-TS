@@ -7,12 +7,12 @@ import {
     NotFoundException,
     Patch,
     Delete,
-} from "@nestjs/common";
-import { ObservationsService } from "./observations.service";
-import { Observation } from "./entities/observation.entity";
-import { CreateObservationDto } from "./dto/create-observation.dto";
+} from '@nestjs/common';
+import { ObservationsService } from './observations.service';
+import { Observation } from './entities/observation.entity';
+import { CreateObservationDto } from './dto/create-observation.dto';
 
-@Controller("observations")
+@Controller('observations')
 export class ObservationsController {
     constructor(private readonly observationsService: ObservationsService) {}
 
@@ -21,8 +21,8 @@ export class ObservationsController {
         return this.observationsService.create(dto);
     }
 
-    @Get(":id")
-    findOne(@Param("id") id: string): Promise<Observation> {
+    @Get(':id')
+    findOne(@Param('id') id: string): Promise<Observation> {
         return this.observationsService.findOne(id);
     }
 
@@ -31,23 +31,18 @@ export class ObservationsController {
         return this.observationsService.findAll();
     }
 
-    @Get("device/:deviceId")
-    findByDevice(@Param("deviceId") deviceId: string): Promise<Observation[]> {
+    @Get('device/:deviceId')
+    findByDevice(@Param('deviceId') deviceId: string): Promise<Observation[]> {
         return this.observationsService.findByDevice(deviceId);
     }
 
-    @Patch(":id")
-    update(
-        @Param("id") id: string,
-        @Body() partial: Partial<Observation>,
-    ): Promise<Observation> {
+    @Patch(':id')
+    update(@Param('id') id: string, @Body() partial: Partial<Observation>): Promise<Observation> {
         return this.observationsService.update(id, partial);
     }
 
-    @Delete(":id")
-    delete(@Param("id") id: string): Promise<void> {
+    @Delete(':id')
+    delete(@Param('id') id: string): Promise<void> {
         return this.observationsService.remove(id);
     }
-
-
 }

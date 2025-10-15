@@ -1,5 +1,5 @@
-import { Injectable, Logger } from "@nestjs/common";
-import * as apn from "@parse/node-apn";
+import { Injectable, Logger } from '@nestjs/common';
+import * as apn from '@parse/node-apn';
 
 @Injectable()
 export class ApnsService {
@@ -22,7 +22,7 @@ export class ApnsService {
 
         note.topic = process.env.APNS_BUNDLE_ID!;
         note.alert = { title, body };
-        note.sound = "defulte";
+        note.sound = 'defulte';
         note.badge = 1;
 
         try {

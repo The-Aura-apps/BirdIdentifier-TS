@@ -1,5 +1,5 @@
-import { Bird } from "src/modules/bird/birds/entities/bird.entity";
-import { Upload } from "src/modules/uploads/entities/upload.entity";
+import { Bird } from 'src/modules/bird/birds/entities/bird.entity';
+import { Upload } from 'src/modules/uploads/entities/upload.entity';
 import {
     Column,
     CreateDateColumn,
@@ -9,8 +9,8 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
     Index,
-} from "typeorm";
-import type { BirdAiResponse } from "src/modules/ai/types";
+} from 'typeorm';
+import type { BirdAiResponse } from 'src/modules/ai/types';
 
 export enum ObservationStatus {
     PENDING = 'pending',
@@ -33,10 +33,10 @@ export class Observation {
     // fileUrl: string;
 
     @Column({ type: 'varchar', length: 10 })
-    type: "image" | 'audio';
+    type: 'image' | 'audio';
 
     @Column({
-        type: "varchar",
+        type: 'varchar',
         default: ObservationStatus.PENDING,
     })
     status: ObservationStatus;
@@ -48,7 +48,7 @@ export class Observation {
         nullable: false,
         eager: false,
     })
-    @JoinColumn({ name: "uploadId" }) // Explicit mapping
+    @JoinColumn({ name: 'uploadId' }) // Explicit mapping
     upload: Upload;
 
     @ManyToOne(() => Bird, (bird) => bird.observations, {
@@ -57,7 +57,7 @@ export class Observation {
     })
     bird: Bird | null;
 
-    @Column({ type: "jsonb", nullable: true }) // check nulleble
+    @Column({ type: 'jsonb', nullable: true }) // check nulleble
     result: BirdAiResponse | null; // AI result
 
     // @Column()

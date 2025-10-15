@@ -1,13 +1,13 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
-import { BirdsModule } from "./modules/bird/birds/birds.module";
-import { ObservationsModule } from "./modules/observation/observations/observations.module";
-import { AiModule } from "./modules/ai/ai.module";
-import { DatabaseModule } from "./core/database/database.module";
-import { UploadsModule } from "./modules/uploads/uploads.module";
-import { NotificationModule } from "./modules/observation/notification/notification.module";
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { BirdsModule } from './modules/bird/birds/birds.module';
+import { ObservationsModule } from './modules/observation/observations/observations.module';
+import { AiModule } from './modules/ai/ai.module';
+import { DatabaseModule } from './core/database/database.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
+import { NotificationModule } from './modules/observation/notification/notification.module';
 import { FoodsService } from './modules/bird/foods/foods.service';
 import { FoodsModule } from './modules/bird/foods/foods.module';
 import { HabitatsModule } from './modules/bird/habitats/habitats.module';
@@ -20,15 +20,15 @@ import { BirdDistributionModule } from './modules/bird/bird-distribution/bird-di
 import { ConservationStatusModule } from './modules/bird/conservation-status/conservation-status.module';
 import { CommonNamesModule } from './modules/bird/common-names/common-names.module';
 import { TaxonomyModule } from './modules/bird/taxonomy/taxonomy.module';
-import { ConservationStatusService } from "./modules/bird/conservation-status/conservation-status.service";
-import { ConservationStatusController } from "./modules/bird/conservation-status/conservation-status.controller";
+import { ConservationStatusService } from './modules/bird/conservation-status/conservation-status.service';
+import { ConservationStatusController } from './modules/bird/conservation-status/conservation-status.controller';
 import { MediaModule } from './modules/media/media.module';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            envFilePath: ".env",
+            envFilePath: '.env',
         }),
         BirdsModule,
         ObservationsModule,

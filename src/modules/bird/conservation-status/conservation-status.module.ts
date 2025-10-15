@@ -3,7 +3,7 @@ import { ConservationStatusController } from './conservation-status.controller';
 import { ConservationStatusService } from './conservation-status.service';
 
 @Module({
-  controllers: [ConservationStatusController],
-  providers: [ConservationStatusService]
+    controllers: [ConservationStatusController],
+    providers: [ConservationStatusService],
 })
 export class ConservationStatusModule {}

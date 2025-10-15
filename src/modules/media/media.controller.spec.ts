@@ -2,17 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MediaController } from './media.controller';
 
 describe('MediaController', () => {
-  let controller: MediaController;
+    let controller: MediaController;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [MediaController],
-    }).compile();
+    beforeEach(async () => {
+        const module: TestingModule = await Test.createTestingModule({
+            controllers: [MediaController],
+        }).compile();
 
-    controller = module.get<MediaController>(MediaController);
-  });
+        controller = module.get<MediaController>(MediaController);
+    });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+    it('should be defined', () => {
+        expect(controller).toBeDefined();
+    });
 });

@@ -3,7 +3,7 @@ import { UserRolesController } from './user-roles.controller';
 import { UserRolesService } from './user-roles.service';
 
 @Module({
-  controllers: [UserRolesController],
-  providers: [UserRolesService]
+    controllers: [UserRolesController],
+    providers: [UserRolesService],
 })
 export class UserRolesModule {}

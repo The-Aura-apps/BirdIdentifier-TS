@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { OpenAI } from "openai";
-import { BirdInfo } from "../types";
+import { Injectable, Logger } from '@nestjs/common';
+import { OpenAI } from 'openai';
+import { BirdInfo } from '../types';
 
 @Injectable()
 export class BirdInfoWrapper {
@@ -8,21 +8,14 @@ export class BirdInfoWrapper {
     private client: OpenAI;
     private readonly REQUEST_TIMEOUT = 30000; // 30 seconds
 
-    //$$
-    // Simple in-memory cache for MVP (consider Redis for production)
-    // private cache = new Map<string, { data: BirdInfo; timestamp: number }>();
-    //private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-
     constructor() {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {
-            this.logger.error(
-                "OPENAI_API_KEY not set in environment variables",
-            );
-            throw new Error("OPENAI_API_KEY is required");
+            this.logger.error('OPENAI_API_KEY not set in environment variables');
+            throw new Error('OPENAI_API_KEY is required');
         }
         this.client = new OpenAI({ apiKey, timeout: this.REQUEST_TIMEOUT });
-        this.logger.log("OpenAI client initialized for bird info fetching");
+        this.logger.log('OpenAI client initialized for bird info fetching');
     }
 
     /**
@@ -31,18 +24,12 @@ export class BirdInfoWrapper {
      * @returns BirdInfo object
      */
     async fetchInfo(scientificName: string): Promise<BirdInfo> {
-        if (!scientificName || scientificName.trim() === "") {
-            throw new Error("Scientific name is required");
+        if (!scientificName || scientificName.trim() === '') {
+            throw new Error('Scientific name is required');
         }
 
         const normalizedName = scientificName.trim();
 
-        // // Check cache first
-        // const cached = this.getCached(normalizedName);
-        // if (cached) {
-        //   this.logger.log(`Cache hit for: ${normalizedName}`);
-        //   return cached;
-        // }
 
         this.logger.log(`Fetching bird info from AI: ${normalizedName}`);
 
@@ -90,40 +77,30 @@ Important:
 
         try {
             const response = await this.client.chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: [{ role: "user", content: prompt }],
-                response_format: { type: "json_object" },
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                response_format: { type: 'json_object' },
             });
 
             const content = response.choices?.[0]?.message?.content;
             if (!content) {
                 Logger.warn(`No content returned for bird: ${scientificName}`);
-                throw new Error("Empty response from OpenAI API");
+                throw new Error('Empty response from OpenAI API');
             }
 
             // Parse JSON
             let data: BirdInfo;
             try {
                 data = JSON.parse(content);
-                this.logger.log(
-                    `Received bird info: ${JSON.stringify(data, null, 2)}`,
-                );
+                this.logger.log(`Received bird info: ${JSON.stringify(data, null, 2)}`);
             } catch (parseErr) {
-                Logger.error(
-                    `JSON parsing failed for bird: ${normalizedName}`,
-                    parseErr,
-                );
-                throw new Error("Invalid JSON from OpenAI API");
+                Logger.error(`JSON parsing failed for bird: ${normalizedName}`, parseErr);
+                throw new Error('Invalid JSON from OpenAI API');
             }
 
             // Validate required fields
             this.validateBirdInfo(data, normalizedName);
 
-            // // Cache the result
-            // this.cache.set(normalizedName, {
-            //     data,
-            //     timestamp: Date.now(),
-            // });
             this.logger.log(`Bird info fetched and cached: ${normalizedName}`);
             return data;
         } catch (err) {
@@ -145,65 +122,48 @@ Important:
 
         if (!data.scientificName) {
             data.scientificName = scientificName; // Fallback
-            warnings.push("scientificName missing, using input");
+            warnings.push('scientificName missing, using input');
         }
         if (!data.commonName) {
-            data.commonName = "Unknown";
-            warnings.push("commonName missing");
+            data.commonName = 'Unknown';
+            warnings.push('commonName missing');
         }
         // Ensure nested objects exist
-        if (!data.photos) data.photos = { male: "", female: "" };
+        if (!data.photos) data.photos = { male: '', female: '' };
         if (!data.features)
             data.features = {
-                sizeAndShape: "",
-                colorPattern: "",
-                billShape: "",
-                markings: "",
+                sizeAndShape: '',
+                colorPattern: '',
+                billShape: '',
+                markings: '',
             };
-        if (!data.ecology)
-            data.ecology = { habitat: "", behavior: "", diet: "" };
+        if (!data.ecology) data.ecology = { habitat: '', behavior: '', diet: '' };
         if (!data.geography)
             data.geography = {
-                rangeMap: "",
-                yearRound: "",
-                breeding: "",
-                wintering: "",
-                migration: "",
-                seasonality: "",
+                rangeMap: '',
+                yearRound: '',
+                breeding: '',
+                wintering: '',
+                migration: '',
+                seasonality: '',
             };
         if (!data.education)
             data.education = {
-                conservation: "",
-                nesting: "",
-                eggs: "",
+                conservation: '',
+                nesting: '',
+                eggs: '',
                 coolFacts: [],
             };
 
         // Ensure coolFacts is an array
         if (!Array.isArray(data.education.coolFacts)) {
             data.education.coolFacts = [];
-            warnings.push("coolFacts not an array");
+            warnings.push('coolFacts not an array');
         }
 
         if (warnings.length > 0) {
-            this.logger.warn(
-                `Incomplete bird info for ${scientificName}: ${warnings.join(", ")}`,
-            );
+            this.logger.warn(`Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`);
         }
     }
 
-    /**
-     * Get cached bird info if not expired
-     * @param scientificName Name to check in cache
-     * @returns Cached BirdInfo or null
-     */
-    // private getCached(scientificName: string): BirdInfo | null {
-    //     const cached = this.cache.get(scientificName);
-    //     if (!cached) return null;
-    //     if (Date.now() - cached.timestamp > this.CACHE_TTL) {
-    //         this.cache.delete(scientificName);
-    //         return null;
-    //     }
-    //     return cached.data;
-    // }
 }

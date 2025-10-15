@@ -1,19 +1,19 @@
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { Observation } from "../../modules/observation/observations/entities/observation.entity";
-import { ObservationsModule } from "src/modules/observation/observations/observations.module";
-import { Bird } from "src/modules/bird/birds/entities/bird.entity";
-import { Upload } from "src/modules/uploads/entities/upload.entity";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { Bird } from 'src/modules/bird/birds/entities/bird.entity';
+import { Observation } from 'src/modules/observation/observations/entities/observation.entity';
+import { Upload } from 'src/modules/uploads/entities/upload.entity';
 @Module({
     imports: [
         TypeOrmModule.forRoot({
-            type: "postgres",
-            host: "localhost",
+            type: 'postgres',
+            host: 'localhost',
             port: 5432,
-            username: "postgres",
-            password: "youshellpass",
-            database: "bird-identifier",
-            entities: [Observation, Bird, Upload],
+            username: 'postgres',
+            password: 'youshellpass',
+            database: 'bird-identifier',
+            entities: [Observation, Bird, Upload, , , , , ,],
             synchronize: true, // Mack True When Released
         }),
     ],
