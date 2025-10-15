@@ -28,20 +28,20 @@ export class BirdsService {
      */
     async create(createBirdDto: CreateBirdDto): Promise<Bird> {
         // Validate input
-        if (!createBirdDto.scientificName) {
-            throw new BadRequestException('Scientific name is required');
-        }
+        // if (!createBirdDto.scientificName) { for DTO
+        //     throw new BadRequestException('Scientific name is required');
+        // }
 
-        // Check for duplicate
-        const existing = await this.birdRepo.findOne({
-            where: { scientificName: createBirdDto.scientificName },
-        });
+        // // Check for duplicate
+        // const existing = await this.birdRepo.findOne({
+        //     where: { scientificName: createBirdDto.scientificName },
+        // });
 
-        if (existing) {
-            throw new ConflictException(
-                `Bird with scintific name "${createBirdDto.scientificName}" alredy exists`,
-            );
-        }
+        // if (existing) {
+        //     throw new ConflictException(
+        //         `Bird with scintific name "${createBirdDto.scientificName}" alredy exists`,
+        //     );
+        // }
 
         try {
             const bird = this.birdRepo.create(createBirdDto);
@@ -135,20 +135,20 @@ export class BirdsService {
         const bird = await this.findOne(id);
 
         // Check for scientific name conflict if updating it
-        if (
-            updateBirdDto?.scientificName &&
-            updateBirdDto.scientificName !== bird.scientificName
-        ) {
-            const existing = await this.birdRepo.findOne({
-                where: { scientificName: updateBirdDto.scientificName.trim() },
-            });
+        // if (for DTO
+        //     updateBirdDto?.scientificName &&
+        //     updateBirdDto.scientificName !== bird.scientificName
+        // ) {
+        //     const existing = await this.birdRepo.findOne({
+        //         where: { scientificName: updateBirdDto.scientificName.trim() },
+        //     });
 
-            if (existing) {
-                throw new ConflictException(
-                    `Bird with scientific name "${updateBirdDto.scientificName}" already exists`,
-                );
-            }
-        }
+        //     if (existing) {
+        //         throw new ConflictException(
+        //             `Bird with scientific name "${updateBirdDto.scientificName}" already exists`,
+        //         );
+        //     }
+        // }
 
         // Prevent manual updates to certain fields
         delete updateBirdDto['id'];
@@ -181,79 +181,37 @@ export class BirdsService {
      * Find or create bird by scientific name (used by AI processing)
      */
     async findOrCreate(scientificName: string): Promise<Bird> {
-        if (!scientificName || scientificName.trim().length === 0) {
+        if (!scientificName?.trim()) {
             throw new BadRequestException('Scientific name is required');
         }
 
-        // Normalize scientific name (trim, lowercase for comparison)
         const normalizedName = scientificName.trim();
 
-       let bird = await this.birdRepo.findOne({
-           where: { scientificName: normalizedName },
-           relations: [
-               'media',
-               'commonNames',
-               'conservationStatus',
-               'habitats',
-               'taxonomy',
-               'distributions',
-               'birdFoods',
-           ],
-       });
+        // Try to find existing bird
+        let bird = await this.birdRepo.findOne({
+            where: { scientificName: normalizedName },
+            relations: [
+                'media',
+                'commonNames',
+                'conservationStatus',
+                'habitats',
+                'taxonomy',
+                'distributions',
+                'birdFoods',
+            ],
+        });
 
-        let birdInfo: BirdInfo | null = null;
-        try {
-            birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
-            this.logger.log(
-                `Fetched bird info: ${JSON.stringify(birdInfo, null, 2)}`,
-            );
-        } catch (err) {
-            this.logger.error(
-                `Failed to fetch bird info for ${normalizedName}: ${err.message}`,
-            );
+        if (bird) {
+            return bird;
         }
 
-        if (!bird) {
-            this.logger.log(`Creating new bird record: ${normalizedName}`);
-            bird = this.birdRepo.create({
-                scientificName: normalizedName,
+        // Create minimal bird if not found
+        this.logger.log(`Creating new bird record: ${normalizedName}`);
+        bird = this.birdRepo.create({
+            scientificName: normalizedName,
+        });
 
-            });
-
-            bird = await this.birdRepo.save(bird);
-            this.logger.log(
-                `Bird created: ${bird.id} - ${bird.scientificName}`,
-            );
-        }
-        // Check if bird data is incomplete (missing any key fields)
-        if (
-            !bird.commonName ||
-            !bird.photos ||
-            !bird.features ||
-            !bird.ecology ||
-            !bird.geography ||
-            !bird.education
-        ) {
-            this.logger.log(`Enriching bird data for: ${normalizedName}`);
-            try {
-                const birdInfo: BirdInfo =
-                    await this.birdInfoWrapper.fetchInfo(normalizedName);
-                this.logger.log(
-                    `Fetched bird info: ${JSON.stringify(birdInfo, null, 2)}`,
-                );
-                bird = await this.update(bird.id, {});
-            } catch (err) {
-                this.logger.error(
-                    `Failed to enrich bird data for ${normalizedName}: ${err.message}`,
-                );
-                // Continue with existing bird data to avoid blocking
-            }
-        } else {
-            this.logger.log(
-                `Bird data already complete for: ${normalizedName}`,
-            );
-        }
-        return bird;
+        return await this.birdRepo.save(bird);
     }
 
     /**
