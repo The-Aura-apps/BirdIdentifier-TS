@@ -24,14 +24,20 @@ export class AiService {
     async process(fileData: Buffer, type: string): Promise<BirdAiResponse> {
         try {
             // Normalize type to remove extra quotes or unexpected characters
-            const normalizedType = type.replace(/['"]+/g, '').trim().toLowerCase();
-            this.logger.log(`Raw type: ${type}, Normalized type: ${normalizedType}`);
+            const normalizedType = type
+                .replace(/['"]+/g, '')
+                .trim()
+                .toLowerCase();
+            this.logger.log(
+                `Raw type: ${type}, Normalized type: ${normalizedType}`,
+            );
 
             // Validate file type
             if (!['image', 'audio'].includes(normalizedType)) {
                 this.logger.error(`Invalid file type: ${normalizedType}`);
                 return {
                     status: 'failed',
+                    confidence: null,
                     error: `Invalid file type: ${normalizedType}`,
                 };
             }
@@ -41,15 +47,22 @@ export class AiService {
                 this.logger.warn(`File too large: ${fileData.length} bytes`);
                 return {
                     status: 'failed',
+                    confidence: null,
                     error: 'File size exceeds 10MB limit',
                 };
             }
 
             if (fileData.length === 0) {
-                return { status: 'failed', error: 'Empty file provided' };
+                return {
+                    status: 'failed',
+                    confidence: null,
+                    error: 'Empty file provided',
+                };
             }
 
-            this.logger.log(`Processing ${normalizedType} file (${fileData.length} bytes)`);
+            this.logger.log(
+                `Processing ${normalizedType} file (${fileData.length} bytes)`,
+            );
 
             // Identify bird species using appropriate wrapper
             const identification = await (normalizedType === 'image'
@@ -57,14 +70,22 @@ export class AiService {
                 : this.audioAi.identify(fileData));
 
             if (!identification) {
-                return { status: 'failed', error: 'AI returned no result' };
+                return {
+                    status: 'failed',
+                    confidence: null,
+                    error: 'AI returned no result',
+                };
             }
 
             // Validate scientific name
-            if (!identification.scientificName || identification.scientificName.trim() === '') {
+            if (
+                !identification.scientificName ||
+                identification.scientificName.trim() === ''
+            ) {
                 this.logger.warn('AI returned empty scientific name');
                 return {
                     status: 'failed',
+                    confidence: null,
                     error: 'No bird species identified',
                 };
             }
@@ -79,30 +100,37 @@ export class AiService {
                 return {
                     status: 'uncertain',
                     confidence,
-                    result: { scientificName: identification.scientificName },
+                    result: {
+                        scientificName: identification.scientificName,
+                        /* confidence: identification.confidence, */
+                    },
                 };
             }
 
             // Fetch detailed bird information
             let info: BirdInfo;
             try {
-                info = await this.birdInfo.fetchInfo(identification.scientificName);
+                info = await this.birdInfo.fetchInfo(
+                    identification.scientificName,
+                );
             } catch (err) {
                 this.logger.warn(
                     `Failed to fetch bird info for ${identification.scientificName}: ${err.message}`,
                 );
+
                 // Fallback: identified but with minimal info
                 return {
                     status: 'identified',
                     confidence,
                     result: {
                         scientificName: identification.scientificName,
-                        //    commonName: 'Unknown',
                     } as BirdInfo,
                 };
             }
 
-            this.logger.log(`Successfully identified: ${info.scientificName} (${confidence})`);
+            this.logger.log(
+                `Successfully identified: ${info.scientificName} (${confidence})`,
+            );
 
             return {
                 status: 'identified',
@@ -110,9 +138,13 @@ export class AiService {
                 result: info,
             };
         } catch (err) {
-            this.logger.error(`AI processing failed: ${err.message}`, err.stack);
+            this.logger.error(
+                `AI processing failed: ${err.message}`,
+                err.stack,
+            );
             return {
                 status: 'failed',
+                confidence: null,
                 error: err.message || 'Unknown AI processing error',
             };
         }

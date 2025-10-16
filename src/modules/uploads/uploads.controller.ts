@@ -38,8 +38,8 @@ export class UploadsController {
     @Get(':id')
     async downloadFile(@Param('id') id: number, @Res() res: Response) {
         const file = await this.uploadsService.getFile(id);
-        res.setHeader('Content-Type', file.mime_type);
-        res.setHeader('Content-Disposition', `attachment; filename=${file.file_name}`);
-        res.send(file.file_data);
+        res.setHeader('Content-Type', file.mimeType);
+        res.setHeader('Content-Disposition', `attachment; filename=${file.fileName}`);
+        res.send(file.fileData);
     }
 }

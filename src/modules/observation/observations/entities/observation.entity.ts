@@ -10,7 +10,7 @@ import {
     PrimaryGeneratedColumn,
     Index,
 } from 'typeorm';
-import type { BirdAiResponse } from 'src/modules/ai/types';
+import { BirdAiResponse } from 'src/modules/ai/types';
 
 export enum ObservationStatus {
     PENDING = 'pending',
@@ -21,16 +21,13 @@ export enum ObservationStatus {
 
 @Index(['deviceId', 'createdAt']) // For device history queries
 @Index(['status']) // For filtering by status
-@Entity()
+@Entity('observations')
 export class Observation {
     @PrimaryGeneratedColumn('uuid')
     id: string; // UUID
 
     @Column()
     deviceId: string;
-
-    // @Column()
-    // fileUrl: string;
 
     @Column({ type: 'varchar', length: 10 })
     type: 'image' | 'audio';
@@ -54,7 +51,7 @@ export class Observation {
 
     // Foreign key for Bird (nullable because might not be identified)
     @Column({ name: 'bird_id', nullable: true })
-    birdId: number;
+    birdId: number | null;
 
     @ManyToOne(() => Bird, (bird) => bird.observations, {
         nullable: true,
@@ -85,6 +82,7 @@ export class Observation {
 
     markAsProcessing(): void {
         this.status = ObservationStatus.PROCESSING;
+        this.updatedAt = new Date();
     }
 
     markAsCompleted(bird: Bird, aiResponse: BirdAiResponse): void {
@@ -93,6 +91,8 @@ export class Observation {
         this.birdId = bird.id;
         this.aiResult = aiResponse;
         this.confidence = aiResponse.confidence;
+        this.errorMessage = null;
+        this.updatedAt = new Date();
     }
 
     markAsFailed(error: string, aiResponse?: BirdAiResponse): void {
@@ -100,7 +100,8 @@ export class Observation {
         this.errorMessage = error;
         this.aiResult = aiResponse || null;
         this.bird = null;
-        this.birdId = Number(null);
-        this.confidence = null;
+        this.birdId = null;
+        this.confidence = aiResponse?.confidence ?? null;
+        this.updatedAt = new Date();
     }
 }

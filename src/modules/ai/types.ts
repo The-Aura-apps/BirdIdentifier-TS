@@ -50,8 +50,13 @@ export interface BirdInfo {
  */
 export type BirdAiResponse =
     | { status: 'identified'; confidence: number; result: BirdInfo }
-    | { status: 'uncertain'; confidence?: number; result?: Partial<BirdInfo> }
-    | { status: 'failed'; error?: string; result?: Partial<BirdInfo> };
+    | { status: 'uncertain'; confidence: number; result?: Partial<BirdInfo> } // ?:
+    | {
+          status: 'failed';
+          confidence: number | null;
+          error?: string;
+          result?: Partial<BirdInfo>;
+      };
 
 // Type guards remain the same...
 export function isIdentified(

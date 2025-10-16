@@ -30,7 +30,7 @@ import { Observation } from 'src/modules/observation/observations/entities/obser
 export class Bird {
     @PrimaryGeneratedColumn()
     @ApiProperty()
-    id: number;
+    id: number | null;
 
     @Column({ type: 'varchar', length: 255, unique: true })
     @ApiProperty()
