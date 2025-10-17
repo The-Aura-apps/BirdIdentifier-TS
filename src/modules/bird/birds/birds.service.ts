@@ -294,6 +294,73 @@ export class BirdsService {
     }
 
     /**
+     * Search birds by common name or scientific name
+     */
+    async search(
+        query: string,
+        options: { page?: number; limit?: number } = {},
+    ): Promise<{ data: Bird[]; total: number }> {
+        const { page = 1, limit = 20 } = options;
+
+        const [data, total] = await this.birdRepo
+            .createQueryBuilder('bird')
+            .leftJoinAndSelect('bird.commonNames', 'commonName')
+            .leftJoinAndSelect('bird.media', 'media')
+            .leftJoinAndSelect('bird.conservationStatus', 'conservationStatus')
+            .where('bird.scientificName ILIKE :query', { query: `%${query}%` })
+            .orWhere('commonName.name ILIKE :query', { query: `%${query}%` })
+            .skip((page - 1) * limit)
+            .take(limit)
+            .orderBy('bird.scientificName', 'ASC')
+            .getManyAndCount();
+
+        return { data, total };
+    }
+
+    /**
+     * Get birds by habitat
+     */
+    async findByHabitat(
+        habitatId: number,
+        options: { page?: number; limit?: number } = {},
+    ): Promise<{ data: Bird[]; total: number }> {
+        const { page = 1, limit = 20 } = options;
+
+        const [data, total] = await this.birdRepo
+            .createQueryBuilder('bird')
+            .innerJoin('bird.habitats', 'habitat')
+            .leftJoinAndSelect('bird.media', 'media')
+            .leftJoinAndSelect('bird.commonNames', 'commonNames')
+            .where('habitat.id = :habitatId', { habitatId })
+            .skip((page - 1) * limit)
+            .take(limit)
+            .orderBy('bird.scientificName', 'ASC')
+            .getManyAndCount();
+
+        return { data, total };
+    }
+
+    /**
+     * Get birds by conservation status
+     */
+    async findByConservationStatus(
+        statusId: number,
+        options: { page?: number; limit?: number } = {},
+    ): Promise<{ data: Bird[]; total: number }> {
+        const { page = 1, limit = 20 } = options;
+
+        const [data, total] = await this.birdRepo.findAndCount({
+            where: { conservationStatusId: statusId },
+            relations: ['media', 'commonNames', 'conservationStatus'],
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { scientificName: 'ASC' },
+        });
+
+        return { data, total };
+    }
+
+    /**
      * Enrich bird data with additional information
      */
     private async enrichBirdData(
@@ -507,7 +574,6 @@ export class BirdsService {
         return updated;
     }
 
-
     /**
      * Habitat relationship methods
      */
@@ -584,7 +650,6 @@ export class BirdsService {
         return updated;
     }
 
-
     /**
      * Common names methods
      */
@@ -626,7 +691,6 @@ export class BirdsService {
         return saved;
     }
 
-
     /**
      * Media methods
      */
@@ -651,7 +715,6 @@ export class BirdsService {
         };
     }
 
-
     /**
      * Taxonomy methods
      */
@@ -675,7 +738,6 @@ export class BirdsService {
             taxonomy: bird.taxonomy,
         };
     }
-
 
     /**
      * Distribution methods

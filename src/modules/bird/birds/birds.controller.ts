@@ -72,6 +72,45 @@ export class BirdsController {
         return this.birdService.remove(id);
     }
 
+    @Get('search/:query')
+    @HttpCode(HttpStatus.OK)
+    search(
+        @Param('query') query: string,
+        @Query('page') page = '1',
+        @Query('limit') limit = '20',
+    ): Promise<{ data: Bird[]; total: number }> {
+        return this.birdService.search(query, {
+            page: Number(page),
+            limit: Number(limit),
+        });
+    }
+
+    @Get('habitat/:habitatId')
+    @HttpCode(HttpStatus.OK)
+    findByHabitat(
+        @Param('habitatId') habitatId: string,
+        @Query('page') page = '1',
+        @Query('limit') limit = '20',
+    ): Promise<{ data: Bird[]; total: number }> {
+        return this.birdService.findByHabitat(+habitatId, {
+            page: Number(page),
+            limit: Number(limit),
+        });
+    }
+
+    @Get('conservation-status/:statusId')
+    @HttpCode(HttpStatus.OK)
+    findByConservationStatus(
+        @Param('statusId') statusId: string,
+        @Query('page') page = '1',
+        @Query('limit') limit = '20',
+    ): Promise<{ data: Bird[]; total: number }> {
+        return this.birdService.findByConservationStatus(+statusId, {
+            page: Number(page),
+            limit: Number(limit),
+        });
+    }
+
     //observation content
     @Get(':id/observation-count')
     getObservationCount(@Param('id') id: string): Promise<number> {
@@ -119,5 +158,38 @@ export class BirdsController {
         @Param('foodId') foodId: string,
     ) {
         return this.birdService.toggleFoodActive(+birdId, +foodId);
+    }
+
+    // Habitat
+    @Get(':id/habitats')
+    getHabitats(@Param('id') id: string) {
+        return this.birdService.getHabitats(+id);
+    }
+
+    @Post(':id/habitats/:habitatId')
+    @HttpCode(HttpStatus.CREATED)
+    addHabitat(@Param('id') id: string, @Param('habitatId') habitatId: string) {
+        return this.birdService.addHabitat(+id, +habitatId);
+    }
+
+    @Delete(':id/habitats/:habitatId')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    removeHabitat(
+        @Param('id') id: string,
+        @Param('habitatId') habitatId: string,
+    ) {
+        return this.birdService.removeHabitat(+id, +habitatId);
+    }
+
+    // Common name
+    @Get(':id/common-names')
+    getCommonNames(@Param('id') id: string) {
+        return this.birdService.getCommonNames(+id);
+    }
+
+    @Post(':id/common-names')
+    @HttpCode(HttpStatus.CREATED)
+    addCommonName(@Param('id') id: string, @Body() createCommonNameDto: any) {
+        return this.birdService.addCommonName(+id, createCommonNameDto);
     }
 }
