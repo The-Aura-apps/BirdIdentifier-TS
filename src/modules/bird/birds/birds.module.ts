@@ -1,14 +1,22 @@
-import { Module } from '@nestjs/common';
-import { BirdsController } from './birds.controller';
-import { Bird } from './entities/bird.entity';
-import { BirdsService } from './birds.service';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
+import { BirdsController } from './birds.controller';
+import { BirdsService } from './birds.service';
+import { Bird } from './entities/bird.entity';
+import { BirdFood } from '../bird-foods/entities/bird-food.entity';
+import { Habitat } from '../habitats/entities/habitat.entity';
+import { CommonName } from '../common-names/entities/common-name.entity';
+import { AiModule } from 'src/modules/ai/ai.module';
+import { ObservationsModule } from 'src/modules/observation/observations/observations.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Bird])],
+    imports: [
+        TypeOrmModule.forFeature([Bird, BirdFood, Habitat, CommonName]),
+        forwardRef(() => ObservationsModule),
+        AiModule,
+    ],
     controllers: [BirdsController],
-    providers: [BirdsService, BirdInfoWrapper],
-    exports: [BirdsService], // export so AI/Uploads modules can use it
+    providers: [BirdsService],
+    exports: [BirdsService],
 })
 export class BirdsModule {}

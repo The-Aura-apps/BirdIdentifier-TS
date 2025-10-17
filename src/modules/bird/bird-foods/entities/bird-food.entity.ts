@@ -22,19 +22,6 @@ export class BirdFood {
     @JoinColumn({ name: 'food_id' })
     food: Food;
 
-    @Column({
-        type: 'enum',
-        enum: ['year-round', 'breeding', 'winter', 'migration'],
-        default: 'year-round',
-    })
-    season: string;
-
-    @Column({ type: 'smallint', nullable: true })
-    percentageOfDiet: number; // 0-100
-
-    @Column({ type: 'text', nullable: true })
-    notes: string;
-
     @Column({ type: 'boolean', default: false })
-    isPrimary: boolean; // Main food source
+    isActive: boolean;
 }

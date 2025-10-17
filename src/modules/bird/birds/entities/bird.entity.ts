@@ -23,6 +23,7 @@ import { BirdDistribution } from '../../bird-distribution/entities/bird-distribu
 import { Habitat } from '../../habitats/entities/habitat.entity';
 import { BirdInfo } from 'src/modules/ai/types';
 import { Observation } from 'src/modules/observation/observations/entities/observation.entity';
+import { Food } from '../../foods/entities/food.entity';
 
 @Entity('birds')
 @Index(['scientificName'], { unique: true })
@@ -125,7 +126,13 @@ export class Bird {
     @Exclude()
     updatedAt: Date;
 
-    // Virtual field for mobile API
+    // Helper method to get active foods
+    getActiveFoods(): Food[] {
+        if (!this.birdFoods) return [];
+        return this.birdFoods.filter((bf) => bf.isActive).map((bf) => bf.food);
+    }
+
+    // Virtual field for mobile API  ??
     @Expose()
     get primaryImage(): string | null {
         const photo = this.media?.find((m) => m.mediaType === 'photo');

@@ -1,4 +1,11 @@
-import { Entity, Index, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+    Entity,
+    Index,
+    PrimaryGeneratedColumn,
+    Column,
+    ManyToOne,
+    JoinColumn,
+} from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
 
 @Entity('common_names')
@@ -10,10 +17,6 @@ export class CommonName {
     @Column({ name: 'bird_id' })
     birdId: number;
 
-    @ManyToOne(() => Bird, (bird) => bird.commonNames, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'bird_id' })
-    bird: Bird;
-
     @Column({ type: 'varchar', length: 255 })
     name: string;
 
@@ -22,4 +25,8 @@ export class CommonName {
 
     @Column({ type: 'varchar', length: 10, nullable: true })
     languageCode: string; // en, es, fr, etc.
+
+    @ManyToOne(() => Bird, (bird) => bird.commonNames, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'bird_id' })
+    bird: Bird;
 }
