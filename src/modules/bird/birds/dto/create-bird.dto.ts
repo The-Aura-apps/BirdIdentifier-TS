@@ -1,55 +1,56 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
+import {
+    IsString,
+    IsNotEmpty,
+    IsOptional,
+    IsObject,
+    IsArray,
+} from 'class-validator';
+import { CreateCommonNameDto } from '../../common-names/dto/create-common-name.dto';
 
 export class CreateBirdDto {
-    // @IsOptional()
-    // @IsString()
-    // commonName?: string;
+    @IsOptional()
+    @IsArray()
+    commonNames?: CreateCommonNameDto[];
 
-    // @IsNotEmpty()
-    // @IsString()
-    // scientificName: string;
+    @IsNotEmpty()
+    @IsString()
+    scientificName: string;
 
-    // @IsOptional()
-    // @IsObject()
-    // photos?: {
-    //     male?: string;
-    //     female?: string;
-    // };
+    @IsOptional()
+    @IsString()
+    description?: string;
 
-    // @IsOptional()
-    // @IsObject()
-    // features?: {
-    //     sizeAndShape?: string;
-    //     colorPattern?: string;
-    //     billShape?: string;
-    //     markings?: string;
-    // };
+    @IsOptional()
+    @IsString()
+    behavior?: string;
 
-    // @IsOptional()
-    // @IsObject()
-    // ecology?: {
-    //     habitat?: string;
-    //     behavior?: string;
-    //     diet?: string;
-    // };
+    @IsOptional()
+    @IsString()
+    nestingHabits?: string;
 
-    // @IsOptional()
-    // @IsObject()
-    // geography?: {
-    //     rangeMap?: string;
-    //     yearRound?: string;
-    //     breeding?: string;
-    //     wintering?: string;
-    //     migration?: string;
-    //     seasonality?: string;
-    // };
+    @IsOptional()
+    @IsString()
+    feedingHabits?: string;
 
-    // @IsOptional()
-    // @IsObject()
-    // education?: {
-    //     conservation?: string;
-    //     nesting?: string;
-    //     eggs?: string;
-    //     coolFacts?: string[];
-    // };
+    @IsOptional()
+    @IsString()
+    eggsDescription?: string;
+
+    @IsOptional()
+    @IsString()
+    coolFacts?: string;
+
+    @IsOptional()
+    @IsObject()
+    size?: {
+        lengthCm: { min: number; max: number };
+        wingspanCm: { min: number; max: number };
+        weightGrams: { min: number; max: number };
+    };
+
+    @IsOptional()
+    lifeExpectancyYears?: number;
+
+    @IsOptional()
+    conservationStatusId?: number;
 }

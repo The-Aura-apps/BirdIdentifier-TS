@@ -23,14 +23,14 @@ import { BirdDistribution } from '../../bird-distribution/entities/bird-distribu
 import { Habitat } from '../../habitats/entities/habitat.entity';
 import { BirdInfo } from 'src/modules/ai/types';
 import { Observation } from 'src/modules/observation/observations/entities/observation.entity';
+import { Food } from '../../foods/entities/food.entity';
 
 @Entity('birds')
 @Index(['scientificName'], { unique: true })
-@Index(['commonNames']) // For search
 export class Bird {
     @PrimaryGeneratedColumn()
     @ApiProperty()
-    id: number | null;
+    id: number;
 
     @Column({ type: 'varchar', length: 255, unique: true })
     @ApiProperty()
@@ -50,7 +50,7 @@ export class Bird {
 
     @Column({ type: 'text', nullable: true })
     @ApiProperty()
-    feedingHabits: string; // General feeding behavior description
+    feedingHabits: string;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
     @ApiProperty()
@@ -60,7 +60,6 @@ export class Bird {
     @ApiProperty()
     coolFacts: string;
 
-    // Store as JSON for flexibility on mobile
     @Column({ type: 'jsonb', nullable: true })
     @ApiProperty()
     size: {
@@ -104,7 +103,7 @@ export class Bird {
     distributions: BirdDistribution[];
 
     @OneToMany(() => Taxonomy, (taxonomy) => taxonomy.bird, { cascade: true })
-    taxonomy: Taxonomy;
+    taxonomy: Taxonomy[];
 
     @ManyToMany(() => Habitat, (habitat) => habitat.birds)
     @JoinTable({
@@ -114,16 +113,25 @@ export class Bird {
     })
     habitats: Habitat[];
 
-    @OneToMany(() => BirdHabitat, (birdHabitat) => birdHabitat.habitat)
+    @OneToMany(() => BirdHabitat, (birdHabitat) => birdHabitat.bird)
     birdHabitats: BirdHabitat[];
 
     @CreateDateColumn()
-    @Exclude() // Don't send to mobile by default
+    @Exclude()
     createdAt: Date;
 
     @UpdateDateColumn()
     @Exclude()
     updatedAt: Date;
+
+    // Helper method to get active foods
+    getActiveFoods(): Food[] {
+        if (!this.birdFoods) return [];
+        return this.birdFoods
+            .filter((bf) => bf.isActive)
+            .map((bf) => bf.food)
+            .filter((food): food is Food => food !== undefined);
+    }
 
     // Virtual field for mobile API
     @Expose()
@@ -131,6 +139,12 @@ export class Bird {
         const photo = this.media?.find((m) => m.mediaType === 'photo');
         return photo ? photo.getThumbnailUrl() : null;
     }
+
+    // Helper to get primary common name
+    get primaryCommonName(): string {
+        return this.commonNames?.[0]?.name || 'Unknown';
+    }
+
     toBirdInfo(): BirdInfo {
         return {
             scientificName: this.scientificName,
@@ -142,29 +156,13 @@ export class Bird {
             coolFacts: this.coolFacts ? [this.coolFacts] : [],
             size: this.size,
             lifeExpectancyYears: this.lifeExpectancyYears,
-            // Map relations to the expected structure
             conservationStatus: this.conservationStatus,
             commonNames: this.commonNames,
             media: this.media,
             habitats: this.habitats,
-            taxonomy: this.taxonomy,
+            taxonomy: this.taxonomy?.[0], // Assuming one taxonomy per bird
             distributions: this.distributions,
             birdFoods: this.birdFoods,
         };
     }
 }
-
-// async function bootstrap() {
-//     const app = await NestFactory.create(AppModule);
-
-//     const config = new DocumentBuilder()
-//         .setTitle('Bird Identifier API')
-//         .setDescription('API documentation for Bird Identifier')
-//         .setVersion('1.0')
-//         .build();
-//     const document = SwaggerModule.createDocument(app, config);
-//     SwaggerModule.setup('api', app, document);
-
-//     await app.listen(3000);
-// }
-// bootstrap();

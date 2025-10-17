@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    ManyToOne,
+    JoinColumn,
+    Column,
+} from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
 import { Habitat } from '../../habitats/entities/habitat.entity';
 
@@ -6,6 +12,12 @@ import { Habitat } from '../../habitats/entities/habitat.entity';
 export class BirdHabitat {
     @PrimaryGeneratedColumn()
     id: number;
+
+    @Column({ name: 'bird_id' })
+    birdId: number;
+
+    @Column({ name: 'habitat_id' })
+    habitatId: number;
 
     @ManyToOne(() => Bird, (bird) => bird.birdHabitats, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'bird_id' })

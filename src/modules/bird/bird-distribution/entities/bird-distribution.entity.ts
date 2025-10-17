@@ -10,12 +10,6 @@ export class BirdDistribution {
     @Column({ name: 'bird_id' })
     birdId: number;
 
-    @ManyToOne(() => Bird, (bird) => bird.distributions, {
-        onDelete: 'CASCADE',
-    })
-    @JoinColumn({ name: 'bird_id' })
-    bird: Bird;
-
     @Column({
         type: 'enum',
         enum: ['breeding', 'non-breeding', 'year-round', 'migration'],
@@ -31,4 +25,10 @@ export class BirdDistribution {
 
     @Column({ type: 'jsonb', nullable: true })
     countries: string[]; // For quick filtering
+
+    @ManyToOne(() => Bird, (bird) => bird.distributions, {
+        onDelete: 'CASCADE',
+    })
+    @JoinColumn({ name: 'bird_id' })
+    bird: Bird;
 }
