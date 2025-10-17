@@ -35,7 +35,7 @@ export class BirdsController {
         @Query('limit') limit = '20',
         @Query('sortBy') sortBy = 'createdAt',
         @Query('order') order: 'ASC' | 'DESC' = 'DESC',
-    ): Promise<Bird[]> {
+    ): Promise<{ data: Bird[]; total: number }> {
         return this.birdService.findAll({
             page: Number(page),
             limit: Number(limit),
@@ -100,11 +100,7 @@ export class BirdsController {
         @Param('foodId') foodId: string,
         @Body() updateBirdFoodDto: UpdateBirdFoodDto,
     ) {
-        return this.birdService.updateFood(
-            +birdId,
-            +foodId,
-            updateBirdFoodDto,
-        );
+        return this.birdService.updateFood(+birdId, +foodId, updateBirdFoodDto);
     }
 
     @Delete(':birdId/foods/:foodId')

@@ -19,6 +19,7 @@ import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
 import { BirdHabitat } from '../bird-habitats/entities/bird-habitat.entity';
 import { error } from 'console';
+import { isErrored } from 'form-data';
 
 @Injectable()
 export class BirdsService {
@@ -30,7 +31,7 @@ export class BirdsService {
         @InjectRepository(BirdFood)
         private readonly birdFoodRepo: Repository<BirdFood>,
         @InjectRepository(Habitat)
-        private readonly habitatRepo: Repository<BirdHabitat>,
+        private readonly habitatRepo: Repository<Habitat>,
         @InjectRepository(CommonName)
         private readonly commonNameRepo: Repository<CommonName>,
         private readonly birdInfoWrapper: BirdInfoWrapper,
@@ -186,7 +187,10 @@ export class BirdsService {
         }
 
         // Prevent manual updates to certain fields
-        const { id: _, createdAt, updatedAt, ...safeUpdates } = updateBirdDto;
+        const { ...safeUpdates } = updateBirdDto as any;
+        delete safeUpdates.id;
+        delete safeUpdates.createdAt;
+        delete safeUpdates.updatedAt;
 
         Object.assign(bird, safeUpdates);
         const updated = await this.birdRepo.save(bird);
@@ -254,7 +258,6 @@ export class BirdsService {
 
         bird = this.birdRepo.create({
             scientificName: normalizedName,
-            commonName: birdInfo?.commonNames || 'Unknown',
             description: birdInfo?.description,
             behavior: birdInfo?.behavior,
         });
@@ -265,9 +268,21 @@ export class BirdsService {
         );
 
         // Enrich bird data if possible
-        if (birdInfo) {
+        if (birdInfo && savedBird.id) {
             try {
                 await this.enrichBirdData(savedBird.id, birdInfo);
+                // Reload the bird to get enriched data
+                return (
+                    (await this.birdRepo.findOne({
+                        where: { id: savedBird.id },
+                        relations: [
+                            'commonNames',
+                            'media',
+                            'conservationStatus',
+                            'habitats',
+                        ],
+                    })) || savedBird
+                );
             } catch (err) {
                 this.logger.error(
                     `Failed to enrich bird data for ${normalizedName}: ${err.message}`,
@@ -286,10 +301,6 @@ export class BirdsService {
         birdInfo: BirdInfo,
     ): Promise<void> {
         const updateData: Partial<Bird> = {};
-
-        if (birdInfo.commonNames && birdInfo.commonNames.name !== 'Unknown') {
-            updateData.commonNames = birdInfo.commonNames;
-        }
 
         if (birdInfo.description) {
             updateData.description = birdInfo.description;
@@ -327,6 +338,30 @@ export class BirdsService {
             await this.birdRepo.update(birdId, updateData);
             this.logger.log(`Bird data enriched: ${birdId}`);
         }
+
+        if (birdInfo.commonNames && birdInfo.commonNames.length > 0) {
+            await this.handleCommonNames(birdId, birdInfo.commonNames);
+        }
+    }
+
+    /**
+     * To handle common names separately
+     */
+    private async handleCommonNames(
+        birdId: number,
+        commonNames: CommonName[],
+    ): Promise<void> {
+        // Remove existing common names
+        await this.commonNameRepo.delete({ birdId });
+
+        // Create new common names
+        for (const commonName of commonNames) {
+            const newCommonName = this.commonNameRepo.create({
+                ...commonName,
+                birdId,
+            });
+            await this.commonNameRepo.save(newCommonName);
+        }
     }
 
     /**
@@ -348,25 +383,23 @@ export class BirdsService {
     /**
      * Food relationship methods
      */
-
     async getFoods(birdId: number) {
         const bird = await this.birdRepo.findOne({
             where: { id: birdId },
-            relations: ['birdFoods', 'birdFoods.food'],
+            relations: ['birdFoods', 'birdFoods.food', 'commonNames'],
         });
 
         if (!bird) {
             throw new NotFoundException(`Bird with ID ${birdId} not found`);
         }
 
-        // Return only active food relationships
         const activeFoods = bird.birdFoods.filter((bf) => bf.isActive);
 
         return {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
-                commonName: bird.commonNames,
+                commonName: bird.primaryCommonName, // Use the helper method
             },
             foods: activeFoods.map((bf) => ({
                 relationshipId: bf.id,
@@ -375,13 +408,18 @@ export class BirdsService {
                     id: bf.food.id,
                     name: bf.food.name,
                     description: bf.food.description,
-                    imageUrl: bf.food.getImageUrl(),
+                    imageUrl: bf.food.getImageUrl?.(),
                 },
             })),
         };
     }
+
     async addFood(birdId: number, createBirdFoodDto: CreateBirdFoodDto) {
         const bird = await this.findOne(birdId.toString());
+
+        if (!bird.id) {
+            throw new BadRequestException('Invalid bird ID');
+        }
 
         // Check if relationship already exists
         const existing = await this.birdFoodRepo.findOne({
@@ -392,7 +430,6 @@ export class BirdsService {
         });
 
         if (existing) {
-            // If exists but inactive, activate it
             if (!existing.isActive) {
                 existing.isActive = true;
                 const activated = await this.birdFoodRepo.save(existing);
@@ -470,8 +507,10 @@ export class BirdsService {
         return updated;
     }
 
-    // Habitat relationship methods
 
+    /**
+     * Habitat relationship methods
+     */
     async getHabitats(birdId: number) {
         const bird = await this.birdRepo.findOne({
             where: { id: birdId },
@@ -494,6 +533,8 @@ export class BirdsService {
 
     async addHabitat(birdId: number, habitatId: number) {
         const bird = await this.findOne(birdId.toString());
+
+        // Fix: Use Habitat repository, not BirdHabitat
         const habitat = await this.habitatRepo.findOne({
             where: { id: habitatId },
         });
@@ -543,8 +584,10 @@ export class BirdsService {
         return updated;
     }
 
-    // Common names methods
 
+    /**
+     * Common names methods
+     */
     async getCommonNames(birdId: number) {
         const commonNames = await this.commonNameRepo.find({
             where: { birdId },
@@ -579,12 +622,14 @@ export class BirdsService {
         });
 
         const saved = await this.commonNameRepo.save(commonName);
-        this.logger.log(`Common name added for bird ${birdId}: ${saved.name}`);
+        this.logger.log(`Common name added for bird ${birdId}: ${commonName}`);
         return saved;
     }
 
-    // Media methods
 
+    /**
+     * Media methods
+     */
     async getMedia(birdId: number) {
         const bird = await this.birdRepo.findOne({
             where: { id: birdId },
@@ -606,8 +651,10 @@ export class BirdsService {
         };
     }
 
-    // Taxonomy methods
 
+    /**
+     * Taxonomy methods
+     */
     async getTaxonomy(birdId: number) {
         const bird = await this.birdRepo.findOne({
             where: { id: birdId },
@@ -629,8 +676,10 @@ export class BirdsService {
         };
     }
 
-    // Distribution methods
 
+    /**
+     * Distribution methods
+     */
     async getDistributions(birdId: number) {
         const bird = await this.birdRepo.findOne({
             where: { id: birdId },
