@@ -10,10 +10,10 @@ import {
     HttpStatus,
     Query,
 } from '@nestjs/common';
-import { HabitatService } from './habitat.service';
 import { Habitat } from './entities/habitat.entity';
 import { CreateHabitatDto } from './dto/create-habitat.dto';
 import { UpdateHabitatDto } from './dto/update-habitat.dto';
+import { HabitatService } from './habitats.service';
 
 @Controller('habitats')
 export class HabitatController {
