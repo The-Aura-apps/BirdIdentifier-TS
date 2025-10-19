@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import databaseConfig from './core/configs/database.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BirdsModule } from './modules/bird/birds/birds.module';
@@ -8,7 +9,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { DatabaseModule } from './core/database/database.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { NotificationModule } from './modules/observation/notification/notification.module';
-import { FoodsService } from './modules/bird/foods/foods.service';
+import { FoodService } from './modules/bird/foods/foods.service';
 import { FoodsModule } from './modules/bird/foods/foods.module';
 import { HabitatsModule } from './modules/bird/habitats/habitats.module';
 import { UsersModule } from './modules/user/users/users.module';
@@ -23,12 +24,14 @@ import { TaxonomyModule } from './modules/bird/taxonomy/taxonomy.module';
 import { ConservationStatusService } from './modules/bird/conservation-status/conservation-status.service';
 import { ConservationStatusController } from './modules/bird/conservation-status/conservation-status.controller';
 import { MediaModule } from './modules/media/media.module';
+import { IngestModule } from './modules/ingest/ingest.module';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: '.env',
+            load: [databaseConfig],
         }),
         BirdsModule,
         ObservationsModule,
@@ -49,9 +52,10 @@ import { MediaModule } from './modules/media/media.module';
         ConservationStatusModule,
         CommonNamesModule,
         MediaModule,
+        IngestModule,
         //NotificationModule,
     ],
     controllers: [AppController, ConservationStatusController],
-    providers: [AppService, FoodsService, ConservationStatusService],
+    providers: [AppService, FoodService, ConservationStatusService],
 })
 export class AppModule {}

@@ -6,19 +6,12 @@ import { Habitat } from '../bird/habitats/entities/habitat.entity';
 import { Taxonomy } from '../bird/taxonomy/entities/taxonomy.entity';
 import { Media } from '../media/entities/media.entity';
 
-/**
- * Result from AI identification (image or audio)
- */
 export interface IdentificationResult {
     scientificName: string;
-    confidence: number; // 0 to 1
+    confidence: number;
 }
 
-/**
- * Complete bird information structure that matches your entity
- */
 export interface BirdInfo {
-    // Core fields from bird entity
     scientificName: string;
     description?: string;
     behavior?: string;
@@ -33,7 +26,7 @@ export interface BirdInfo {
     };
     lifeExpectancyYears?: number;
 
-    // Relations - use actual entity types
+    // Relations
     conservationStatus?: ConservationStatus;
     commonNames?: CommonName[];
     media?: Media[];
@@ -41,24 +34,14 @@ export interface BirdInfo {
     taxonomy?: Taxonomy;
     distributions?: BirdDistribution[];
     birdFoods?: BirdFood[];
-
     primaryImage?: string;
 }
 
-/**
- * Discriminated union for AI processing responses
- */
 export type BirdAiResponse =
     | { status: 'identified'; confidence: number; result: BirdInfo }
-    | { status: 'uncertain'; confidence: number; result?: Partial<BirdInfo> } // ?:
-    | {
-          status: 'failed';
-          confidence: number | null;
-          error?: string;
-          result?: Partial<BirdInfo>;
-      };
+    | { status: 'uncertain'; confidence: number; result?: Partial<BirdInfo> }
+    | { status: 'failed'; confidence: number | null; error?: string };
 
-// Type guards remain the same...
 export function isIdentified(
     response: BirdAiResponse,
 ): response is Extract<BirdAiResponse, { status: 'identified' }> {
