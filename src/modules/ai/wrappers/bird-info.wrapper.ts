@@ -11,7 +11,9 @@ export class BirdInfoWrapper {
     constructor() {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {
-            this.logger.error('OPENAI_API_KEY not set in environment variables');
+            this.logger.error(
+                'OPENAI_API_KEY·not·set·in·environment·variables',
+            );
             throw new Error('OPENAI_API_KEY is required');
         }
         this.client = new OpenAI({ apiKey, timeout: this.REQUEST_TIMEOUT });
@@ -29,7 +31,6 @@ export class BirdInfoWrapper {
         }
 
         const normalizedName = scientificName.trim();
-
 
         this.logger.log(`Fetching bird info from AI: ${normalizedName}`);
 

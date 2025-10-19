@@ -24,6 +24,7 @@ import { TaxonomyModule } from './modules/bird/taxonomy/taxonomy.module';
 import { ConservationStatusService } from './modules/bird/conservation-status/conservation-status.service';
 import { ConservationStatusController } from './modules/bird/conservation-status/conservation-status.controller';
 import { MediaModule } from './modules/media/media.module';
+import { IngestModule } from './modules/ingest/ingest.module';
 
 @Module({
     imports: [
@@ -51,6 +52,7 @@ import { MediaModule } from './modules/media/media.module';
         ConservationStatusModule,
         CommonNamesModule,
         MediaModule,
+        IngestModule,
         //NotificationModule,
     ],
     controllers: [AppController, ConservationStatusController],
