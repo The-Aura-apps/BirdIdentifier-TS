@@ -13,7 +13,9 @@ export class ImageAiWrapper {
     constructor() {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {
-            this.logger.error('OPENAI_API_KEY not set in environment variables');
+            this.logger.error(
+                'OPENAI_API_KEY not set in environment variables',
+            );
             throw new Error('OPENAI_API_KEY is required');
         }
         this.client = new OpenAI({
@@ -67,7 +69,9 @@ export class ImageAiWrapper {
             const base64Image = file.toString('base64');
             const mimeType = this.detectMimeType(file);
 
-            this.logger.log(`Processing image (${file.length} bytes, ${mimeType})`);
+            this.logger.log(
+                `Processing image (${file.length} bytes, ${mimeType})`,
+            );
 
             const prompt = `You are an expert ornithologist. Analyze this bird image and identify the species.
 
@@ -115,7 +119,10 @@ Rules:
             try {
                 data = JSON.parse(content);
             } catch (prsErr) {
-                this.logger.error('Failed to pars OpenAI JSON response', content);
+                this.logger.error(
+                    'Failed to pars OpenAI JSON response',
+                    content,
+                );
                 throw new Error('Invalid JSON from AI');
             }
 
@@ -137,7 +144,10 @@ Rules:
 
             return data;
         } catch (err) {
-            this.logger.error(`Image AI identification failed: ${err.message}`, err.stack);
+            this.logger.error(
+                `Image AI identification failed: ${err.message}`,
+                err.stack,
+            );
             throw err; // Propagate error instead of returning default
         }
     }
@@ -150,13 +160,23 @@ Rules:
         if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
             return 'image/jpeg';
         }
-        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+        if (
+            buffer[0] === 0x89 &&
+            buffer[1] === 0x50 &&
+            buffer[2] === 0x4e &&
+            buffer[3] === 0x47
+        ) {
             return 'image/png';
         }
         if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
             return 'image/gif';
         }
-        if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) {
+        if (
+            buffer[0] === 0x52 &&
+            buffer[1] === 0x49 &&
+            buffer[2] === 0x46 &&
+            buffer[3] === 0x46
+        ) {
             return 'image/webp';
         }
 

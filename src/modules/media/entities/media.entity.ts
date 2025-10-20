@@ -1,5 +1,12 @@
 import { Bird } from 'src/modules/bird/birds/entities/bird.entity';
-import { Entity, Index, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+    Entity,
+    Index,
+    PrimaryGeneratedColumn,
+    Column,
+    ManyToOne,
+    JoinColumn,
+} from 'typeorm';
 
 @Entity('media')
 @Index(['birdId', 'mediaType'])
@@ -53,12 +60,14 @@ export class Media {
 
     // Helper methods for mobile
     getThumbnailUrl(): string {
-        const key = this.variants?.thumbnail || this.variants?.small || this.storageKey;
+        const key =
+            this.variants?.thumbnail || this.variants?.small || this.storageKey;
         return `${process.env.CDN_URL}/${key}`;
     }
 
     getDisplayUrl(): string {
-        const key = this.variants?.medium || this.variants?.large || this.storageKey;
+        const key =
+            this.variants?.medium || this.variants?.large || this.storageKey;
         return `${process.env.CDN_URL}/${key}`;
     }
 }

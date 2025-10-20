@@ -4,7 +4,7 @@ import { IngestController } from './controlers/ingest.controller';
 import { IngestService } from './ingest.service';
 
 @Module({
-  providers: [Ingest, IngestService],
-  controllers: [IngestController]
+    providers: [Ingest, IngestService],
+    controllers: [IngestController],
 })
 export class IngestModule {}

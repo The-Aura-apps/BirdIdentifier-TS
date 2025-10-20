@@ -1,4 +1,11 @@
-import { Entity, Index, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+    Entity,
+    Index,
+    PrimaryGeneratedColumn,
+    Column,
+    ManyToOne,
+    JoinColumn,
+} from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
 
 @Entity('bird_distributions')

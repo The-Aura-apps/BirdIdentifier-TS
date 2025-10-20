@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, Index, OneToMany } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    Index,
+    OneToMany,
+} from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
 
 @Entity('conservation_status')

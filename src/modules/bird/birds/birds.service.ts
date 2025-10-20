@@ -6,7 +6,7 @@ import {
     ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Bird } from './entities/bird.entity';
 import { CreateBirdDto } from './dto/create-bird.dto';
 import { UpdateBirdDto } from './dto/update-bird.dto';
@@ -17,9 +17,6 @@ import { Habitat } from '../habitats/entities/habitat.entity';
 import { CommonName } from '../common-names/entities/common-name.entity';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
-import { BirdHabitat } from '../bird-habitats/entities/bird-habitat.entity';
-import { error } from 'console';
-import { isErrored } from 'form-data';
 
 @Injectable()
 export class BirdsService {

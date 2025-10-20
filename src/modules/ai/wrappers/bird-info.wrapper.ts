@@ -93,9 +93,14 @@ Important:
             let data: BirdInfo;
             try {
                 data = JSON.parse(content);
-                this.logger.log(`Received bird info: ${JSON.stringify(data, null, 2)}`);
+                this.logger.log(
+                    `Received bird info: ${JSON.stringify(data, null, 2)}`,
+                );
             } catch (parseErr) {
-                Logger.error(`JSON parsing failed for bird: ${normalizedName}`, parseErr);
+                Logger.error(
+                    `JSON parsing failed for bird: ${normalizedName}`,
+                    parseErr,
+                );
                 throw new Error('Invalid JSON from OpenAI API');
             }
 
@@ -138,7 +143,8 @@ Important:
                 billShape: '',
                 markings: '',
             };
-        if (!data.ecology) data.ecology = { habitat: '', behavior: '', diet: '' };
+        if (!data.ecology)
+            data.ecology = { habitat: '', behavior: '', diet: '' };
         if (!data.geography)
             data.geography = {
                 rangeMap: '',
@@ -163,8 +169,9 @@ Important:
         }
 
         if (warnings.length > 0) {
-            this.logger.warn(`Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`);
+            this.logger.warn(
+                `Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`,
+            );
         }
     }
-
 }

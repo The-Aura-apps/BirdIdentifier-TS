@@ -45,19 +45,27 @@ export class AudioAiWrapper {
             const inputStream = Readable.from(buffer);
             fluentFfmpeg.ffprobe(inputStream, (err, metadata) => {
                 if (err) {
-                    this.logger.error(`Format detection failed: ${err.message}`);
-                    return reject(new Error(`Format detection failed: ${err.message}`));
+                    this.logger.error(
+                        `Format detection failed: ${err.message}`,
+                    );
+                    return reject(
+                        new Error(`Format detection failed: ${err.message}`),
+                    );
                 }
 
                 const format = metadata.format.format_name.toLowerCase();
                 const supported = ['wav', 'mp3', 'aac', 'm4a'];
                 if (!supported.includes(format)) {
                     this.logger.error(`Unsupported audio format: ${format}`);
-                    return reject(new Error(`Unsupported audio format: ${format}`));
+                    return reject(
+                        new Error(`Unsupported audio format: ${format}`),
+                    );
                 }
 
                 if (format === 'wav') {
-                    this.logger.log('Input is already WAV, no conversion needed');
+                    this.logger.log(
+                        'Input is already WAV, no conversion needed',
+                    );
                     return resolve(buffer);
                 }
 
@@ -68,12 +76,20 @@ export class AudioAiWrapper {
                     .audioCodec('pcm_s16le')
                     .format('wav')
                     .on('error', (err) => {
-                        this.logger.error(`Conversion to WAV failed: ${err.message}`);
-                        reject(new Error(`Conversion to WAV failed: ${err.message}`));
+                        this.logger.error(
+                            `Conversion to WAV failed: ${err.message}`,
+                        );
+                        reject(
+                            new Error(
+                                `Conversion to WAV failed: ${err.message}`,
+                            ),
+                        );
                     })
                     .on('end', () => {
                         const result = Buffer.concat(outputBuffers);
-                        this.logger.log(`Converted to WAV: ${result.length} bytes`);
+                        this.logger.log(
+                            `Converted to WAV: ${result.length} bytes`,
+                        );
                         resolve(result);
                     })
                     .pipe()
@@ -135,8 +151,14 @@ export class AudioAiWrapper {
         }
 
         const timestamp = Date.now();
-        const inputFile = path.join(this.TMP_DIR, `birdnet_input_${timestamp}.wav`);
-        const outputFile = path.join(this.TMP_DIR, `birdnet_output_${timestamp}.json`);
+        const inputFile = path.join(
+            this.TMP_DIR,
+            `birdnet_input_${timestamp}.wav`,
+        );
+        const outputFile = path.join(
+            this.TMP_DIR,
+            `birdnet_output_${timestamp}.json`,
+        );
 
         // Convert Windows path to POSIX-style for Docker
         const hostPath = path
@@ -149,7 +171,9 @@ export class AudioAiWrapper {
         try {
             // Write audio to tmp file
             await fs.writeFile(inputFile, wavBuffer);
-            this.logger.log(`Audio saved to ${inputFile} (${wavBuffer.length} bytes)`);
+            this.logger.log(
+                `Audio saved to ${inputFile} (${wavBuffer.length} bytes)`,
+            );
 
             // Run BirdNET Docker container
             const dockerCmd = [
@@ -184,7 +208,9 @@ export class AudioAiWrapper {
             try {
                 detections = JSON.parse(raw);
             } catch (err) {
-                this.logger.error(`Failed to parse BirdNET output: ${err.message}`);
+                this.logger.error(
+                    `Failed to parse BirdNET output: ${err.message}`,
+                );
                 throw new Error('Invalid JSON from BirdNET');
             }
 
@@ -196,7 +222,10 @@ export class AudioAiWrapper {
 
             // Get best detection (highest confidence)
             const best = detections
-                .filter((d) => d.scientific_name && typeof d.confidence === 'number')
+                .filter(
+                    (d) =>
+                        d.scientific_name && typeof d.confidence === 'number',
+                )
                 .sort((a, b) => b.confidence - a.confidence)[0];
 
             if (!best) {
@@ -213,7 +242,10 @@ export class AudioAiWrapper {
                 confidence: Number(best.confidence) || 0,
             };
         } catch (error) {
-            this.logger.error(`BirdNET analysis failed: ${error.message}`, error.stack);
+            this.logger.error(
+                `BirdNET analysis failed: ${error.message}`,
+                error.stack,
+            );
             throw error;
         } finally {
             // Always clean up temp files
@@ -226,7 +258,10 @@ export class AudioAiWrapper {
      * @param dockerCmd Docker command array
      * @param timeout Timeout in ms
      */
-    private runDockerWithTimeout(dockerCmd: string[], timeout: number): Promise<void> {
+    private runDockerWithTimeout(
+        dockerCmd: string[],
+        timeout: number,
+    ): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const proc = spawn('docker', dockerCmd, { stdio: 'pipe' });
             let stdout = '';
@@ -237,7 +272,9 @@ export class AudioAiWrapper {
             const timer = setTimeout(() => {
                 timedOut = true;
                 proc.kill('SIGTERM');
-                reject(new Error(`BirdNET analysis timed out after ${timeout}ms`));
+                reject(
+                    new Error(`BirdNET analysis timed out after ${timeout}ms`),
+                );
             }, timeout);
 
             // Capture stdout
@@ -270,7 +307,11 @@ export class AudioAiWrapper {
                     resolve();
                 } else {
                     this.logger.error(`Docker stderr: ${stderr}`);
-                    reject(new Error(`BirdNET exited with code ${code}: ${stderr}`));
+                    reject(
+                        new Error(
+                            `BirdNET exited with code ${code}: ${stderr}`,
+                        ),
+                    );
                 }
             });
         });
@@ -287,9 +328,13 @@ export class AudioAiWrapper {
                 this.logger.log(`Cleaned up: ${path.basename(file)}`);
             } catch (err) {
                 if (err.code === 'ENOENT') {
-                    this.logger.debug(`File ${file} does not exist, skipping cleanup`);
+                    this.logger.debug(
+                        `File ${file} does not exist, skipping cleanup`,
+                    );
                 } else {
-                    this.logger.warn(`Could not delete ${file}: ${err.message}`);
+                    this.logger.warn(
+                        `Could not delete ${file}: ${err.message}`,
+                    );
                 }
             }
         }
