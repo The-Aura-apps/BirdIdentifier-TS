@@ -8,13 +8,13 @@ import {
 import { CreateCommonNameDto } from '../../common-names/dto/create-common-name.dto';
 
 export class CreateBirdDto {
-    @IsOptional()
-    @IsArray()
-    commonNames?: CreateCommonNameDto[];
-
     @IsNotEmpty()
     @IsString()
     scientificName: string;
+
+    @IsOptional()
+    @IsArray()
+    commonNames?: CreateCommonNameDto[];
 
     @IsOptional()
     @IsString()
