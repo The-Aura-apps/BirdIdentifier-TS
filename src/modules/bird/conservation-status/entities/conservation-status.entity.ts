@@ -24,4 +24,13 @@ export class ConservationStatus {
 
     @OneToMany(() => Bird, (bird) => bird.conservationStatus)
     birds: Bird[];
+
+    // Convert to ProcessedBirdData format
+    toProcessedFormat() {
+        return {
+            code: this.code,
+            fullName: this.fullName,
+            colorHex: this.colorHex,
+        };
+    }
 }

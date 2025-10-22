@@ -25,6 +25,7 @@ import { ConservationStatusService } from './modules/bird/conservation-status/co
 import { ConservationStatusController } from './modules/bird/conservation-status/conservation-status.controller';
 import { MediaModule } from './modules/media/media.module';
 //import { IngestModule } from './modules/ingest/ingest.module';
+import { AaaaModule } from './aaaa/aaaa.module';
 
 @Module({
     imports: [
@@ -52,6 +53,7 @@ import { MediaModule } from './modules/media/media.module';
         ConservationStatusModule,
         CommonNamesModule,
         MediaModule,
+        AaaaModule,
         //IngestModule,
         //NotificationModule,
     ],
