@@ -17,7 +17,6 @@ import { Upload } from 'src/modules/uploads/entities/upload.entity';
 
 // Import all entities
 
-
 @Module({
     imports: [
         ConfigModule,

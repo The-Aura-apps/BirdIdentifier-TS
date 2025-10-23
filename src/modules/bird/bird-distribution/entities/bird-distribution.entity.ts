@@ -1,5 +1,21 @@
-import { Entity, Index, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+    Entity,
+    Index,
+    PrimaryGeneratedColumn,
+    Column,
+    ManyToOne,
+    JoinColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
+} from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
+
+export enum DistributionSeason {
+    Breeding = 'breeding',
+    NonBreeding = 'non-breeding',
+    YearRound = 'year-round',
+    Migration = 'migration',
+}
 
 @Entity('bird_distributions')
 @Index(['birdId', 'season'])
@@ -12,13 +28,9 @@ export class BirdDistribution {
 
     @Column({
         type: 'enum',
-        enum: ['breeding', 'non-breeding', 'year-round', 'migration'],
+        enum: DistributionSeason,
     })
-    season: string;
-
-    // For mobile, simplified polygon data
-    @Column({ type: 'jsonb', nullable: true })
-    rangeGeoJson: any; // Store as JSON, render on mobile
+    season: DistributionSeason;
 
     @Column({ type: 'text', nullable: true })
     description: string;
@@ -31,4 +43,19 @@ export class BirdDistribution {
     })
     @JoinColumn({ name: 'bird_id' })
     bird: Bird;
+
+    @CreateDateColumn({ name: 'created_at' })
+    createdAt: Date;
+
+    @UpdateDateColumn({ name: 'updated_at' })
+    updatedAt: Date;
+
+    // Convert to ProcessedBirdData format
+    toProcessedFormat() {
+        return {
+            season: this.season,
+            description: this.description,
+            countries: this.countries || [],
+        };
+    }
 }

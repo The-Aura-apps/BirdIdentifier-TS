@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import { Media } from 'src/modules/media/entities/media.entity';
 import {
     Entity,
@@ -134,16 +134,16 @@ export class Bird {
     }
 
     // Virtual field for mobile API
-    @Expose()
-    get primaryImage(): string | null {
-        const photo = this.media?.find((m) => m.mediaType === 'photo');
-        return photo ? photo.getThumbnailUrl() : null;
-    }
+    // @Expose()
+    // get primaryImage(): string | null {
+    //     const photo = this.media?.find((m) => m.mediaType === 'photo');
+    //     return photo ? photo.getThumbnailUrl() : null;
+    // }
 
-    // Helper to get primary common name
-    get primaryCommonName(): string {
-        return this.commonNames?.[0]?.name || 'Unknown';
-    }
+    // // Helper to get primary common name
+    // get primaryCommonName(): string {
+    //     return this.commonNames?.[0]?.name || 'Unknown';
+    // }
 
     toBirdInfo(): BirdInfo {
         return {

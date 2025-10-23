@@ -8,7 +8,7 @@ import { ObservationsModule } from './modules/observation/observations/observati
 import { AiModule } from './modules/ai/ai.module';
 import { DatabaseModule } from './core/database/database.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
-import { NotificationModule } from './modules/observation/notification/notification.module';
+//import { NotificationModule } from './modules/observation/notification/notification.module';
 import { FoodService } from './modules/bird/foods/foods.service';
 import { FoodsModule } from './modules/bird/foods/foods.module';
 import { HabitatsModule } from './modules/bird/habitats/habitats.module';
@@ -24,7 +24,7 @@ import { TaxonomyModule } from './modules/bird/taxonomy/taxonomy.module';
 import { ConservationStatusService } from './modules/bird/conservation-status/conservation-status.service';
 import { ConservationStatusController } from './modules/bird/conservation-status/conservation-status.controller';
 import { MediaModule } from './modules/media/media.module';
-import { IngestModule } from './modules/ingest/ingest.module';
+//import { IngestModule } from './modules/ingest/ingest.module';
 
 @Module({
     imports: [
@@ -52,7 +52,7 @@ import { IngestModule } from './modules/ingest/ingest.module';
         ConservationStatusModule,
         CommonNamesModule,
         MediaModule,
-        IngestModule,
+        //IngestModule,
         //NotificationModule,
     ],
     controllers: [AppController, ConservationStatusController],

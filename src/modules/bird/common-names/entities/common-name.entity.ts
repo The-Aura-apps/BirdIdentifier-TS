@@ -18,6 +18,9 @@ export class CommonName {
     @Column({ type: 'varchar', length: 10, default: 'en' })
     language: string;
 
+    @Column()
+    region: string | undefined;
+
     @Column({ name: 'bird_id' })
     birdId: number;
 

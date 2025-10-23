@@ -133,5 +133,4 @@ export class UploadsService {
         const file = await this.getFile(id);
         return file.getFileInfo();
     }
-
 }

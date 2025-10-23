@@ -40,10 +40,6 @@ Return ONLY valid JSON with this structure (no explanations):
 {
   "scientificName": "${normalizedName}",
   "commonName": "string",
-  "photos": {
-    "male": "URL or empty string",
-    "female": "URL or empty string"
-  },
   "features": {
     "sizeAndShape": "string",
     "colorPattern": "string",
@@ -56,7 +52,6 @@ Return ONLY valid JSON with this structure (no explanations):
     "diet": "string"
   },
   "geography": {
-    "rangeMap": "string",
     "yearRound": "string",
     "breeding": "string",
     "wintering": "string",
@@ -67,7 +62,7 @@ Return ONLY valid JSON with this structure (no explanations):
     "conservation": "string",
     "nesting": "string",
     "eggs": "string",
-    "coolFacts": ["fact1", "fact2", "fact3"]
+    "coolFacts": ["fact1", "fact2", "fact3", ...]
   }
 }
 
@@ -93,9 +88,14 @@ Important:
             let data: BirdInfo;
             try {
                 data = JSON.parse(content);
-                this.logger.log(`Received bird info: ${JSON.stringify(data, null, 2)}`);
+                this.logger.log(
+                    `Received bird info: ${JSON.stringify(data, null, 2)}`,
+                );
             } catch (parseErr) {
-                Logger.error(`JSON parsing failed for bird: ${normalizedName}`, parseErr);
+                Logger.error(
+                    `JSON parsing failed for bird: ${normalizedName}`,
+                    parseErr,
+                );
                 throw new Error('Invalid JSON from OpenAI API');
             }
 
@@ -138,7 +138,8 @@ Important:
                 billShape: '',
                 markings: '',
             };
-        if (!data.ecology) data.ecology = { habitat: '', behavior: '', diet: '' };
+        if (!data.ecology)
+            data.ecology = { habitat: '', behavior: '', diet: '' };
         if (!data.geography)
             data.geography = {
                 rangeMap: '',
@@ -163,8 +164,9 @@ Important:
         }
 
         if (warnings.length > 0) {
-            this.logger.warn(`Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`);
+            this.logger.warn(
+                `Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`,
+            );
         }
     }
-
 }

@@ -1,4 +1,10 @@
-import { Entity, Index, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+    Entity,
+    Index,
+    PrimaryGeneratedColumn,
+    Column,
+    OneToMany,
+} from 'typeorm';
 import { BirdFood } from '../../bird-foods/entities/bird-food.entity';
 
 @Entity('foods')
@@ -24,5 +30,4 @@ export class Food {
         if (!this.imageStorageKey) return null;
         return `${process.env.CDN_URL}/${this.imageStorageKey}`;
     }
-
 }
