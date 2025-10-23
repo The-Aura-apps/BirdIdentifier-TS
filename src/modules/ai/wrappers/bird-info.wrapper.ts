@@ -40,10 +40,6 @@ Return ONLY valid JSON with this structure (no explanations):
 {
   "scientificName": "${normalizedName}",
   "commonName": "string",
-  "photos": {
-    "male": "URL or empty string",
-    "female": "URL or empty string"
-  },
   "features": {
     "sizeAndShape": "string",
     "colorPattern": "string",
@@ -56,7 +52,6 @@ Return ONLY valid JSON with this structure (no explanations):
     "diet": "string"
   },
   "geography": {
-    "rangeMap": "string",
     "yearRound": "string",
     "breeding": "string",
     "wintering": "string",
@@ -67,7 +62,7 @@ Return ONLY valid JSON with this structure (no explanations):
     "conservation": "string",
     "nesting": "string",
     "eggs": "string",
-    "coolFacts": ["fact1", "fact2", "fact3"]
+    "coolFacts": ["fact1", "fact2", "fact3", ...]
   }
 }
 
