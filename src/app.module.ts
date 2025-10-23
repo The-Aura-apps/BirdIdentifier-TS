@@ -52,7 +52,6 @@ import { MediaModule } from './modules/media/media.module';
         ConservationStatusModule,
         CommonNamesModule,
         MediaModule,
-        AaaaModule,
         //IngestModule,
         //NotificationModule,
     ],
