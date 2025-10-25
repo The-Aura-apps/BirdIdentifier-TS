@@ -49,7 +49,7 @@ export class BirdsService {
 
         if (existing) {
             throw new ConflictException(
-                `Bird with scintific name "${createBirdDto.scientificName}" alredy exists`,
+                `Bird with scintific name "${createBirdDto.scientificName}" already exists`,
             );
         }
 
@@ -85,7 +85,7 @@ export class BirdsService {
                 'commonNames',
                 'conservationStatus',
                 'birdFoods',
-                'birdsFoods.food',
+                'birdFoods.food',
                 'habitats',
                 'taxonomy',
                 'distributions',
@@ -463,7 +463,6 @@ export class BirdsService {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
-                commonName: bird.primaryCommonName, // Use the helper method
             },
             foods: activeFoods.map((bf) => ({
                 relationshipId: bf.id,
@@ -588,7 +587,6 @@ export class BirdsService {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
-                commonName: bird.commonNames,
             },
             habitats: bird.habitats,
         };

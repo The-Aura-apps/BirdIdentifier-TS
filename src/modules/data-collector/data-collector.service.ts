@@ -402,7 +402,7 @@ export class DataCollectorService {
         }
 
         this.logger.log(
-            `Successfully stored OpenAI generated data for bird ${birdId} , ${ScintificNmae}`,
+            `Successfully stored OpenAI generated data for bird ${birdId} ,`,
         );
     }
 }

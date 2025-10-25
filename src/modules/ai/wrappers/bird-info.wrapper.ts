@@ -5,7 +5,7 @@ import { BirdInfo } from '../types';
 @Injectable()
 export class BirdInfoWrapper {
     private readonly logger = new Logger(BirdInfoWrapper.name);
-    private client: OpenAI;
+    private client!: OpenAI;
     private readonly REQUEST_TIMEOUT = 30000; // 30 seconds
 
     constructor() {
@@ -80,7 +80,9 @@ Important:
 
             const content = response.choices?.[0]?.message?.content;
             if (!content) {
-                Logger.warn(`No content returned for bird: ${scientificName}`);
+                this.logger.warn(
+                    `No content returned for bird: ${scientificName}`,
+                );
                 throw new Error('Empty response from OpenAI API');
             }
 
@@ -92,7 +94,7 @@ Important:
                     `Received bird info: ${JSON.stringify(data, null, 2)}`,
                 );
             } catch (parseErr) {
-                Logger.error(
+                this.logger.error(
                     `JSON parsing failed for bird: ${normalizedName}`,
                     parseErr,
                 );
@@ -130,7 +132,6 @@ Important:
             warnings.push('commonName missing');
         }
         // Ensure nested objects exist
-        if (!data.photos) data.photos = { male: '', female: '' };
         if (!data.features)
             data.features = {
                 sizeAndShape: '',
@@ -164,8 +165,8 @@ Important:
         }
 
         if (warnings.length > 0) {
-            this.logger.warn(
-                `Incomplete bird info for ${scientificName}: ${warnings.join(', ')}`,
+            warnings.forEach((w) =>
+                this.logger.warn(`[${scientificName}] ${w}`),
             );
         }
     }

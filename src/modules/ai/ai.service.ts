@@ -3,6 +3,8 @@ import { AudioAiWrapper } from './wrappers/audio-ai.wrapper';
 import { ImageAiWrapper } from './wrappers/image-ai.wrapper';
 import { BirdInfoWrapper } from './wrappers/bird-info.wrapper';
 import { BirdAiResponse, IdentificationResult, BirdInfo } from './types';
+import { BirdsService } from '../bird/birds/birds.service';
+//import { DataCollectorService } from '../data-collector/data-collector.service';
 
 @Injectable()
 export class AiService {
@@ -13,6 +15,8 @@ export class AiService {
         private readonly imageAi: ImageAiWrapper,
         private readonly audioAi: AudioAiWrapper,
         private readonly birdInfo: BirdInfoWrapper,
+        //private readonly dataCollector: DataCollectorService,
+        private readonly birdsService: BirdsService,
     ) {}
 
     /**
@@ -108,7 +112,7 @@ export class AiService {
             }
 
             // Fetch detailed bird information
-            let info: BirdInfo;
+            let info: BirdInfo; 
             try {
                 info = await this.birdInfo.fetchInfo(
                     identification.scientificName,
@@ -149,4 +153,72 @@ export class AiService {
             };
         }
     }
+
+    /**
+     * Check if bird data is incomplete
+     */
+    private isDataIncomplete(bird: any): boolean {
+        // Check for essential fields
+        const hasBasicInfo = bird.description && bird.scientificName;
+        const hasMedia = bird.media && bird.media.length > 0;
+        const hasCommonNames = bird.commonNames && bird.commonNames.length > 0;
+        const hasTaxonomy = bird.taxonomy && bird.taxonomy.length > 0;
+
+        return !hasBasicInfo || !hasMedia || !hasCommonNames || !hasTaxonomy;
+    }
+
+    /**
+     * Manually trigger data collection for a bird
+     */
+    /* async collectBirdData(
+        scientificName: string,
+        options?: {
+            forceUpdate?: boolean;
+        },
+    ): Promise<{
+        success: boolean;
+        birdId?: number;
+        message: string;
+    }> {
+        try {
+            const { forceUpdate = false } = options || {};
+
+            // Check if bird exists
+            const existingBird =
+                await this.birdsService.findByScientificName(scientificName);
+
+            if (existingBird && !forceUpdate) {
+                return {
+                    success: false,
+                    birdId: existingBird.id,
+                    message:
+                        'Bird already exists. Use forceUpdate to refresh data.',
+                };
+            }
+
+            // Collect data
+            const result =
+                await this.dataCollector.collectBirdData(scientificName);
+
+            const successCount = result.results.filter((r) => r.success).length;
+
+            return {
+                success: true,
+                birdId: result.birdId,
+                message: `Data collected from ${successCount}/${result.results.length} sources`,
+            };
+        } catch (error) {
+            this.logger.error(
+                `Failed to collect bird data: ${error.message}`,
+                error.stack,
+            );
+            return {
+                success: false,
+                message: `Failed to collect data: ${error.message}`,
+            };
+        }
+    } */
 }
+
+
+

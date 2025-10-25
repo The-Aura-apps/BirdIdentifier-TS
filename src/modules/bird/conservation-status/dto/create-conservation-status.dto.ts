@@ -1,19 +1,14 @@
-import { IsString, IsOptional, Length, Matches } from 'class-validator';
+import { IsString, IsOptional, Length, Matches, IsEnum } from 'class-validator';
+import { ConservationStatusCode } from '../entities/conservation-status.entity';
 
 export class CreateConservationStatusDto {
-    @IsString()
+    @IsEnum(ConservationStatusCode)
     @Length(2, 5)
-    code: string; // LC, NT, VU, EN, CR
+    code: ConservationStatusCode;
 
     @IsString()
     @Length(1, 100)
     fullName: string;
-
-    @IsOptional()
-    @IsString()
-    @Length(7, 7)
-    @Matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
-    colorHex?: string;
 }
 
 // import { IsString, IsNotEmpty, IsOptional } from 'class-validator';

@@ -4,16 +4,18 @@ import {
     IsOptional,
     IsNumber,
     IsArray,
+    IsEnum,
 } from 'class-validator';
+import { DistributionSeason } from '../entities/bird-distribution.entity';
 
 export class CreateBirdDistributionDto {
     @IsNumber()
     @IsNotEmpty()
     birdId: number;
 
-    @IsString()
+    @IsEnum(DistributionSeason)
     @IsNotEmpty()
-    season: string;
+    season: DistributionSeason;
 
     @IsOptional()
     @IsArray()

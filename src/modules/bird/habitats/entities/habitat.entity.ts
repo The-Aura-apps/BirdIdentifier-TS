@@ -9,7 +9,6 @@ import {
     OneToMany,
 } from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
-import { BirdHabitat } from '../../bird-habitats/entities/bird-habitat.entity';
 
 @Entity('habitats')
 export class Habitat {
@@ -29,6 +28,4 @@ export class Habitat {
     @ManyToMany(() => Bird, (bird) => bird.habitats)
     birds: Bird[];
 
-    @OneToMany(() => BirdHabitat, (birdHabitats) => birdHabitats.habitat)
-    birdHabitats: BirdHabitat[];
 }
