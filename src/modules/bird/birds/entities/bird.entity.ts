@@ -18,7 +18,6 @@ import { BirdFood } from '../../bird-foods/entities/bird-food.entity';
 import { CommonName } from '../../common-names/entities/common-name.entity';
 import { ConservationStatus } from '../../conservation-status/entities/conservation-status.entity';
 import { Taxonomy } from '../../taxonomy/entities/taxonomy.entity';
-import { BirdHabitat } from '../../bird-habitats/entities/bird-habitat.entity';
 import { BirdDistribution } from '../../bird-distribution/entities/bird-distribution.entity';
 import { Habitat } from '../../habitats/entities/habitat.entity';
 import { BirdInfo } from 'src/modules/ai/types';
@@ -52,7 +51,7 @@ export class Bird {
     @ApiProperty()
     feedingHabits: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: true })
+    @Column({ type: 'text', length: 255, nullable: true })
     @ApiProperty()
     eggsDescription: string;
 
@@ -113,8 +112,6 @@ export class Bird {
     })
     habitats: Habitat[];
 
-    @OneToMany(() => BirdHabitat, (birdHabitat) => birdHabitat.bird)
-    birdHabitats: BirdHabitat[];
 
     @CreateDateColumn()
     @Exclude()
@@ -133,17 +130,6 @@ export class Bird {
             .filter((food): food is Food => food !== undefined);
     }
 
-    // Virtual field for mobile API
-    // @Expose()
-    // get primaryImage(): string | null {
-    //     const photo = this.media?.find((m) => m.mediaType === 'photo');
-    //     return photo ? photo.getThumbnailUrl() : null;
-    // }
-
-    // // Helper to get primary common name
-    // get primaryCommonName(): string {
-    //     return this.commonNames?.[0]?.name || 'Unknown';
-    // }
 
     toBirdInfo(): BirdInfo {
         return {

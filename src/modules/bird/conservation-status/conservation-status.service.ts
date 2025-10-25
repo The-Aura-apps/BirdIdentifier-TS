@@ -6,9 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConservationStatus } from './entities/conservation-status.entity';
+import { ConservationStatus, ConservationStatusCode } from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
 import { UpdateConservationStatusDto } from './dto/update-conservation-status.dto';
+
 
 @Injectable()
 export class ConservationStatusService {
@@ -70,11 +71,12 @@ export class ConservationStatusService {
         return status;
     }
 
-    async findByCode(code: string): Promise<ConservationStatus> {
+    async findByCode(
+        code: ConservationStatusCode,
+    ): Promise<ConservationStatus> {
         const status = await this.conservationStatusRepo.findOne({
             where: { code },
         });
-
         if (!status) {
             throw new NotFoundException(
                 `Conservation status with code "${code}" not found`,

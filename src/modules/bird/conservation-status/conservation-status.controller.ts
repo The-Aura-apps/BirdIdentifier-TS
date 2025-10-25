@@ -11,7 +11,7 @@ import {
     Query,
 } from '@nestjs/common';
 import { ConservationStatusService } from './conservation-status.service';
-import { ConservationStatus } from './entities/conservation-status.entity';
+import { ConservationStatus, ConservationStatusCode } from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
 import { UpdateConservationStatusDto } from './dto/update-conservation-status.dto';
 
@@ -46,7 +46,9 @@ export class ConservationStatusController {
     }
 
     @Get('code/:code')
-    findByCode(@Param('code') code: string): Promise<ConservationStatus> {
+    findByCode(
+        @Param('code') code: ConservationStatusCode,
+    ): Promise<ConservationStatus> {
         return this.conservationStatusService.findByCode(code);
     }
 

@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { BirdDistribution } from 'src/modules/bird/bird-distribution/entities/bird-distribution.entity';
 import { BirdFood } from 'src/modules/bird/bird-foods/entities/bird-food.entity';
-import { BirdHabitat } from 'src/modules/bird/bird-habitats/entities/bird-habitat.entity';
 import { Bird } from 'src/modules/bird/birds/entities/bird.entity';
 import { CommonName } from 'src/modules/bird/common-names/entities/common-name.entity';
 import { ConservationStatus } from 'src/modules/bird/conservation-status/entities/conservation-status.entity';
@@ -38,7 +37,6 @@ import { Upload } from 'src/modules/uploads/entities/upload.entity';
                     Habitat,
                     Food,
                     BirdFood,
-                    BirdHabitat,
                     BirdDistribution,
                     Observation,
                     Upload,
