@@ -8,6 +8,6 @@ import { BirdFood } from './entities/bird-food.entity';
     imports: [TypeOrmModule.forFeature([BirdFood])],
     controllers: [BirdFoodsController],
     providers: [BirdFoodsService],
-    exports: [TypeOrmModule],
+    exports: [TypeOrmModule, BirdFoodsService],
 })
 export class BirdFoodsModule {}

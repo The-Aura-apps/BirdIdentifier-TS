@@ -55,7 +55,7 @@ import { MediaModule } from './modules/media/media.module';
         //IngestModule,
         //NotificationModule,
     ],
-    controllers: [AppController, ConservationStatusController],
-    providers: [AppService, FoodService, ConservationStatusService],
+    controllers: [AppController],
+    providers: [AppService],
 })
 export class AppModule {}
