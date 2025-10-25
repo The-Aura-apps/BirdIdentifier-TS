@@ -10,7 +10,7 @@ import { Bird } from '../../birds/entities/bird.entity';
 import { Food } from '../../foods/entities/food.entity';
 
 @Entity('bird_foods')
-@Index(['birdId', 'foodId', 'season'], { unique: true })
+@Index(['birdId', 'foodId'], { unique: true })
 export class BirdFood {
     @PrimaryGeneratedColumn()
     id: number;
