@@ -9,7 +9,7 @@ import { BirdFood } from '../../bird-foods/entities/bird-food.entity';
 
 @Entity('foods')
 @Index(['name'])
-@Index(['category'])
+// @Index(['category'])
 export class Food {
     @PrimaryGeneratedColumn()
     id: number;

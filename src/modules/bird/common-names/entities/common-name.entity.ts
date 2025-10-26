@@ -4,9 +4,11 @@ import {
     Column,
     ManyToOne,
     JoinColumn,
+    Index,
 } from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
 
+@Index(['name'])
 @Entity('common_names')
 export class CommonName {
     @PrimaryGeneratedColumn()
@@ -19,7 +21,7 @@ export class CommonName {
     language: string;
 
     @Column()
-    region: string | undefined;
+    region: string;
 
     @Column({ name: 'bird_id' })
     birdId: number;

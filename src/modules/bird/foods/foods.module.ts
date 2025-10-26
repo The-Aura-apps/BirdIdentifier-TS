@@ -9,5 +9,6 @@ import { BirdFoodsModule } from '../bird-foods/bird-foods.module';
     imports: [TypeOrmModule.forFeature([Food]), BirdFoodsModule],
     controllers: [FoodController],
     providers: [FoodService],
+    exports: [FoodService],
 })
 export class FoodsModule {}

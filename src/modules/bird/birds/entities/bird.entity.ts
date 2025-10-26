@@ -51,7 +51,7 @@ export class Bird {
     @ApiProperty()
     feedingHabits: string;
 
-    @Column({ type: 'text', length: 255, nullable: true })
+    @Column({ type: 'text', nullable: true })
     @ApiProperty()
     eggsDescription: string;
 
