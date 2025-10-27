@@ -1,10 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional, Length } from 'class-validator';
 
-
-
-
-
-
 import { ApiProperty } from '@nestjs/swagger';
 
 // export class CreateHabitatDto {
@@ -33,10 +28,6 @@ import { ApiProperty } from '@nestjs/swagger';
 //     @IsOptional()
 //     regions?: string;
 // }
-
-
-
-
 
 export class CreateHabitatDto {
     @IsString()

@@ -11,7 +11,10 @@ import {
     Query,
 } from '@nestjs/common';
 import { ConservationStatusService } from './conservation-status.service';
-import { ConservationStatus, ConservationStatusCode } from './entities/conservation-status.entity';
+import {
+    ConservationStatus,
+    ConservationStatusCode,
+} from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
 import { UpdateConservationStatusDto } from './dto/update-conservation-status.dto';
 

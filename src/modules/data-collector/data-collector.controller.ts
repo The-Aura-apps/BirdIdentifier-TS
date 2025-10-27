@@ -16,6 +16,5 @@ export class DataCollectorController {
     @ApiOperation({ summary: 'Collect bird data from external APIs' })
     @ApiResponse({ status: 200, description: 'Data collected successfully' })
     @ApiResponse({ status: 400, description: 'Invalid scientific name' })
-        async collectBirdData(){}
-
+    async collectBirdData() {}
 }

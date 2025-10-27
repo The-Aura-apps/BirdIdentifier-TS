@@ -112,7 +112,7 @@ export class AiService {
             }
 
             // Fetch detailed bird information
-            let info: BirdInfo; 
+            let info: BirdInfo;
             try {
                 info = await this.birdInfo.fetchInfo(
                     identification.scientificName,
@@ -219,6 +219,3 @@ export class AiService {
         }
     } */
 }
-
-
-

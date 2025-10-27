@@ -180,4 +180,3 @@ interface OpenAIBirdData {
 }
 
 // OpenAi API Response Type
-

@@ -112,7 +112,6 @@ export class Bird {
     })
     habitats: Habitat[];
 
-
     @CreateDateColumn()
     @Exclude()
     createdAt: Date;
@@ -129,7 +128,6 @@ export class Bird {
             .map((bf) => bf.food)
             .filter((food): food is Food => food !== undefined);
     }
-
 
     toBirdInfo(): BirdInfo {
         return {

@@ -6,8 +6,6 @@ import { Observation } from './entities/observation.entity';
 import { BirdsModule } from 'src/modules/bird/birds/birds.module';
 import { AiModule } from 'src/modules/ai/ai.module';
 
-
-
 @Module({
     imports: [
         TypeOrmModule.forFeature([Observation]),

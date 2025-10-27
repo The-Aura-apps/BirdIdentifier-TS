@@ -1,6 +1,6 @@
-import { HttpService } from "@nestjs/axios";
-import { Logger } from "@nestjs/common";
-import { firstValueFrom } from "rxjs";
+import { HttpService } from '@nestjs/axios';
+import { Logger } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
 
 /**
  * Abstract base class for all API data sources
