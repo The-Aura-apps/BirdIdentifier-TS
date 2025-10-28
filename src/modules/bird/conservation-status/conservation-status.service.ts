@@ -6,10 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConservationStatus, ConservationStatusCode } from './entities/conservation-status.entity';
+import {
+    ConservationStatus,
+    ConservationStatusCode,
+} from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
 import { UpdateConservationStatusDto } from './dto/update-conservation-status.dto';
-
 
 @Injectable()
 export class ConservationStatusService {

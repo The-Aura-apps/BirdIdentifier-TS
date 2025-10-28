@@ -27,5 +27,4 @@ export class Habitat {
 
     @ManyToMany(() => Bird, (bird) => bird.habitats)
     birds: Bird[];
-
 }

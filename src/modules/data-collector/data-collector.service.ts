@@ -290,10 +290,7 @@ export class DataCollectorService {
             try {
                 switch (result.source) {
                     case 'OpenAI':
-                        await this.storeOpenAIData(
-                            birdId,
-                            result.data as OpenAIData,
-                        );
+                        await this.storeOpenAIData(birdId, result.data);
                         break;
                 }
             } catch (error) {
@@ -349,7 +346,7 @@ export class DataCollectorService {
         // Store diet information
         if (Odesc.diet && Odesc.diet.length > 0) {
             for (const foodItem of Odesc.diet) {
-                let food = await this.foodsService.findByName(foodItem);
+                const food = await this.foodsService.findByName(foodItem);
                 if (!food) {
                     await this.foodsService.create({
                         name: foodItem,
@@ -362,11 +359,11 @@ export class DataCollectorService {
                 });
             }
 
-        // Optionally set bird.feedingHabits for summary (aligns with CreateBirdDto)
-        await this.birdsService.update(birdId.toString(), {
-            feedingHabits: `Diet includes: ${Odesc.diet.join(', ')}`,
-        });
-    }
+            // Optionally set bird.feedingHabits for summary (aligns with CreateBirdDto)
+            await this.birdsService.update(birdId.toString(), {
+                feedingHabits: `Diet includes: ${Odesc.diet.join(', ')}`,
+            });
+        }
 
         // Store conservation information  // NO Need Any More
         // if (Odesc.conservation) {
@@ -385,10 +382,7 @@ export class DataCollectorService {
         // }
 
         // Store interesting facts as metadata or additional description
-        if (
-            Odesc.interesting_facts &&
-            Odesc.interesting_facts.length > 0
-        ) {
+        if (Odesc.interesting_facts && Odesc.interesting_facts.length > 0) {
             const currentBird = await this.birdsService.findOne(
                 birdId.toString(),
             );

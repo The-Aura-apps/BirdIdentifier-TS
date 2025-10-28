@@ -31,11 +31,11 @@ export class ImageAiWrapper {
      * @returns Converted buffer or original if already JPEG
      */
     private async convertToJpegIfNeeded(buffer: Buffer): Promise<Buffer> {
-        const format = await sharp(buffer)
+        const format = await sharp(buffer) 
             .metadata()
             .then((meta) => meta.format?.toLowerCase());
         const supported = ['jpeg', 'png', 'gif', 'webp', 'heic'];
-        if (!supported.includes(format)) {
+        if (!supported.includes(format || "")) {
             throw new Error(`Unsupported image format: ${format}`);
         }
 
