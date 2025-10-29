@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IdentificationResult } from '../types';
 import OpenAI from 'openai';
-import sharp from 'sharp'; // Added for image format conversion
+//import sharp from 'sharp'; // Added for image format conversion
 
 @Injectable()
 export class ImageAiWrapper {
@@ -30,22 +30,22 @@ export class ImageAiWrapper {
      * @param buffer Input image buffer
      * @returns Converted buffer or original if already JPEG
      */
-    private async convertToJpegIfNeeded(buffer: Buffer): Promise<Buffer> {
-        const format = await sharp(buffer) 
-            .metadata()
-            .then((meta) => meta.format?.toLowerCase());
-        const supported = ['jpeg', 'png', 'gif', 'webp', 'heic'];
-        if (!supported.includes(format || "")) {
-            throw new Error(`Unsupported image format: ${format}`);
-        }
+    // private async convertToJpegIfNeeded(buffer: Buffer): Promise<Buffer> {
+    //     const format = await sharp(buffer) 
+    //         .metadata()
+    //         .then((meta) => meta.format?.toLowerCase());
+    //     const supported = ['jpeg', 'png', 'gif', 'webp', 'heic'];
+    //     if (!supported.includes(format || "")) {
+    //         throw new Error(`Unsupported image format: ${format}`);
+    //     }
 
-        if (format === 'jpeg') {
-            return buffer;
-        }
+    //     if (format === 'jpeg') {
+    //         return buffer;
+    //     }
 
-        this.logger.log(`Converting ${format} to JPEG`);
-        return sharp(buffer).jpeg({ quality: 90 }).toBuffer();
-    }
+    //     this.logger.log(`Converting ${format} to JPEG`);
+    //     return sharp(buffer).jpeg({ quality: 90 }).toBuffer();
+    // }
 
     /**
      * Identify a bird from an image buffer using GPT-4o-mini
