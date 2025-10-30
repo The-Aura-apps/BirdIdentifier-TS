@@ -9,11 +9,8 @@ import { AiModule } from './modules/ai/ai.module';
 import { DatabaseModule } from './core/database/database.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 //import { NotificationModule } from './modules/observation/notification/notification.module';
-import { FoodService } from './modules/bird/foods/foods.service';
 import { FoodsModule } from './modules/bird/foods/foods.module';
 import { HabitatsModule } from './modules/bird/habitats/habitats.module';
-import { UsersModule } from './modules/user/users/users.module';
-import { RolesModule } from './modules/user/roles/roles.module';
 import { BirdFoodsModule } from './modules/bird/bird-foods/bird-foods.module';
 import { BirdHabitatsModule } from './modules/bird/bird-habitats/bird-habitats.module';
 import { UserRolesModule } from './modules/user/user-roles/user-roles.module';
@@ -21,8 +18,6 @@ import { BirdDistributionModule } from './modules/bird/bird-distribution/bird-di
 import { ConservationStatusModule } from './modules/bird/conservation-status/conservation-status.module';
 import { CommonNamesModule } from './modules/bird/common-names/common-names.module';
 import { TaxonomyModule } from './modules/bird/taxonomy/taxonomy.module';
-import { ConservationStatusService } from './modules/bird/conservation-status/conservation-status.service';
-import { ConservationStatusController } from './modules/bird/conservation-status/conservation-status.controller';
 import { MediaModule } from './modules/media/media.module';
 //import { IngestModule } from './modules/ingest/ingest.module';
 
