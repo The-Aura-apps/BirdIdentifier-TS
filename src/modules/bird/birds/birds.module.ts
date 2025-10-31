@@ -1,9 +1,12 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { BirdsService } from './birds.service';
 import { BirdsController } from './birds.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { Bird } from './entities/bird.entity';
 import { BirdDistribution } from '../bird-distribution/entities/bird-distribution.entity';
+import { BirdFood } from '../bird-foods/entities/bird-food.entity';
+import { CommonName } from '../common-names/entities/common-name.entity';
+import { Habitat } from '../habitats/entities/habitat.entity';
 import { ObservationsModule } from 'src/modules/observation/observations/observations.module';
 import { BirdFoodsModule } from '../bird-foods/bird-foods.module';
 import { HabitatsModule } from '../habitats/habitats.module';
@@ -12,7 +15,13 @@ import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Bird, BirdDistribution]),
+        TypeOrmModule.forFeature([
+            Bird,
+            BirdDistribution,
+            BirdFood,
+            CommonName,
+            Habitat,
+        ]),
         forwardRef(() => ObservationsModule),
         BirdFoodsModule,
         HabitatsModule,
@@ -20,6 +29,6 @@ import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
     ],
     controllers: [BirdsController],
     providers: [BirdsService, BirdInfoWrapper],
-    exports: [BirdsService],
+    exports: [BirdsService, TypeOrmModule],
 })
 export class BirdsModule {}

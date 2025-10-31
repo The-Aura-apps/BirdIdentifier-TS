@@ -4,6 +4,7 @@ import {
     Logger,
     BadRequestException,
     ConflictException,
+    InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -42,7 +43,7 @@ export class BirdsService {
             throw new BadRequestException('Scientific name is required');
         }
 
-        // Check for duplicate
+        // Check for duplicate scientific name
         const existing = await this.birdRepo.findOne({
             where: { scientificName: createBirdDto.scientificName },
         });
@@ -68,7 +69,7 @@ export class BirdsService {
                 conservationStatusId: createBirdDto.conservationStatusId,
             });
 
-            // Handle common names if provided (cascade will save them)
+            // Handle common names (cascade saves automatically)
             if (
                 createBirdDto.commonNames &&
                 createBirdDto.commonNames.length > 0
@@ -77,12 +78,11 @@ export class BirdsService {
                     this.commonNameRepo.create({
                         name: cn.name,
                         language: cn.language || 'en',
-                        isPrimary: cn.isPrimary || false,
                     }),
                 );
             }
 
-            // Handle habitats if provided (many-to-many doesn't auto-cascade)
+            // Handle habitats (many-to-many must be linked manually)
             if (
                 createBirdDto.habitatIds &&
                 createBirdDto.habitatIds.length > 0
@@ -104,7 +104,7 @@ export class BirdsService {
                 bird.habitats = habitats;
             }
 
-            // Save bird (will cascade to common names)
+            // Save bird (cascades common names)
             const saved = await this.birdRepo.save(bird);
 
             this.logger.log(
@@ -113,8 +113,8 @@ export class BirdsService {
                     `${bird.habitats?.length || 0} habitats`,
             );
 
-            // Return bird with all relations
-            return await this.birdRepo.findOne({
+            // Re-fetch the bird with all relations for return
+            const found = await this.birdRepo.findOne({
                 where: { id: saved.id },
                 relations: [
                     'commonNames',
@@ -127,6 +127,14 @@ export class BirdsService {
                     'birdFoods.food',
                 ],
             });
+
+            if (!found) {
+                throw new InternalServerErrorException(
+                    'Failed to load created bird',
+                );
+            }
+
+            return found;
         } catch (err) {
             this.logger.error(
                 `Failed to create bird: ${err.message}`,
