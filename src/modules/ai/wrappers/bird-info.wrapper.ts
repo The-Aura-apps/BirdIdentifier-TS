@@ -34,42 +34,7 @@ export class BirdInfoWrapper {
 
         this.logger.log(`Fetching bird info from AI: ${normalizedName}`);
 
-        const prompt = `Provide detailed information about the bird species "${normalizedName}" in strict JSON format.
-
-Return ONLY valid JSON with this structure (no explanations):
-{
-  "scientificName": "${normalizedName}",
-  "commonName": "string",
-  "features": {
-    "sizeAndShape": "string",
-    "colorPattern": "string",
-    "billShape": "string",
-    "markings": "string"
-  },
-  "ecology": {
-    "habitat": "string",
-    "behavior": "string",
-    "diet": "string"
-  },
-  "geography": {
-    "yearRound": "string",
-    "breeding": "string",
-    "wintering": "string",
-    "migration": "string",
-    "seasonality": "string"
-  },
-  "education": {
-    "conservation": "string",
-    "nesting": "string",
-    "eggs": "string",
-    "coolFacts": ["fact1", "fact2", "fact3", ...]
-  }
-}
-
-Important:
-- All fields must be present (use empty strings if unknown)
-- coolFacts must be an array of strings
-- Return only JSON, no markdown or explanations`;
+        const prompt = `hi`;
 
         try {
             const response = await this.client.chat.completions.create({

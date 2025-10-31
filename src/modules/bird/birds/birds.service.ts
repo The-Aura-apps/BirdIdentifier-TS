@@ -4,6 +4,7 @@ import {
     Logger,
     BadRequestException,
     ConflictException,
+    InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -42,24 +43,98 @@ export class BirdsService {
             throw new BadRequestException('Scientific name is required');
         }
 
-        // Check forduplicate
+        // Check for duplicate scientific name
         const existing = await this.birdRepo.findOne({
             where: { scientificName: createBirdDto.scientificName },
         });
 
         if (existing) {
             throw new ConflictException(
-                `Bird with scintific name "${createBirdDto.scientificName}" already exists`,
+                `Bird with scientific name "${createBirdDto.scientificName}" already exists`,
             );
         }
 
         try {
-            const bird = this.birdRepo.create(createBirdDto);
+            // Create the bird entity
+            const bird = this.birdRepo.create({
+                scientificName: createBirdDto.scientificName,
+                description: createBirdDto.description,
+                behavior: createBirdDto.behavior,
+                nestingHabits: createBirdDto.nestingHabits,
+                feedingHabits: createBirdDto.feedingHabits,
+                eggsDescription: createBirdDto.eggsDescription,
+                coolFacts: createBirdDto.coolFacts,
+                size: createBirdDto.size,
+                lifeExpectancyYears: createBirdDto.lifeExpectancyYears,
+                conservationStatusId: createBirdDto.conservationStatusId,
+            });
+
+            // Handle common names (cascade saves automatically)
+            if (
+                createBirdDto.commonNames &&
+                createBirdDto.commonNames.length > 0
+            ) {
+                bird.commonNames = createBirdDto.commonNames.map((cn) =>
+                    this.commonNameRepo.create({
+                        name: cn.name,
+                        language: cn.language || 'en',
+                    }),
+                );
+            }
+
+            // Handle habitats (many-to-many must be linked manually)
+            if (
+                createBirdDto.habitatIds &&
+                createBirdDto.habitatIds.length > 0
+            ) {
+                const habitats = await this.habitatRepo.findByIds(
+                    createBirdDto.habitatIds,
+                );
+
+                if (habitats.length !== createBirdDto.habitatIds.length) {
+                    const foundIds = habitats.map((h) => h.id);
+                    const missingIds = createBirdDto.habitatIds.filter(
+                        (id) => !foundIds.includes(id),
+                    );
+                    throw new BadRequestException(
+                        `Habitat IDs not found: ${missingIds.join(', ')}`,
+                    );
+                }
+
+                bird.habitats = habitats;
+            }
+
+            // Save bird (cascades common names)
             const saved = await this.birdRepo.save(bird);
+
             this.logger.log(
-                `Bird created ${saved.id} - ${saved.scientificName}`,
+                `Bird created ${saved.id} - ${saved.scientificName} ` +
+                    `with ${bird.commonNames?.length || 0} common names and ` +
+                    `${bird.habitats?.length || 0} habitats`,
             );
-            return saved;
+
+            // Re-fetch the bird with all relations for return
+            const found = await this.birdRepo.findOne({
+                where: { id: saved.id },
+                relations: [
+                    'commonNames',
+                    'media',
+                    'conservationStatus',
+                    'habitats',
+                    'taxonomy',
+                    'distributions',
+                    'birdFoods',
+                    'birdFoods.food',
+                ],
+            });
+
+            if (!found) {
+                throw new InternalServerErrorException(
+                    'Failed to load created bird',
+                );
+            }
+
+            return found;
         } catch (err) {
             this.logger.error(
                 `Failed to create bird: ${err.message}`,

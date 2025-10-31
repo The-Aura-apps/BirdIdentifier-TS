@@ -119,34 +119,4 @@ export class Bird {
     @UpdateDateColumn()
     @Exclude()
     updatedAt: Date;
-
-    // Helper method to get active foods
-    getActiveFoods(): Food[] {
-        if (!this.birdFoods) return [];
-        return this.birdFoods
-            .filter((bf) => bf.isActive)
-            .map((bf) => bf.food)
-            .filter((food): food is Food => food !== undefined);
-    }
-
-    toBirdInfo(): BirdInfo {
-        return {
-            scientificName: this.scientificName,
-            description: this.description,
-            behavior: this.behavior,
-            nestingHabits: this.nestingHabits,
-            feedingHabits: this.feedingHabits,
-            eggsDescription: this.eggsDescription,
-            coolFacts: this.coolFacts ? [this.coolFacts] : [],
-            size: this.size,
-            lifeExpectancyYears: this.lifeExpectancyYears,
-            conservationStatus: this.conservationStatus,
-            commonNames: this.commonNames,
-            media: this.media,
-            habitats: this.habitats,
-            taxonomy: this.taxonomy?.[0], // Assuming one taxonomy per bird
-            distributions: this.distributions,
-            birdFoods: this.birdFoods,
-        };
-    }
 }

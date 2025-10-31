@@ -14,7 +14,7 @@ import { CommonName } from './entities/common-name.entity';
 import { CreateCommonNameDto } from './dto/create-common-name.dto';
 import { UpdateCommonNameDto } from './dto/update-common-name.dto';
 
-@Controller('common-names')
+@Controller('commonNames')
 export class CommonNamesController {
     constructor(private readonly commonNamesService: CommonNamesService) {}
 
