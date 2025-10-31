@@ -35,8 +35,6 @@ import { MediaModule } from './modules/media/media.module';
         UploadsModule,
         FoodsModule,
         HabitatsModule,
-        //UsersModule,
-        //RolesModule,
         BirdFoodsModule,
         BirdHabitatsModule,
         UserRolesModule,

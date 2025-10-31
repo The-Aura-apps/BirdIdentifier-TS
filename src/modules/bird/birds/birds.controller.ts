@@ -24,7 +24,7 @@ export class BirdsController {
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    create(@Body() dto: CreateBirdDto): Promise<Bird> {
+    create(@Body() dto: CreateBirdDto): Promise<Bird | null> {
         return this.birdService.create(dto);
     }
 

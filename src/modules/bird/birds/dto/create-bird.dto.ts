@@ -4,7 +4,10 @@ import {
     IsOptional,
     IsObject,
     IsArray,
+    IsNumber,
+    ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { CreateCommonNameDto } from '../../common-names/dto/create-common-name.dto';
 
 export class CreateBirdDto {
@@ -14,7 +17,14 @@ export class CreateBirdDto {
 
     @IsOptional()
     @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CreateCommonNameDto)
     commonNames?: CreateCommonNameDto[];
+
+    @IsOptional()
+    @IsArray()
+    @IsNumber({}, { each: true })
+    habitatIds?: number[]; // Add habitat IDs
 
     @IsOptional()
     @IsString()
@@ -49,8 +59,10 @@ export class CreateBirdDto {
     };
 
     @IsOptional()
+    @IsNumber()
     lifeExpectancyYears?: number;
 
     @IsOptional()
+    @IsNumber()
     conservationStatusId?: number;
 }
