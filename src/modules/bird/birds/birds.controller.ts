@@ -25,6 +25,7 @@ import { UpdateBirdDto } from './dto/update-bird.dto';
 import { CreateBirdFoodDto } from '../bird-foods/dto/create-bird-food.dto';
 import { UpdateBirdFoodDto } from '../bird-foods/dto/update-bird-food.dto';
 import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto';
+import { CreateTaxonomyDto } from '../taxonomy/dto/create-taxonomy.dto';
 
 @ApiTags('birds')
 @Controller('birds')
@@ -273,6 +274,42 @@ export class BirdsController {
     getTaxonomy(@Param('id') id: string) {
         return this.birdService.getTaxonomy(+id);
     }
+
+    // @Patch(':id/taxonomy')
+    // @ApiOperation({ summary: 'Update or add taxonomy to a bird' })
+    // @ApiParam({ name: 'id', description: 'Bird ID' })
+    // @ApiResponse({
+    //     status: 200,
+    //     description: 'Taxonomy updated successfully',
+    // })
+    // updateTaxonomy(
+    //     @Param('id') id: string,
+    //     @Body() taxonomyDto: CreateTaxonomyDto,
+    // ): Promise<Bird> {
+    //     return this.birdService.updateTaxonomy(+id, taxonomyDto);
+    // }
+
+    // @Delete(':id/taxonomy')
+    // @HttpCode(HttpStatus.NO_CONTENT)
+    // @ApiOperation({ summary: 'Remove taxonomy from a bird' })
+    // @ApiParam({ name: 'id', description: 'Bird ID' })
+    // removeTaxonomy(@Param('id') id: string): Promise<void> {
+    //     return this.birdService.removeTaxonomy(+id);
+    // }
+
+    // @Get('without-taxonomy')
+    // @ApiOperation({ summary: 'Get all birds without taxonomy' })
+    // @ApiQuery({ name: 'page', required: false, type: Number })
+    // @ApiQuery({ name: 'limit', required: false, type: Number })
+    // findBirdsWithoutTaxonomy(
+    //     @Query('page') page = '1',
+    //     @Query('limit') limit = '20',
+    // ): Promise<{ data: Bird[]; total: number }> {
+    //     return this.birdService.findBirdsWithoutTaxonomy({
+    //         page: Number(page),
+    //         limit: Number(limit),
+    //     });
+    // }
 
     // Distributions
     @Get(':id/distributions')
