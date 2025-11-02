@@ -71,16 +71,22 @@ export class Bird {
     @ApiProperty()
     lifeExpectancyYears: number;
 
-    @Column({ name: 'conservation_status_id', nullable: true })
-    conservationStatusId: number;
+    @ManyToOne(() => Taxonomy, (taxonomy) => taxonomy.birds, {
+        eager: true,
+        nullable: true,
+        onDelete: 'SET NULL', // Important: Don't cascade delete taxonomies
+    })
+    @JoinColumn({ name: 'taxonomy_id' }) // ✅ This tells TypeORM the column name
+    @ApiProperty({ type: () => Taxonomy, required: false })
+    taxonomy: Taxonomy;
 
-    @OneToMany(() => Observation, (observation) => observation.bird)
-    observations: Observation[];
-
-    @ManyToOne(() => ConservationStatus, { eager: true })
+    @ManyToOne(() => ConservationStatus, { eager: true, nullable: true })
     @JoinColumn({ name: 'conservation_status_id' })
     @ApiProperty()
     conservationStatus: ConservationStatus;
+
+    @OneToMany(() => Observation, (observation) => observation.bird)
+    observations: Observation[];
 
     @OneToMany(() => CommonName, (commonName) => commonName.bird, {
         cascade: true,
@@ -100,9 +106,6 @@ export class Bird {
         cascade: true,
     })
     distributions: BirdDistribution[];
-
-    @OneToMany(() => Taxonomy, (taxonomy) => taxonomy.bird, { cascade: true })
-    taxonomy: Taxonomy[];
 
     @ManyToMany(() => Habitat, (habitat) => habitat.birds)
     @JoinTable({

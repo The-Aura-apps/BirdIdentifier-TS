@@ -96,20 +96,20 @@ export class BirdsController {
         });
     }
 
-    @Get('conservation-status/:statusId')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Get birds by conservation status' })
-    @ApiParam({ name: 'statusId', description: 'Conservation status ID' })
-    findByConservationStatus(
-        @Param('statusId') statusId: string,
-        @Query('page') page = '1',
-        @Query('limit') limit = '20',
-    ): Promise<{ data: Bird[]; total: number }> {
-        return this.birdService.findByConservationStatus(+statusId, {
-            page: Number(page),
-            limit: Number(limit),
-        });
-    }
+    // @Get('conservation-status/:statusId')
+    // @HttpCode(HttpStatus.OK)
+    // @ApiOperation({ summary: 'Get birds by conservation status' })
+    // @ApiParam({ name: 'statusId', description: 'Conservation status ID' })
+    // findByConservationStatus(
+    //     @Param('statusId') statusId: string,
+    //     @Query('page') page = '1',
+    //     @Query('limit') limit = '20',
+    // ): Promise<{ data: Bird[]; total: number }> {
+    //     return this.birdService.findByConservationStatus(+statusId, {
+    //         page: Number(page),
+    //         limit: Number(limit),
+    //     });
+    // }
 
     @Get('scientific/:scientificName')
     @HttpCode(HttpStatus.OK)
