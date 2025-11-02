@@ -9,11 +9,17 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateCommonNameDto } from '../../common-names/dto/create-common-name.dto';
+import { CreateTaxonomyDto } from '../../taxonomy/dto/create-taxonomy.dto';
 
 export class CreateBirdDto {
     @IsNotEmpty()
     @IsString()
     scientificName: string;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => CreateTaxonomyDto)
+    taxonomy?: CreateTaxonomyDto;
 
     @IsOptional()
     @IsArray()
@@ -24,31 +30,14 @@ export class CreateBirdDto {
     @IsOptional()
     @IsArray()
     @IsNumber({}, { each: true })
-    habitatIds?: number[]; // Add habitat IDs
+    habitatIds?: number[];
 
-    @IsOptional()
-    @IsString()
-    description?: string;
-
-    @IsOptional()
-    @IsString()
-    behavior?: string;
-
-    @IsOptional()
-    @IsString()
-    nestingHabits?: string;
-
-    @IsOptional()
-    @IsString()
-    feedingHabits?: string;
-
-    @IsOptional()
-    @IsString()
-    eggsDescription?: string;
-
-    @IsOptional()
-    @IsString()
-    coolFacts?: string;
+    @IsOptional() @IsString() description?: string;
+    @IsOptional() @IsString() behavior?: string;
+    @IsOptional() @IsString() nestingHabits?: string;
+    @IsOptional() @IsString() feedingHabits?: string;
+    @IsOptional() @IsString() eggsDescription?: string;
+    @IsOptional() @IsString() coolFacts?: string;
 
     @IsOptional()
     @IsObject()
@@ -62,7 +51,4 @@ export class CreateBirdDto {
     @IsNumber()
     lifeExpectancyYears?: number;
 
-    @IsOptional()
-    @IsNumber()
-    conservationStatusId?: number;
 }
