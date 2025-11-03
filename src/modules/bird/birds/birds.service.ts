@@ -20,6 +20,7 @@ import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
 import { ConservationStatusService } from '../conservation-status/conservation-status.service';
 import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
+import { Taxonomy } from '../taxonomy/entities/taxonomy.entity';
 
 @Injectable()
 export class BirdsService {
@@ -724,7 +725,14 @@ export class BirdsService {
     /**
      * Taxonomy methods
      */
-    async getTaxonomy(birdId: number) {
+    async getTaxonomy(birdId: number): Promise<{
+        bird: {
+            id: number;
+            scientificName: string;
+            commonNames: CommonName[]; 
+        };
+        taxonomy: Taxonomy | null;
+    }> {
         const bird = await this.birdRepo.findOne({
             where: { id: birdId },
             relations: ['taxonomy'],
@@ -739,7 +747,7 @@ export class BirdsService {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
-                commonName: bird.commonNames,
+                commonNames: bird.commonNames || [],
             },
             taxonomy: bird.taxonomy,
         };
@@ -770,7 +778,7 @@ export class BirdsService {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
-                commonNames: bird.commonNames || [], // ✅ Full common name objects
+                commonNames: bird.commonNames || [],
             },
             conservationStatus: bird.conservationStatus,
         };
