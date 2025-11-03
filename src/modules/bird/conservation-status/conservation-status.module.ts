@@ -8,5 +8,6 @@ import { ConservationStatus } from './entities/conservation-status.entity';
     imports: [TypeOrmModule.forFeature([ConservationStatus])],
     controllers: [ConservationStatusController],
     providers: [ConservationStatusService],
+    exports: [ConservationStatusService, TypeOrmModule], 
 })
 export class ConservationStatusModule {}

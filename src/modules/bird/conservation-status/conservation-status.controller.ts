@@ -1,24 +1,28 @@
+// conservation-status/conservation-status.controller.ts
 import {
     Controller,
     Get,
     Post,
     Body,
     Param,
-    Put,
-    Delete,
+    ParseEnumPipe,
     HttpCode,
     HttpStatus,
-    Query,
+    UseInterceptors,
+    ClassSerializerInterceptor,
 } from '@nestjs/common';
+
 import { ConservationStatusService } from './conservation-status.service';
 import {
     ConservationStatus,
     ConservationStatusCode,
 } from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
-import { UpdateConservationStatusDto } from './dto/update-conservation-status.dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Conservation Status')
 @Controller('conservation-status')
+@UseInterceptors(ClassSerializerInterceptor)
 export class ConservationStatusController {
     constructor(
         private readonly conservationStatusService: ConservationStatusService,
@@ -26,46 +30,73 @@ export class ConservationStatusController {
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    create(
-        @Body() createDto: CreateConservationStatusDto,
+    async create(
+        @Body() createConservationStatusDto: CreateConservationStatusDto,
     ): Promise<ConservationStatus> {
-        return this.conservationStatusService.create(createDto);
+        const result = await this.conservationStatusService.findOrCreate(
+            createConservationStatusDto,
+        );
+        if (!result) {
+            throw new Error('Failed to create conservation status');
+        }
+        return result;
     }
 
     @Get()
-    findAll(
-        @Query('page') page = '1',
-        @Query('limit') limit = '20',
-    ): Promise<{ data: ConservationStatus[]; total: number }> {
-        return this.conservationStatusService.findAll({
-            page: Number(page),
-            limit: Number(limit),
-        });
-    }
-
-    @Get(':id')
-    findOne(@Param('id') id: string): Promise<ConservationStatus> {
-        return this.conservationStatusService.findOne(+id);
+    @ApiOperation({
+        summary: 'Get all conservation statuses (sorted by severity)',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'List of all conservation statuses',
+        type: [ConservationStatus],
+    })
+    async findAll(): Promise<ConservationStatus[]> {
+        return this.conservationStatusService.findAll();
     }
 
     @Get('code/:code')
-    findByCode(
-        @Param('code') code: ConservationStatusCode,
+    async findByCode(
+        @Param('code', new ParseEnumPipe(ConservationStatusCode))
+        code: ConservationStatusCode,
     ): Promise<ConservationStatus> {
-        return this.conservationStatusService.findByCode(code);
+        const status = await this.conservationStatusService.findByCode(code);
+        if (!status) {
+            throw new Error(
+                `Conservation status with code "${code}" not found`,
+            );
+        }
+        return status;
     }
 
-    @Put(':id')
-    update(
-        @Param('id') id: string,
-        @Body() updateDto: UpdateConservationStatusDto,
-    ): Promise<ConservationStatus> {
-        return this.conservationStatusService.update(+id, updateDto);
-    }
+    // @Post('seed')
+    // @HttpCode(HttpStatus.CREATED)
+    // async seedDefaultStatuses(): Promise<{ message: string }> {
+    //     await this.conservationStatusService.seedDefaultStatuses();
+    //     return { message: 'Default conservation statuses seeded successfully' };
+    // }
 
-    @Delete(':id')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    remove(@Param('id') id: string): Promise<void> {
-        return this.conservationStatusService.remove(+id);
-    }
+    // @Get('codes')
+    // getAvailableCodes(): {
+    //     code: ConservationStatusCode;
+    //     description: string;
+    // }[] {
+    //     return [
+    //         { code: ConservationStatusCode.EX, description: 'Extinct' },
+    //         {
+    //             code: ConservationStatusCode.EW,
+    //             description: 'Extinct in the Wild',
+    //         },
+    //         {
+    //             code: ConservationStatusCode.CR,
+    //             description: 'Critically Endangered',
+    //         },
+    //         { code: ConservationStatusCode.EN, description: 'Endangered' },
+    //         { code: ConservationStatusCode.VU, description: 'Vulnerable' },
+    //         { code: ConservationStatusCode.NT, description: 'Near Threatened' },
+    //         { code: ConservationStatusCode.LC, description: 'Least Concern' },
+    //         { code: ConservationStatusCode.DD, description: 'Data Deficient' },
+    //         { code: ConservationStatusCode.NE, description: 'Not Evaluated' },
+    //     ];
+    // }
 }

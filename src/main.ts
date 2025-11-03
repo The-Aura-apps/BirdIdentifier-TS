@@ -21,12 +21,12 @@ async function bootstrap() {
         }),
     );
 
-    const config = new DocumentBuilder()
-        .setTitle('My API Docs')
-        .setDescription('Swagger for NestJS')
-        .setVersion('1.0')
-        .addBearerAuth() // For JWT Auth
-        .build();
+ const config = new DocumentBuilder()
+     .setTitle('Bird API')
+     .setDescription('Comprehensive bird information API')
+     .setVersion('1.0')
+     .addTag('birds')
+     .build();
 
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);

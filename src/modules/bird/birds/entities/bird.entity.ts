@@ -76,13 +76,20 @@ export class Bird {
         nullable: true,
         onDelete: 'SET NULL', // Important: Don't cascade delete taxonomies
     })
-    @JoinColumn({ name: 'taxonomy_id' }) // ✅ This tells TypeORM the column name
-    @ApiProperty({ type: () => Taxonomy, required: false })
+    @JoinColumn({ name: 'taxonomy_id' })
+    @ApiProperty({
+        type: () => Taxonomy,
+        required: false,
+    })
     taxonomy: Taxonomy;
 
-    @ManyToOne(() => ConservationStatus, { eager: true, nullable: true })
+    @ManyToOne(() => ConservationStatus, (conservation) => conservation.birds, {
+        eager: true,
+        nullable: true,
+        onDelete: 'SET NULL',
+    })
     @JoinColumn({ name: 'conservation_status_id' })
-    @ApiProperty()
+    @ApiProperty({ type: () => ConservationStatus, required: false })
     conservationStatus: ConservationStatus;
 
     @OneToMany(() => Observation, (observation) => observation.bird)
