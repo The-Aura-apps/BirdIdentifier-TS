@@ -26,22 +26,17 @@ import { CreateBirdFoodDto } from '../bird-foods/dto/create-bird-food.dto';
 import { UpdateBirdFoodDto } from '../bird-foods/dto/update-bird-food.dto';
 import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto';
 import { CreateTaxonomyDto } from '../taxonomy/dto/create-taxonomy.dto';
+import { TaxonomyService } from '../taxonomy/taxonomy.service';
 
 @ApiTags('birds')
 @Controller('birds')
 export class BirdsController {
-    constructor(private readonly birdService: BirdsService) {}
+    constructor(
+        private readonly birdService: BirdsService,
+    ) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Create a new bird' })
-    @ApiResponse({
-        status: 201,
-        description: 'Bird successfully created',
-        type: Bird,
-    })
-    @ApiResponse({ status: 400, description: 'Bad request' })
-    @ApiResponse({ status: 409, description: 'Bird already exists' })
     create(@Body() dto: CreateBirdDto): Promise<Bird> {
         return this.birdService.create(dto);
     }
@@ -82,37 +77,7 @@ export class BirdsController {
         });
     }
 
-    @Get('habitat/:habitatId')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Get birds by habitat' })
-    @ApiParam({ name: 'habitatId', description: 'Habitat ID' })
-    findByHabitat(
-        @Param('habitatId') habitatId: string,
-        @Query('page') page = '1',
-        @Query('limit') limit = '20',
-    ): Promise<{ data: Bird[]; total: number }> {
-        return this.birdService.findByHabitat(+habitatId, {
-            page: Number(page),
-            limit: Number(limit),
-        });
-    }
-
-    // @Get('conservation-status/:statusId')
-    // @HttpCode(HttpStatus.OK)
-    // @ApiOperation({ summary: 'Get birds by conservation status' })
-    // @ApiParam({ name: 'statusId', description: 'Conservation status ID' })
-    // findByConservationStatus(
-    //     @Param('statusId') statusId: string,
-    //     @Query('page') page = '1',
-    //     @Query('limit') limit = '20',
-    // ): Promise<{ data: Bird[]; total: number }> {
-    //     return this.birdService.findByConservationStatus(+statusId, {
-    //         page: Number(page),
-    //         limit: Number(limit),
-    //     });
-    // }
-
-    @Get('scientific/:scientificName')
+    @Get('scientific/:scientific-Name')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Find bird by scientific name' })
     @ApiParam({ name: 'scientificName', description: 'Scientific name' })
@@ -131,8 +96,6 @@ export class BirdsController {
     }
 
     @Put(':id')
-    @ApiOperation({ summary: 'Update bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     update(
         @Param('id') id: string,
         @Body() updateBirdDto: UpdateBirdDto,
@@ -142,8 +105,6 @@ export class BirdsController {
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiOperation({ summary: 'Delete bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     delete(@Param('id') id: string): Promise<void> {
         return this.birdService.remove(id);
     }
@@ -166,8 +127,6 @@ export class BirdsController {
 
     @Post(':id/foods')
     @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Add food to bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     addFood(
         @Param('id') id: string,
         @Body() createBirdFoodDto: CreateBirdFoodDto,
@@ -176,9 +135,6 @@ export class BirdsController {
     }
 
     @Put(':birdId/foods/:foodId')
-    @ApiOperation({ summary: 'Update bird-food relationship' })
-    @ApiParam({ name: 'birdId', description: 'Bird ID' })
-    @ApiParam({ name: 'foodId', description: 'Food ID' })
     updateFood(
         @Param('birdId') birdId: string,
         @Param('foodId') foodId: string,
@@ -189,9 +145,6 @@ export class BirdsController {
 
     @Delete(':birdId/foods/:foodId')
     @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiOperation({ summary: 'Remove food from bird' })
-    @ApiParam({ name: 'birdId', description: 'Bird ID' })
-    @ApiParam({ name: 'foodId', description: 'Food ID' })
     removeFood(
         @Param('birdId') birdId: string,
         @Param('foodId') foodId: string,
@@ -201,9 +154,6 @@ export class BirdsController {
 
     @Patch(':birdId/foods/:foodId/toggle-active')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Toggle food active status' })
-    @ApiParam({ name: 'birdId', description: 'Bird ID' })
-    @ApiParam({ name: 'foodId', description: 'Food ID' })
     toggleFoodActive(
         @Param('birdId') birdId: string,
         @Param('foodId') foodId: string,
@@ -212,6 +162,21 @@ export class BirdsController {
     }
 
     // Habitat relationships
+    @Get('habitat/:habitatId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Get birds by habitat' })
+    @ApiParam({ name: 'habitatId', description: 'Habitat ID' })
+    findByHabitat(
+        @Param('habitatId') habitatId: string,
+        @Query('page') page = '1',
+        @Query('limit') limit = '20',
+    ): Promise<{ data: Bird[]; total: number }> {
+        return this.birdService.findByHabitat(+habitatId, {
+            page: Number(page),
+            limit: Number(limit),
+        });
+    }
+
     @Get(':id/habitats')
     @ApiOperation({ summary: 'Get all habitats for a bird' })
     @ApiParam({ name: 'id', description: 'Bird ID' })
@@ -221,18 +186,12 @@ export class BirdsController {
 
     @Post(':id/habitats/:habitatId')
     @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Add habitat to bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    @ApiParam({ name: 'habitatId', description: 'Habitat ID' })
     addHabitat(@Param('id') id: string, @Param('habitatId') habitatId: string) {
         return this.birdService.addHabitat(+id, +habitatId);
     }
 
     @Delete(':id/habitats/:habitatId')
     @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiOperation({ summary: 'Remove habitat from bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    @ApiParam({ name: 'habitatId', description: 'Habitat ID' })
     removeHabitat(
         @Param('id') id: string,
         @Param('habitatId') habitatId: string,
@@ -275,41 +234,21 @@ export class BirdsController {
         return this.birdService.getTaxonomy(+id);
     }
 
-    // @Patch(':id/taxonomy')
-    // @ApiOperation({ summary: 'Update or add taxonomy to a bird' })
-    // @ApiParam({ name: 'id', description: 'Bird ID' })
-    // @ApiResponse({
-    //     status: 200,
-    //     description: 'Taxonomy updated successfully',
-    // })
-    // updateTaxonomy(
-    //     @Param('id') id: string,
-    //     @Body() taxonomyDto: CreateTaxonomyDto,
-    // ): Promise<Bird> {
-    //     return this.birdService.updateTaxonomy(+id, taxonomyDto);
-    // }
-
-    // @Delete(':id/taxonomy')
-    // @HttpCode(HttpStatus.NO_CONTENT)
-    // @ApiOperation({ summary: 'Remove taxonomy from a bird' })
-    // @ApiParam({ name: 'id', description: 'Bird ID' })
-    // removeTaxonomy(@Param('id') id: string): Promise<void> {
-    //     return this.birdService.removeTaxonomy(+id);
-    // }
-
-    // @Get('without-taxonomy')
-    // @ApiOperation({ summary: 'Get all birds without taxonomy' })
-    // @ApiQuery({ name: 'page', required: false, type: Number })
-    // @ApiQuery({ name: 'limit', required: false, type: Number })
-    // findBirdsWithoutTaxonomy(
-    //     @Query('page') page = '1',
-    //     @Query('limit') limit = '20',
-    // ): Promise<{ data: Bird[]; total: number }> {
-    //     return this.birdService.findBirdsWithoutTaxonomy({
-    //         page: Number(page),
-    //         limit: Number(limit),
-    //     });
-    // }
+    // Conservation Status
+    @Get(':id/conservation-status')
+    @ApiOperation({ summary: 'Get conservation status for a bird' })
+    @ApiParam({ name: 'id', description: 'Bird ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns the conservation status of the bird',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Bird not found',
+    })
+    getConservationStatus(@Param('id') id: string) {
+        return this.birdService.getConservationStatus(+id);
+    }
 
     // Distributions
     @Get(':id/distributions')

@@ -10,6 +10,7 @@ import {
 import { Type } from 'class-transformer';
 import { CreateCommonNameDto } from '../../common-names/dto/create-common-name.dto';
 import { CreateTaxonomyDto } from '../../taxonomy/dto/create-taxonomy.dto';
+import { CreateConservationStatusDto } from '../../conservation-status/dto/create-conservation-status.dto';
 
 export class CreateBirdDto {
     @IsNotEmpty()
@@ -20,6 +21,11 @@ export class CreateBirdDto {
     @ValidateNested()
     @Type(() => CreateTaxonomyDto)
     taxonomy?: CreateTaxonomyDto;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => CreateConservationStatusDto)
+    conservationStatus?: CreateConservationStatusDto;
 
     @IsOptional()
     @IsArray()
@@ -50,5 +56,4 @@ export class CreateBirdDto {
     @IsOptional()
     @IsNumber()
     lifeExpectancyYears?: number;
-
 }

@@ -18,6 +18,8 @@ import { CommonName } from '../common-names/entities/common-name.entity';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
+import { ConservationStatusService } from '../conservation-status/conservation-status.service';
+import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
 
 @Injectable()
 export class BirdsService {
@@ -33,6 +35,7 @@ export class BirdsService {
         @InjectRepository(CommonName)
         private readonly commonNameRepo: Repository<CommonName>,
         private readonly taxonomyService: TaxonomyService,
+        private readonly conservationStatusService: ConservationStatusService,
         private readonly birdInfoWrapper: BirdInfoWrapper,
     ) {}
 
@@ -40,7 +43,12 @@ export class BirdsService {
      * Create a new bird record
      */
     async create(createBirdDto: CreateBirdDto): Promise<Bird> {
-        const { scientificName, taxonomy: taxDto, ...rest } = createBirdDto;
+        const {
+            scientificName,
+            taxonomy: taxDto,
+            conservationStatus: consDto,
+            ...rest
+        } = createBirdDto;
 
         if (!scientificName) {
             throw new BadRequestException('Scientific name is required');
@@ -62,10 +70,18 @@ export class BirdsService {
             taxonomy = await this.taxonomyService.findOrCreate(taxDto);
         }
 
+        // Handle conservation status find-or-create
+        let conservationStatus;
+        if (consDto) {
+            conservationStatus =
+                await this.conservationStatusService.findOrCreate(consDto);
+        }
+
         // Create the bird entity - taxonomy is a SINGLE object, not an array!
         const bird = this.birdRepo.create({
             scientificName,
             taxonomy, // Assign directly (ManyToOne relationship)
+            conservationStatus,
             ...rest,
         });
 
@@ -77,9 +93,9 @@ export class BirdsService {
             where: { id: saved.id },
             relations: [
                 'taxonomy',
+                'conservationStatus',
                 'commonNames',
                 'media',
-                'conservationStatus',
                 'habitats',
                 'distributions',
                 'birdFoods',
@@ -374,26 +390,6 @@ export class BirdsService {
     }
 
     /**
-     * Get birds by conservation status
-     */
-    // async findByConservationStatus(
-    //     statusId: number,
-    //     options: { page?: number; limit?: number } = {},
-    // ): Promise<{ data: Bird[]; total: number }> {
-    //     const { page = 1, limit = 20 } = options;
-
-    //     const [data, total] = await this.birdRepo.findAndCount({
-    //         where: { conservationStatus: statusId },
-    //         relations: ['media', 'commonNames', 'conservationStatus'],
-    //         skip: (page - 1) * limit,
-    //         take: limit,
-    //         order: { scientificName: 'ASC' },
-    //     });
-
-    //     return { data, total };
-    // }
-
-    /**
      * Enrich bird data with additional information
      */
     private async enrichBirdData(
@@ -439,29 +435,9 @@ export class BirdsService {
             this.logger.log(`Bird data enriched: ${birdId}`);
         }
 
-        if (birdInfo.commonNames && birdInfo.commonNames.length > 0) {
-            await this.handleCommonNames(birdId, birdInfo.commonNames);
-        }
-    }
-
-    /**
-     * Handle common names separately
-     */
-    private async handleCommonNames(
-        birdId: number,
-        commonNames: CommonName[],
-    ): Promise<void> {
-        // Remove existing common names
-        await this.commonNameRepo.delete({ birdId });
-
-        // Create new common names
-        for (const commonName of commonNames) {
-            const newCommonName = this.commonNameRepo.create({
-                ...commonName,
-                birdId,
-            });
-            await this.commonNameRepo.save(newCommonName);
-        }
+        // if (birdInfo.commonNames && birdInfo.commonNames.length > 0) {
+        //     await this.handleCommonNames(birdId, birdInfo.commonNames);
+        // }
     }
 
     /**
@@ -766,6 +742,37 @@ export class BirdsService {
                 commonName: bird.commonNames,
             },
             taxonomy: bird.taxonomy,
+        };
+    }
+
+    /**
+     * Get conservation status for a bird
+     */
+    async getConservationStatus(birdId: number): Promise<{
+        bird: {
+            id: number;
+            scientificName: string;
+            commonNames: CommonName[]; // Full objects
+        };
+        conservationStatus: ConservationStatus | null;
+    }> {
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+            relations: ['conservationStatus', 'commonNames'],
+            select: ['id', 'scientificName'],
+        });
+
+        if (!bird) {
+            throw new NotFoundException(`Bird with ID ${birdId} not found`);
+        }
+
+        return {
+            bird: {
+                id: bird.id,
+                scientificName: bird.scientificName,
+                commonNames: bird.commonNames || [], // ✅ Full common name objects
+            },
+            conservationStatus: bird.conservationStatus,
         };
     }
 

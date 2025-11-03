@@ -14,6 +14,8 @@ import { CommonNamesModule } from '../common-names/common-names.module';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
 import { Taxonomy } from '../taxonomy/entities/taxonomy.entity';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
+import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
+import { ConservationStatusModule } from '../conservation-status/conservation-status.module';
 
 @Module({
     imports: [
@@ -25,6 +27,7 @@ import { TaxonomyModule } from '../taxonomy/taxonomy.module';
             Habitat,
         ]),
         TaxonomyModule,
+        ConservationStatusModule,
         forwardRef(() => ObservationsModule),
         BirdFoodsModule,
         HabitatsModule,
