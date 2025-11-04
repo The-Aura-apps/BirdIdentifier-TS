@@ -14,19 +14,27 @@ import { CommonName } from './entities/common-name.entity';
 import { CreateCommonNameDto } from './dto/create-common-name.dto';
 import { UpdateCommonNameDto } from './dto/update-common-name.dto';
 
-@Controller('commonNames')
+@Controller('common-names')
 export class CommonNamesController {
-    constructor(private readonly commonNamesService: CommonNamesService) {}
+    constructor(
+        private readonly commonNamesService: CommonNamesService,
+    ) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    create(@Body() createDto: CreateCommonNameDto): Promise<CommonName> {
+    create(
+        @Body() createDto: CreateCommonNameDto,
+    ): Promise<CommonName> {
         return this.commonNamesService.create(createDto);
     }
 
     @Get('bird/:birdId')
-    findByBirdId(@Param('birdId') birdId: string): Promise<CommonName[]> {
-        return this.commonNamesService.findByBirdId(+birdId);
+    findByBirdId(
+        @Param('birdId') birdId: string,
+    ): Promise<CommonName[]> {
+        return this.commonNamesService.findByBirdId(
+            +birdId,
+        );
     }
 
     @Get(':id')
@@ -39,7 +47,10 @@ export class CommonNamesController {
         @Param('id') id: string,
         @Body() updateDto: UpdateCommonNameDto,
     ): Promise<CommonName> {
-        return this.commonNamesService.update(+id, updateDto);
+        return this.commonNamesService.update(
+            +id,
+            updateDto,
+        );
     }
 
     @Delete(':id')

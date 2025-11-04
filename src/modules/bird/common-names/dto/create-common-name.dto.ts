@@ -1,4 +1,8 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+    IsString,
+    IsNotEmpty,
+    IsOptional,
+} from 'class-validator';
 
 // Use this for standalone creation via API
 export class CreateCommonNameDto {
