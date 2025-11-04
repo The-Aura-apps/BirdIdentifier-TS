@@ -4,17 +4,26 @@ import {
     Logger,
     BadRequestException,
 } from '@nestjs/common';
-import { Observation, ObservationStatus } from './entities/observation.entity';
+import {
+    Observation,
+    ObservationStatus,
+} from './entities/observation.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BirdsService } from 'src/modules/bird/birds/birds.service';
 import { AiService } from 'src/modules/ai/ai.service';
 import { CreateObservationDto } from './dto/create-observation.dto';
-import { BirdAiResponse, isIdentified, isFailed } from 'src/modules/ai/types';
+import {
+    BirdAiResponse,
+    isIdentified,
+    isFailed,
+} from 'src/modules/ai/types';
 
 @Injectable()
 export class ObservationsService {
-    private readonly logger = new Logger(ObservationsService.name);
+    private readonly logger = new Logger(
+        ObservationsService.name,
+    );
 
     constructor(
         @InjectRepository(Observation)
@@ -28,7 +37,9 @@ export class ObservationsService {
         to: ObservationStatus,
     ): boolean {
         const validTransitions = {
-            [ObservationStatus.PENDING]: [ObservationStatus.PROCESSING],
+            [ObservationStatus.PENDING]: [
+                ObservationStatus.PROCESSING,
+            ],
             [ObservationStatus.PROCESSING]: [
                 ObservationStatus.COMPLETED,
                 ObservationStatus.FAILED,
@@ -36,18 +47,26 @@ export class ObservationsService {
             [ObservationStatus.COMPLETED]: [],
             //    [ObservationStatus.FAILED]: [ObservationStatus.PENDING], // Allow retries func is commented in butt
         };
-        return validTransitions[from]?.includes(to) ?? false;
+        return (
+            validTransitions[from]?.includes(to) ?? false
+        );
     }
 
     /**
      * Create an observation from API input
      */
-    async create(dto: CreateObservationDto): Promise<Observation> {
-        this.logger.log(`Creating observation for device: ${dto.deviceId}`);
+    async create(
+        dto: CreateObservationDto,
+    ): Promise<Observation> {
+        this.logger.log(
+            `Creating observation for device: ${dto.deviceId}`,
+        );
 
         // Validate upload exists and has file data
         if (!dto.uploadId) {
-            throw new BadRequestException('Upload ID is required');
+            throw new BadRequestException(
+                'Upload ID is required',
+            );
         }
 
         const observation = this.observationsRepo.create({
@@ -57,15 +76,18 @@ export class ObservationsService {
             status: ObservationStatus.PENDING,
         });
 
-        const saved = await this.observationsRepo.save(observation);
+        const saved =
+            await this.observationsRepo.save(observation);
         this.logger.log(`Observation created: ${saved.id}`);
 
         // Start background processing
-        this.processObservationBackground(saved.id).catch((err) => {
-            this.logger.error(
-                `Background processing failed for observation ${saved.id}: ${err.message}`,
-            );
-        });
+        this.processObservationBackground(saved.id).catch(
+            (err) => {
+                this.logger.error(
+                    `Background processing failed for observation ${saved.id}: ${err.message}`,
+                );
+            },
+        );
 
         return saved;
     }
@@ -73,9 +95,13 @@ export class ObservationsService {
     /**
      * Process observation in background
      */
-    private async processObservationBackground(id: string): Promise<void> {
+    private async processObservationBackground(
+        id: string,
+    ): Promise<void> {
         // Small delay to ensure the initial response is sent
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) =>
+            setTimeout(resolve, 100),
+        );
 
         try {
             await this.processObservation(id);
@@ -93,13 +119,16 @@ export class ObservationsService {
     private async processObservation(id: string) {
         this.logger.log(`Processing observation: ${id}`);
 
-        const observation = await this.observationsRepo.findOne({
-            where: { id },
-            relations: ['upload'],
-        });
+        const observation =
+            await this.observationsRepo.findOne({
+                where: { id },
+                relations: ['upload'],
+            });
 
         if (!observation) {
-            this.logger.warn(`Observation not found for processing: ${id}`);
+            this.logger.warn(
+                `Observation not found for processing: ${id}`,
+            );
             return;
         }
 
@@ -125,8 +154,13 @@ export class ObservationsService {
                 observation.type,
             );
 
-            await this.handleAiResponse(observation, aiResponse);
-            this.logger.log(`Observation processed successfully: ${id}`);
+            await this.handleAiResponse(
+                observation,
+                aiResponse,
+            );
+            this.logger.log(
+                `Observation processed successfully: ${id}`,
+            );
         } catch (err) {
             this.logger.error(
                 `Failed to process observation ${id}: ${err.message}`,
@@ -151,11 +185,15 @@ export class ObservationsService {
         if (isIdentified(aiResponse)) {
             try {
                 // Find or create bird with enriched data
-                const bird = await this.birdService.findOrCreate(
-                    aiResponse.result.scientificName,
-                );
+                const bird =
+                    await this.birdService.findOrCreate(
+                        aiResponse.result.scientificName,
+                    );
 
-                observation.markAsCompleted(bird, aiResponse);
+                observation.markAsCompleted(
+                    bird,
+                    aiResponse,
+                );
             } catch (birdError) {
                 this.logger.error(
                     `Failed to process bird for observation ${observation.id}: ${birdError.message}`,
@@ -167,7 +205,8 @@ export class ObservationsService {
             }
         } else if (aiResponse.status === 'uncertain') {
             // Store uncertain result but don't link to a bird
-            observation.status = ObservationStatus.COMPLETED;
+            observation.status =
+                ObservationStatus.COMPLETED;
             observation.aiResult = aiResponse;
             observation.confidence = aiResponse.confidence;
             observation.bird = null;
@@ -190,7 +229,9 @@ export class ObservationsService {
         });
     }
 
-    async findByDevice(deviceId: string): Promise<Observation[]> {
+    async findByDevice(
+        deviceId: string,
+    ): Promise<Observation[]> {
         return await this.observationsRepo.find({
             where: { deviceId },
             relations: ['bird', 'upload'],
@@ -199,13 +240,16 @@ export class ObservationsService {
     }
 
     async findOne(id: string): Promise<Observation> {
-        const observation = await this.observationsRepo.findOne({
-            where: { id },
-            relations: ['bird', 'upload'],
-        });
+        const observation =
+            await this.observationsRepo.findOne({
+                where: { id },
+                relations: ['bird', 'upload'],
+            });
 
         if (!observation) {
-            throw new NotFoundException(`Observation ${id} not found`);
+            throw new NotFoundException(
+                `Observation ${id} not found`,
+            );
         }
         return observation;
     }
@@ -216,8 +260,16 @@ export class ObservationsService {
     ): Promise<Observation> {
         const obs = await this.findOne(id);
 
-        if (partial.status && partial.status !== obs.status) {
-            if (!this.validateStatusTransition(obs.status, partial.status)) {
+        if (
+            partial.status &&
+            partial.status !== obs.status
+        ) {
+            if (
+                !this.validateStatusTransition(
+                    obs.status,
+                    partial.status,
+                )
+            ) {
                 throw new BadRequestException(
                     `Invalid status transition from ${obs.status} to ${partial.status}`,
                 );
@@ -228,7 +280,9 @@ export class ObservationsService {
         delete partial['createdAt'];
         delete partial['uploadId'];
 
-        Object.assign(obs, partial, { updatedAt: new Date() });
+        Object.assign(obs, partial, {
+            updatedAt: new Date(),
+        });
         return this.observationsRepo.save(obs);
     }
 

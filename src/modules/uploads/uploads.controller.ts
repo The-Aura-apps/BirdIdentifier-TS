@@ -15,7 +15,9 @@ import type { FileUploadDto } from './dto/upload.dto';
 
 @Controller('uploads')
 export class UploadsController {
-    constructor(private readonly uploadsService: UploadsService) {}
+    constructor(
+        private readonly uploadsService: UploadsService,
+    ) {}
 
     @Post()
     @UseInterceptors(FileInterceptor('file'))
@@ -36,7 +38,10 @@ export class UploadsController {
     }
 
     @Get(':id')
-    async downloadFile(@Param('id') id: number, @Res() res: Response) {
+    async downloadFile(
+        @Param('id') id: number,
+        @Res() res: Response,
+    ) {
         const file = await this.uploadsService.getFile(id);
         res.setHeader('Content-Type', file.mimeType);
         res.setHeader(

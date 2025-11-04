@@ -16,11 +16,15 @@ import { CreateObservationDto } from './dto/create-observation.dto';
 
 @Controller('observations')
 export class ObservationsController {
-    constructor(private readonly observationsService: ObservationsService) {}
+    constructor(
+        private readonly observationsService: ObservationsService,
+    ) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    create(@Body() dto: CreateObservationDto): Promise<Observation> {
+    create(
+        @Body() dto: CreateObservationDto,
+    ): Promise<Observation> {
         return this.observationsService.create(dto);
     }
 
@@ -35,8 +39,12 @@ export class ObservationsController {
     }
 
     @Get('device/:deviceId')
-    findByDevice(@Param('deviceId') deviceId: string): Promise<Observation[]> {
-        return this.observationsService.findByDevice(deviceId);
+    findByDevice(
+        @Param('deviceId') deviceId: string,
+    ): Promise<Observation[]> {
+        return this.observationsService.findByDevice(
+            deviceId,
+        );
     }
 
     @Patch(':id')

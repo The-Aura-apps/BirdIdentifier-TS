@@ -1,4 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+    ApiProperty,
+    ApiPropertyOptional,
+} from '@nestjs/swagger';
 import {
     IsEnum,
     IsString,
@@ -29,14 +32,16 @@ export class CreateConservationStatusDto {
     fullName: string;
 
     @ApiPropertyOptional({
-        description: 'Description of what this status means',
+        description:
+            'Description of what this status means',
     })
     @IsOptional()
     @IsString()
     description?: string;
 
     @ApiProperty({
-        description: 'Severity ranking (higher = more threatened) 0 to 9',
+        description:
+            'Severity ranking (higher = more threatened) 0 to 9',
         example: 0,
         minimum: 0,
         maximum: 9,

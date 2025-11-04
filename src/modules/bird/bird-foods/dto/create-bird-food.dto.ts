@@ -1,4 +1,8 @@
-import { IsNumber, IsBoolean, IsOptional } from 'class-validator';
+import {
+    IsNumber,
+    IsBoolean,
+    IsOptional,
+} from 'class-validator';
 
 export class CreateBirdFoodDto {
     @IsNumber()

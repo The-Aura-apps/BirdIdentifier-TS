@@ -35,7 +35,9 @@ export class FoodService {
         const food = this.foodRepo.create(createDto);
         const saved = await this.foodRepo.save(food);
 
-        this.logger.log(`Food created: ${saved.id} - ${saved.name}`);
+        this.logger.log(
+            `Food created: ${saved.id} - ${saved.name}`,
+        );
         return saved;
     }
 
@@ -44,11 +46,12 @@ export class FoodService {
     ): Promise<{ data: Food[]; total: number }> {
         const { page = 1, limit = 20 } = options;
 
-        const [data, total] = await this.foodRepo.findAndCount({
-            skip: (page - 1) * limit,
-            take: limit,
-            order: { name: 'ASC' },
-        });
+        const [data, total] =
+            await this.foodRepo.findAndCount({
+                skip: (page - 1) * limit,
+                take: limit,
+                order: { name: 'ASC' },
+            });
 
         return { data, total };
     }
@@ -60,7 +63,9 @@ export class FoodService {
         });
 
         if (!food) {
-            throw new NotFoundException(`Food with ID ${id} not found`);
+            throw new NotFoundException(
+                `Food with ID ${id} not found`,
+            );
         }
 
         return food;
@@ -73,16 +78,24 @@ export class FoodService {
         });
 
         if (!food) {
-            throw new NotFoundException(`Food with name "${name}" not found`);
+            throw new NotFoundException(
+                `Food with name "${name}" not found`,
+            );
         }
 
         return food;
     }
 
-    async update(id: number, updateDto: UpdateFoodDto): Promise<Food> {
+    async update(
+        id: number,
+        updateDto: UpdateFoodDto,
+    ): Promise<Food> {
         const food = await this.findOne(id);
 
-        if (updateDto.name && updateDto.name !== food.name) {
+        if (
+            updateDto.name &&
+            updateDto.name !== food.name
+        ) {
             const existing = await this.foodRepo.findOne({
                 where: { name: updateDto.name },
             });
@@ -97,7 +110,9 @@ export class FoodService {
         Object.assign(food, updateDto);
         const updated = await this.foodRepo.save(food);
 
-        this.logger.log(`Food updated: ${updated.id} - ${updated.name}`);
+        this.logger.log(
+            `Food updated: ${updated.id} - ${updated.name}`,
+        );
         return updated;
     }
 
@@ -132,11 +147,15 @@ export class FoodService {
         });
 
         if (!food) {
-            throw new NotFoundException(`Food with ID ${id} not found`);
+            throw new NotFoundException(
+                `Food with ID ${id} not found`,
+            );
         }
 
         // Only return active relationships
-        const activeRelations = food.birdFoods.filter((bf) => bf.isActive);
+        const activeRelations = food.birdFoods.filter(
+            (bf) => bf.isActive,
+        );
 
         return {
             food: {
@@ -161,7 +180,9 @@ export class FoodService {
             .createQueryBuilder('food')
             .innerJoin('food.birdFoods', 'birdFood')
             .where('food.id = :id', { id })
-            .andWhere('birdFood.isActive = :isActive', { isActive: true })
+            .andWhere('birdFood.isActive = :isActive', {
+                isActive: true,
+            })
             .getCount();
 
         if (activeBirdRelations > 0) {
@@ -172,7 +193,9 @@ export class FoodService {
 
         // In a real scenario, you might have an 'active' field on Food entity
         // For now, we'll just return the food as we don't have an active field
-        this.logger.log(`Toggle active requested for food: ${id}`);
+        this.logger.log(
+            `Toggle active requested for food: ${id}`,
+        );
         return food;
     }
 }

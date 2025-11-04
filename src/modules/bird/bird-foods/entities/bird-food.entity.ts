@@ -21,11 +21,15 @@ export class BirdFood {
     @Column({ name: 'food_id' })
     foodId: number;
 
-    @ManyToOne(() => Bird, (bird) => bird.birdFoods, { onDelete: 'CASCADE' })
+    @ManyToOne(() => Bird, (bird) => bird.birdFoods, {
+        onDelete: 'CASCADE',
+    })
     @JoinColumn({ name: 'bird_id' })
     bird: Bird;
 
-    @ManyToOne(() => Food, (food) => food.birdFoods, { onDelete: 'CASCADE' })
+    @ManyToOne(() => Food, (food) => food.birdFoods, {
+        onDelete: 'CASCADE',
+    })
     @JoinColumn({ name: 'food_id' })
     food: Food;
 

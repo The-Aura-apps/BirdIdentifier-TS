@@ -67,15 +67,24 @@ export class Bird {
         weightGrams: { min: number; max: number };
     };
 
-    @Column({ type: 'decimal', precision: 4, scale: 1, nullable: true })
+    @Column({
+        type: 'decimal',
+        precision: 4,
+        scale: 1,
+        nullable: true,
+    })
     @ApiProperty()
     lifeExpectancyYears: number;
 
-    @ManyToOne(() => Taxonomy, (taxonomy) => taxonomy.birds, {
-        eager: true,
-        nullable: true,
-        onDelete: 'SET NULL', // Important: Don't cascade delete taxonomies
-    })
+    @ManyToOne(
+        () => Taxonomy,
+        (taxonomy) => taxonomy.birds,
+        {
+            eager: true,
+            nullable: true,
+            onDelete: 'SET NULL', // Important: Don't cascade delete taxonomies
+        },
+    )
     @JoinColumn({ name: 'taxonomy_id' })
     @ApiProperty({
         type: () => Taxonomy,
@@ -83,42 +92,72 @@ export class Bird {
     })
     taxonomy: Taxonomy;
 
-    @ManyToOne(() => ConservationStatus, (conservation) => conservation.birds, {
-        eager: true,
-        nullable: true,
-        onDelete: 'SET NULL',
-    })
+    @ManyToOne(
+        () => ConservationStatus,
+        (conservation) => conservation.birds,
+        {
+            eager: true,
+            nullable: true,
+            onDelete: 'SET NULL',
+        },
+    )
     @JoinColumn({ name: 'conservation_status_id' })
-    @ApiProperty({ type: () => ConservationStatus, required: false })
+    @ApiProperty({
+        type: () => ConservationStatus,
+        required: false,
+    })
     conservationStatus: ConservationStatus;
 
-    @OneToMany(() => CommonName, (commonName) => commonName.bird, {
-        cascade: true,
-    })
+    @OneToMany(
+        () => CommonName,
+        (commonName) => commonName.bird,
+        {
+            cascade: true,
+        },
+    )
     @ApiProperty({ type: () => [CommonName] })
     commonNames: CommonName[];
-    
-    @OneToMany(() => Observation, (observation) => observation.bird)
+
+    @OneToMany(
+        () => Observation,
+        (observation) => observation.bird,
+    )
     observations: Observation[];
 
-    @OneToMany(() => Media, (media) => media.bird, { cascade: true })
+    @OneToMany(() => Media, (media) => media.bird, {
+        cascade: true,
+    })
     @ApiProperty({ type: () => [Media] })
     media: Media[];
 
-    @OneToMany(() => BirdFood, (birdFood) => birdFood.bird, { cascade: true })
+    @OneToMany(
+        () => BirdFood,
+        (birdFood) => birdFood.bird,
+        { cascade: true },
+    )
     @ApiProperty({ type: () => [BirdFood] })
     birdFoods: BirdFood[];
 
-    @OneToMany(() => BirdDistribution, (distribution) => distribution.bird, {
-        cascade: true,
-    })
+    @OneToMany(
+        () => BirdDistribution,
+        (distribution) => distribution.bird,
+        {
+            cascade: true,
+        },
+    )
     distributions: BirdDistribution[];
 
     @ManyToMany(() => Habitat, (habitat) => habitat.birds)
     @JoinTable({
         name: 'bird_habitats',
-        joinColumn: { name: 'bird_id', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'habitat_id', referencedColumnName: 'id' },
+        joinColumn: {
+            name: 'bird_id',
+            referencedColumnName: 'id',
+        },
+        inverseJoinColumn: {
+            name: 'habitat_id',
+            referencedColumnName: 'id',
+        },
     })
     habitats: Habitat[];
 

@@ -20,7 +20,11 @@ export class Food {
     @Column({ type: 'text', nullable: true })
     description: string;
 
-    @Column({ type: 'varchar', length: 500, nullable: true })
+    @Column({
+        type: 'varchar',
+        length: 500,
+        nullable: true,
+    })
     imageStorageKey: string;
 
     @OneToMany(() => BirdFood, (birdFood) => birdFood.food)

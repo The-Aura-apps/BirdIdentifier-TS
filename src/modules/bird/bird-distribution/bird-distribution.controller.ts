@@ -29,12 +29,18 @@ export class BirdDistributionController {
     }
 
     @Get('bird/:birdId')
-    findByBirdId(@Param('birdId') birdId: string): Promise<BirdDistribution[]> {
-        return this.distributionService.findByBirdId(+birdId);
+    findByBirdId(
+        @Param('birdId') birdId: string,
+    ): Promise<BirdDistribution[]> {
+        return this.distributionService.findByBirdId(
+            +birdId,
+        );
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string): Promise<BirdDistribution> {
+    findOne(
+        @Param('id') id: string,
+    ): Promise<BirdDistribution> {
         return this.distributionService.findOne(+id);
     }
 
@@ -43,7 +49,10 @@ export class BirdDistributionController {
         @Param('id') id: string,
         @Body() updateDto: UpdateBirdDistributionDto,
     ): Promise<BirdDistribution> {
-        return this.distributionService.update(+id, updateDto);
+        return this.distributionService.update(
+            +id,
+            updateDto,
+        );
     }
 
     @Delete(':id')

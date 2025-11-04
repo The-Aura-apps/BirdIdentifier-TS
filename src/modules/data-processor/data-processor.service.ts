@@ -80,12 +80,16 @@ interface ProcessedBirdData {
 
 @Injectable()
 export class DataProcessorService {
-    private readonly logger = new Logger(DataProcessorService.name);
+    private readonly logger = new Logger(
+        DataProcessorService.name,
+    );
 
     /**
      * Process and normalize data from multiple sources
      */
-    processCollectedData(sources: SourceData[]): ProcessedBirdData {
+    processCollectedData(
+        sources: SourceData[],
+    ): ProcessedBirdData {
         const processed: ProcessedBirdData = {
             basic: {
                 scientificName: '',
@@ -108,7 +112,10 @@ export class DataProcessorService {
 
             try {
                 if (source.source === 'OpenAI') {
-                    this.processOpenAiData(source.data, processed);
+                    this.processOpenAiData(
+                        source.data,
+                        processed,
+                    );
                 } else {
                     //this.logger.warn(`Unknown source type: ${source.source}`);
                 }
@@ -124,12 +131,19 @@ export class DataProcessorService {
         processed.commonNames = this.deduplicateCommonNames(
             processed.commonNames,
         );
-        processed.media = this.deduplicateMedia(processed.media);
-        processed.distributions = this.deduplicateDistributions(
-            processed.distributions,
+        processed.media = this.deduplicateMedia(
+            processed.media,
         );
-        processed.habitats = [...new Set(processed.habitats)];
-        processed.birdFoods = [...new Set(processed.birdFoods)];
+        processed.distributions =
+            this.deduplicateDistributions(
+                processed.distributions,
+            );
+        processed.habitats = [
+            ...new Set(processed.habitats),
+        ];
+        processed.birdFoods = [
+            ...new Set(processed.birdFoods),
+        ];
 
         return processed;
     }
@@ -142,8 +156,12 @@ export class DataProcessorService {
         processed: ProcessedBirdData,
     ): void {
         // Update basic information
-        if (data.scientificName && !processed.basic.scientificName) {
-            processed.basic.scientificName = data.scientificName;
+        if (
+            data.scientificName &&
+            !processed.basic.scientificName
+        ) {
+            processed.basic.scientificName =
+                data.scientificName;
         }
 
         if (data.description) {
@@ -155,22 +173,30 @@ export class DataProcessorService {
         }
 
         if (data.nestingHabits) {
-            processed.basic.nestingHabits = data.nestingHabits;
+            processed.basic.nestingHabits =
+                data.nestingHabits;
         }
 
         if (data.feedingHabits) {
-            processed.basic.feedingHabits = data.feedingHabits;
+            processed.basic.feedingHabits =
+                data.feedingHabits;
         }
 
         if (data.eggsDescription) {
-            processed.basic.eggsDescription = data.eggsDescription;
+            processed.basic.eggsDescription =
+                data.eggsDescription;
         }
 
-        if (data.coolFacts && Array.isArray(data.coolFacts)) {
+        if (
+            data.coolFacts &&
+            Array.isArray(data.coolFacts)
+        ) {
             if (!processed.basic.coolFacts) {
                 processed.basic.coolFacts = [];
             }
-            processed.basic.coolFacts.push(...data.coolFacts);
+            processed.basic.coolFacts.push(
+                ...data.coolFacts,
+            );
         }
 
         // Process size measurements
@@ -183,7 +209,8 @@ export class DataProcessorService {
         }
 
         if (data.lifeExpectancyYears) {
-            processed.basic.lifeExpectancyYears = data.lifeExpectancyYears;
+            processed.basic.lifeExpectancyYears =
+                data.lifeExpectancyYears;
         }
 
         // Process taxonomy
@@ -205,7 +232,10 @@ export class DataProcessorService {
         }
 
         // Process common names
-        if (data.commonNames && Array.isArray(data.commonNames)) {
+        if (
+            data.commonNames &&
+            Array.isArray(data.commonNames)
+        ) {
             data.commonNames.forEach((nameObj, index) => {
                 processed.commonNames.push({
                     name: nameObj.name,
@@ -229,11 +259,15 @@ export class DataProcessorService {
         }
 
         // Process foods/diet - BirdFood is a join table, extract food.name
-        if (data.birdFoods && Array.isArray(data.birdFoods)) {
+        if (
+            data.birdFoods &&
+            Array.isArray(data.birdFoods)
+        ) {
             const foodNames = data.birdFoods
                 .map((birdFood): string => {
                     // BirdFood has a food property that contains the actual Food entity
-                    if (typeof birdFood === 'string') return birdFood;
+                    if (typeof birdFood === 'string')
+                        return birdFood;
                     // Access the nested food.name
                     return birdFood.food?.name || '';
                 })
@@ -254,7 +288,9 @@ export class DataProcessorService {
     /**
      * Deduplicate common names
      */
-    private deduplicateCommonNames(names: CommonName[]): CommonName[] {
+    private deduplicateCommonNames(
+        names: CommonName[],
+    ): CommonName[] {
         const seen = new Set<string>();
         return names.filter((name) => {
             const key = `${name.name}-${name.language}`;
@@ -267,7 +303,9 @@ export class DataProcessorService {
     /**
      * Deduplicate media entries
      */
-    private deduplicateMedia(media: MediaItem[]): MediaItem[] {
+    private deduplicateMedia(
+        media: MediaItem[],
+    ): MediaItem[] {
         const seen = new Set<string>();
         return media.filter((item) => {
             if (seen.has(item.url)) return false;

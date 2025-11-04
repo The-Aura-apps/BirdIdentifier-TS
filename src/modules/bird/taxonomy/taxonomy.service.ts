@@ -6,7 +6,9 @@ import { CreateTaxonomyDto } from './dto/create-taxonomy.dto';
 
 @Injectable()
 export class TaxonomyService {
-    private readonly logger = new Logger(TaxonomyService.name);
+    private readonly logger = new Logger(
+        TaxonomyService.name,
+    );
 
     constructor(
         @InjectRepository(Taxonomy)
@@ -16,7 +18,9 @@ export class TaxonomyService {
     /**
      * Find or create taxonomy
      */
-    async findOrCreate(dto: CreateTaxonomyDto): Promise<Taxonomy> {
+    async findOrCreate(
+        dto: CreateTaxonomyDto,
+    ): Promise<Taxonomy> {
         const where = {
             phylum: dto.phylum ?? 'Chordata',
             class: dto.class ?? 'Aves',
@@ -25,7 +29,9 @@ export class TaxonomyService {
             genus: dto.genus,
         };
 
-        let taxonomy = await this.taxonomyRepo.findOne({ where });
+        let taxonomy = await this.taxonomyRepo.findOne({
+            where,
+        });
 
         if (taxonomy) {
             return taxonomy;
@@ -74,11 +80,16 @@ export class TaxonomyService {
     }): Promise<{ data: Taxonomy[]; total: number }> {
         const { page = 1, limit = 20 } = options;
 
-        const [data, total] = await this.taxonomyRepo.findAndCount({
-            skip: (page - 1) * limit,
-            take: limit,
-            order: { order: 'ASC', family: 'ASC', genus: 'ASC' },
-        });
+        const [data, total] =
+            await this.taxonomyRepo.findAndCount({
+                skip: (page - 1) * limit,
+                take: limit,
+                order: {
+                    order: 'ASC',
+                    family: 'ASC',
+                    genus: 'ASC',
+                },
+            });
 
         return { data, total };
     }

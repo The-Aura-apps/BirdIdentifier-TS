@@ -5,9 +5,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConservationStatus } from './entities/conservation-status.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([ConservationStatus])],
+    imports: [
+        TypeOrmModule.forFeature([ConservationStatus]),
+    ],
     controllers: [ConservationStatusController],
     providers: [ConservationStatusService],
-    exports: [ConservationStatusService, TypeOrmModule], 
+    exports: [ConservationStatusService, TypeOrmModule],
 })
 export class ConservationStatusModule {}

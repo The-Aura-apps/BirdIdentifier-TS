@@ -10,15 +10,25 @@ import {
 import { Bird } from '../../birds/entities/bird.entity';
 
 @Entity('taxonomy')
-@Index(['phylum', 'class', 'order', 'family', 'genus'], { unique: true })
+@Index(['phylum', 'class', 'order', 'family', 'genus'], {
+    unique: true,
+})
 export class Taxonomy {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ type: 'varchar', length: 100, default: 'Chordata' })
+    @Column({
+        type: 'varchar',
+        length: 100,
+        default: 'Chordata',
+    })
     phylum: string;
 
-    @Column({ type: 'varchar', length: 100, default: 'Aves' })
+    @Column({
+        type: 'varchar',
+        length: 100,
+        default: 'Aves',
+    })
     class: string;
 
     @Column({ type: 'varchar', length: 100 })

@@ -3,7 +3,9 @@ import { ApnsService } from './apns.service';
 
 @Injectable()
 export class NotificationService {
-    constructor(private readonly apnsService: ApnsService) {}
+    constructor(
+        private readonly apnsService: ApnsService,
+    ) {}
 
     async sendWelcomeReminder(deviceToken: string) {
         return this.apnsService.sendNotification(
