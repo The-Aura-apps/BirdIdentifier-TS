@@ -26,26 +26,44 @@ export class Media {
     @Column({ name: 'bird_id' })
     birdId: number;
 
-    @ManyToOne(() => Bird, (bird) => bird.media, { onDelete: 'CASCADE' })
+    @ManyToOne(() => Bird, (bird) => bird.media, {
+        onDelete: 'CASCADE',
+    })
     @JoinColumn({ name: 'bird_id' })
     bird: Bird;
 
     @Column({ type: 'varchar', length: 500 })
     storageKey: string; // S3 key: birds/123/photos/uuid.jpg
 
-    @Column({ type: 'enum', enum: mediaType, default: mediaType.Photo })
+    @Column({
+        type: 'enum',
+        enum: mediaType,
+        default: mediaType.Photo,
+    })
     type: mediaType;
 
     @Column({ type: 'varchar', nullable: true })
     size: string; // File size as string (e.g., "2.5 MB")
 
-    @Column({ type: 'varchar', length: 255, nullable: true })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+    })
     caption: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: true })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+    })
     source: string; // Source/credit for the media
 
-    @Column({ type: 'varchar', length: 255, nullable: true })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+    })
     attribution: string; // Attribution text
 
     @Column({ type: 'integer', default: 0 })
@@ -73,7 +91,9 @@ export class Media {
     // Helper methods for URL generation
     getCdnUrl(variant?: string): string {
         const base = process.env.CDN_URL ?? '';
-        const key = variant ? `${variant}/${this.storageKey}` : this.storageKey;
+        const key = variant
+            ? `${variant}/${this.storageKey}`
+            : this.storageKey;
         return `${base}/${key}`;
     }
 
@@ -84,7 +104,10 @@ export class Media {
 
     getThumbnailUrl(): string {
         // For videos, return thumbnail; for images, return thumbnail variant
-        if (this.type === mediaType.Video && this.metadata?.thumbnailKey) {
+        if (
+            this.type === mediaType.Video &&
+            this.metadata?.thumbnailKey
+        ) {
             return `${process.env.CDN_URL}/${this.metadata.thumbnailKey}`;
         }
         return this.getCdnUrl('thumbnail');

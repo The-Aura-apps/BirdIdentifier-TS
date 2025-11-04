@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import {
+    ConfigModule,
+    ConfigService,
+} from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { BirdDistribution } from 'src/modules/bird/bird-distribution/entities/bird-distribution.entity';
@@ -24,11 +27,21 @@ import { Upload } from 'src/modules/uploads/entities/upload.entity';
             inject: [ConfigService],
             useFactory: (configService: ConfigService) => ({
                 type: 'postgres',
-                host: configService.get<string>('database.host'),
-                port: configService.get<number>('database.port'),
-                username: configService.get<string>('database.username'),
-                password: configService.get<string>('database.password'),
-                database: configService.get<string>('database.database'),
+                host: configService.get<string>(
+                    'database.host',
+                ),
+                port: configService.get<number>(
+                    'database.port',
+                ),
+                username: configService.get<string>(
+                    'database.username',
+                ),
+                password: configService.get<string>(
+                    'database.password',
+                ),
+                database: configService.get<string>(
+                    'database.database',
+                ),
                 entities: [
                     Bird,
                     CommonName,
@@ -42,10 +55,15 @@ import { Upload } from 'src/modules/uploads/entities/upload.entity';
                     Upload,
                     Media,
                 ],
-                synchronize: configService.get<boolean>('database.synchronize'),
-                logging: configService.get<boolean>('database.logging'),
+                synchronize: configService.get<boolean>(
+                    'database.synchronize',
+                ),
+                logging: configService.get<boolean>(
+                    'database.logging',
+                ),
                 // Production optimizations
-                ...(process.env.NODE_ENV === 'production' && {
+                ...(process.env.NODE_ENV ===
+                    'production' && {
                     extra: {
                         max: 20,
                         idleTimeoutMillis: 30000,

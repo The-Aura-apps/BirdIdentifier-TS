@@ -36,7 +36,7 @@ export class ConservationStatus {
     @Column({
         type: 'enum',
         enum: ConservationStatusCode,
-        unique: true, 
+        unique: true,
     })
     @ApiProperty({
         enum: ConservationStatusCode,
@@ -54,26 +54,35 @@ export class ConservationStatus {
 
     @Column({ type: 'text', nullable: true })
     @ApiProperty({
-        description: 'Description of what this status means',
+        description:
+            'Description of what this status means',
         required: false,
     })
     description?: string;
 
     @Column({ type: 'int', default: 0 })
     @ApiProperty({
-        description: 'Severity ranking (higher = more threatened) 1 to 9',
+        description:
+            'Severity ranking (higher = more threatened) 1 to 9',
         example: 0,
     })
     severityLevel: number;
 
-    @Column({ type: 'varchar', length: 50, default: 'IUCN' })
+    @Column({
+        type: 'varchar',
+        length: 50,
+        default: 'IUCN',
+    })
     @ApiProperty({
         description: 'Authority that defined this status',
         example: 'IUCN',
     })
     authority: string;
 
-    @OneToMany(() => Bird, (bird) => bird.conservationStatus)
+    @OneToMany(
+        () => Bird,
+        (bird) => bird.conservationStatus,
+    )
     birds: Bird[];
 
     @CreateDateColumn()
@@ -81,8 +90,6 @@ export class ConservationStatus {
 
     @UpdateDateColumn()
     updatedAt: Date;
-
-  
 
     /**
      * Default conservation statuses to seed in database

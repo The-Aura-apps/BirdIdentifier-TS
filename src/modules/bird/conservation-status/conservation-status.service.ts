@@ -1,5 +1,8 @@
 // conservation-status/conservation-status.service.ts
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+    Injectable,
+    ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -24,26 +27,32 @@ export class ConservationStatusService {
         const { code } = dto;
 
         // Try to find existing conservation status
-        let conservationStatus = await this.conservationStatusRepo.findOne({
-            where: { code },
-        });
+        let conservationStatus =
+            await this.conservationStatusRepo.findOne({
+                where: { code },
+            });
 
         if (conservationStatus) {
             return conservationStatus;
         }
 
         // Create new conservation status
-        conservationStatus = this.conservationStatusRepo.create(dto);
+        conservationStatus =
+            this.conservationStatusRepo.create(dto);
 
         try {
-            return await this.conservationStatusRepo.save(conservationStatus);
+            return await this.conservationStatusRepo.save(
+                conservationStatus,
+            );
         } catch (error) {
             // Handle race condition where another request might have created it
             if (error.code === '23505') {
                 // Unique violation
-                return await this.conservationStatusRepo.findOne({
-                    where: { code },
-                });
+                return await this.conservationStatusRepo.findOne(
+                    {
+                        where: { code },
+                    },
+                );
             }
             throw error;
         }

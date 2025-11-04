@@ -19,12 +19,13 @@ export class BirdDistributionService {
     async create(
         createDto: CreateBirdDistributionDto,
     ): Promise<BirdDistribution> {
-        const existing = await this.distributionRepo.findOne({
-            where: {
-                birdId: createDto.birdId,
-                season: createDto.season,
-            },
-        });
+        const existing =
+            await this.distributionRepo.findOne({
+                where: {
+                    birdId: createDto.birdId,
+                    season: createDto.season,
+                },
+            });
 
         if (existing) {
             throw new ConflictException(
@@ -32,11 +33,16 @@ export class BirdDistributionService {
             );
         }
 
-        const distribution = this.distributionRepo.create(createDto);
-        return await this.distributionRepo.save(distribution);
+        const distribution =
+            this.distributionRepo.create(createDto);
+        return await this.distributionRepo.save(
+            distribution,
+        );
     }
 
-    async findByBirdId(birdId: number): Promise<BirdDistribution[]> {
+    async findByBirdId(
+        birdId: number,
+    ): Promise<BirdDistribution[]> {
         return await this.distributionRepo.find({
             where: { birdId },
             order: { season: 'ASC' },
@@ -44,13 +50,16 @@ export class BirdDistributionService {
     }
 
     async findOne(id: number): Promise<BirdDistribution> {
-        const distribution = await this.distributionRepo.findOne({
-            where: { id },
-            relations: ['bird'],
-        });
+        const distribution =
+            await this.distributionRepo.findOne({
+                where: { id },
+                relations: ['bird'],
+            });
 
         if (!distribution) {
-            throw new NotFoundException(`Distribution with ID ${id} not found`);
+            throw new NotFoundException(
+                `Distribution with ID ${id} not found`,
+            );
         }
 
         return distribution;
@@ -62,7 +71,9 @@ export class BirdDistributionService {
     ): Promise<BirdDistribution> {
         const distribution = await this.findOne(id);
         Object.assign(distribution, updateDto);
-        return await this.distributionRepo.save(distribution);
+        return await this.distributionRepo.save(
+            distribution,
+        );
     }
 
     async remove(id: number): Promise<void> {

@@ -42,10 +42,14 @@ export class Observation {
     @Column({ name: 'upload_id' })
     uploadId: number;
 
-    @ManyToOne(() => Upload, (upload) => upload.observations, {
-        nullable: false,
-        eager: true, // Eager load upload for processing
-    })
+    @ManyToOne(
+        () => Upload,
+        (upload) => upload.observations,
+        {
+            nullable: false,
+            eager: true, // Eager load upload for processing
+        },
+    )
     @JoinColumn({ name: 'upload_id' })
     upload: Upload;
 
@@ -63,7 +67,12 @@ export class Observation {
     @Column({ type: 'jsonb', nullable: true })
     aiResult: BirdAiResponse | null;
 
-    @Column({ type: 'decimal', precision: 5, scale: 4, nullable: true })
+    @Column({
+        type: 'decimal',
+        precision: 5,
+        scale: 4,
+        nullable: true,
+    })
     confidence: number | null;
 
     @Column({ type: 'text', nullable: true })
@@ -85,7 +94,10 @@ export class Observation {
         this.updatedAt = new Date();
     }
 
-    markAsCompleted(bird: Bird, aiResponse: BirdAiResponse): void {
+    markAsCompleted(
+        bird: Bird,
+        aiResponse: BirdAiResponse,
+    ): void {
         this.status = ObservationStatus.COMPLETED;
         this.bird = bird;
         this.birdId = bird.id;
@@ -95,7 +107,10 @@ export class Observation {
         this.updatedAt = new Date();
     }
 
-    markAsFailed(error: string, aiResponse?: BirdAiResponse): void {
+    markAsFailed(
+        error: string,
+        aiResponse?: BirdAiResponse,
+    ): void {
         this.status = ObservationStatus.FAILED;
         this.errorMessage = error;
         this.aiResult = aiResponse || null;

@@ -17,11 +17,15 @@ import { UpdateFoodDto } from './dto/update-food.dto';
 
 @Controller('foods')
 export class FoodController {
-    constructor(private readonly foodService: FoodService) {}
+    constructor(
+        private readonly foodService: FoodService,
+    ) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    create(@Body() createDto: CreateFoodDto): Promise<Food> {
+    create(
+        @Body() createDto: CreateFoodDto,
+    ): Promise<Food> {
         return this.foodService.create(createDto);
     }
 

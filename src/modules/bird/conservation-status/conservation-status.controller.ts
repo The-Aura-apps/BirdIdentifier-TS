@@ -18,7 +18,11 @@ import {
     ConservationStatusCode,
 } from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+    ApiOperation,
+    ApiResponse,
+    ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('Conservation Status')
 @Controller('conservation-status')
@@ -31,20 +35,25 @@ export class ConservationStatusController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     async create(
-        @Body() createConservationStatusDto: CreateConservationStatusDto,
+        @Body()
+        createConservationStatusDto: CreateConservationStatusDto,
     ): Promise<ConservationStatus> {
-        const result = await this.conservationStatusService.findOrCreate(
-            createConservationStatusDto,
-        );
+        const result =
+            await this.conservationStatusService.findOrCreate(
+                createConservationStatusDto,
+            );
         if (!result) {
-            throw new Error('Failed to create conservation status');
+            throw new Error(
+                'Failed to create conservation status',
+            );
         }
         return result;
     }
 
     @Get()
     @ApiOperation({
-        summary: 'Get all conservation statuses (sorted by severity)',
+        summary:
+            'Get all conservation statuses (sorted by severity)',
     })
     @ApiResponse({
         status: 200,
@@ -57,10 +66,16 @@ export class ConservationStatusController {
 
     @Get('code/:code')
     async findByCode(
-        @Param('code', new ParseEnumPipe(ConservationStatusCode))
+        @Param(
+            'code',
+            new ParseEnumPipe(ConservationStatusCode),
+        )
         code: ConservationStatusCode,
     ): Promise<ConservationStatus> {
-        const status = await this.conservationStatusService.findByCode(code);
+        const status =
+            await this.conservationStatusService.findByCode(
+                code,
+            );
         if (!status) {
             throw new Error(
                 `Conservation status with code "${code}" not found`,

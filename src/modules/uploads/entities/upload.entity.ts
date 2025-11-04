@@ -31,7 +31,10 @@ export class Upload {
     @Column({ unique: true, nullable: false })
     checksum: string;
 
-    @OneToMany(() => Observation, (observation) => observation.upload)
+    @OneToMany(
+        () => Observation,
+        (observation) => observation.upload,
+    )
     observations: Observation[];
 
     @CreateDateColumn()

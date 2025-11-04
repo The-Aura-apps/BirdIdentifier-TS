@@ -1,4 +1,10 @@
-import { IsString, IsUUID, IsIn, IsUrl, IsNumber } from 'class-validator';
+import {
+    IsString,
+    IsUUID,
+    IsIn,
+    IsUrl,
+    IsNumber,
+} from 'class-validator';
 
 export class CreateObservationDto {
     // can later add   @IsValidDeviceId()

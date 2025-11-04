@@ -17,11 +17,15 @@ import { HabitatService } from './habitats.service';
 
 @Controller('habitats')
 export class HabitatController {
-    constructor(private readonly habitatService: HabitatService) {}
+    constructor(
+        private readonly habitatService: HabitatService,
+    ) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    create(@Body() createDto: CreateHabitatDto): Promise<Habitat> {
+    create(
+        @Body() createDto: CreateHabitatDto,
+    ): Promise<Habitat> {
         return this.habitatService.create(createDto);
     }
 
@@ -42,7 +46,9 @@ export class HabitatController {
     }
 
     @Get('name/:name')
-    findByName(@Param('name') name: string): Promise<Habitat> {
+    findByName(
+        @Param('name') name: string,
+    ): Promise<Habitat> {
         return this.habitatService.findByName(name);
     }
 

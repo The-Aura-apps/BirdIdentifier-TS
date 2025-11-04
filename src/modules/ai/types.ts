@@ -38,24 +38,45 @@ export interface BirdInfo {
 }
 
 export type BirdAiResponse =
-    | { status: 'identified'; confidence: number; result: BirdInfo }
-    | { status: 'uncertain'; confidence: number; result?: Partial<BirdInfo> }
-    | { status: 'failed'; confidence: number | null; error?: string };
+    | {
+          status: 'identified';
+          confidence: number;
+          result: BirdInfo;
+      }
+    | {
+          status: 'uncertain';
+          confidence: number;
+          result?: Partial<BirdInfo>;
+      }
+    | {
+          status: 'failed';
+          confidence: number | null;
+          error?: string;
+      };
 
 export function isIdentified(
     response: BirdAiResponse,
-): response is Extract<BirdAiResponse, { status: 'identified' }> {
+): response is Extract<
+    BirdAiResponse,
+    { status: 'identified' }
+> {
     return response.status === 'identified';
 }
 
 export function isUncertain(
     response: BirdAiResponse,
-): response is Extract<BirdAiResponse, { status: 'uncertain' }> {
+): response is Extract<
+    BirdAiResponse,
+    { status: 'uncertain' }
+> {
     return response.status === 'uncertain';
 }
 
 export function isFailed(
     response: BirdAiResponse,
-): response is Extract<BirdAiResponse, { status: 'failed' }> {
+): response is Extract<
+    BirdAiResponse,
+    { status: 'failed' }
+> {
     return response.status === 'failed';
 }
