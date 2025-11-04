@@ -31,9 +31,7 @@ import { TaxonomyService } from '../taxonomy/taxonomy.service';
 @ApiTags('birds')
 @Controller('birds')
 export class BirdsController {
-    constructor(
-        private readonly birdService: BirdsService,
-    ) {}
+    constructor(private readonly birdService: BirdsService) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
@@ -77,7 +75,7 @@ export class BirdsController {
         });
     }
 
-    @Get('scientific/:scientific-Name')
+    @Get('scientific/:scientificName')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Find bird by scientific name' })
     @ApiParam({ name: 'scientificName', description: 'Scientific name' })
@@ -200,14 +198,14 @@ export class BirdsController {
     }
 
     // Common names
-    @Get(':id/common-names')
+    @Get(':id/commonNames')
     @ApiOperation({ summary: 'Get all common names for a bird' })
     @ApiParam({ name: 'id', description: 'Bird ID' })
     getCommonNames(@Param('id') id: string) {
         return this.birdService.getCommonNames(+id);
     }
 
-    @Post(':id/common-names')
+    @Post(':id/commonNames')
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ summary: 'Add common name to bird' })
     @ApiParam({ name: 'id', description: 'Bird ID' })
@@ -235,7 +233,7 @@ export class BirdsController {
     }
 
     // Conservation Status
-    @Get(':id/conservation-status')
+    @Get(':id/conservationStatus')
     @ApiOperation({ summary: 'Get conservation status for a bird' })
     @ApiParam({ name: 'id', description: 'Bird ID' })
     @ApiResponse({

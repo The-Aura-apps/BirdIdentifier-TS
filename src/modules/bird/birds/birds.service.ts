@@ -48,6 +48,7 @@ export class BirdsService {
             scientificName,
             taxonomy: taxDto,
             conservationStatus: consDto,
+            commonNames: cmnDto,
             ...rest
         } = createBirdDto;
 
