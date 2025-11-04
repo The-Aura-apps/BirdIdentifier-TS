@@ -8,7 +8,7 @@ import {
     ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateCommonNameDto } from '../../common-names/dto/create-common-name.dto';
+import { CreateCommonNameDto, CreateCommonNameNestedDto } from '../../common-names/dto/create-common-name.dto';
 import { CreateTaxonomyDto } from '../../taxonomy/dto/create-taxonomy.dto';
 import { CreateConservationStatusDto } from '../../conservation-status/dto/create-conservation-status.dto';
 
@@ -30,8 +30,8 @@ export class CreateBirdDto {
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(() => CreateCommonNameDto)
-    commonNames?: CreateCommonNameDto[];
+    @Type(() => CreateCommonNameNestedDto)
+    commonNames?: CreateCommonNameNestedDto[];
 
     @IsOptional()
     @IsArray()

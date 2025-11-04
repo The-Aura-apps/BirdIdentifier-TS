@@ -5,19 +5,24 @@ import {
     ManyToOne,
     JoinColumn,
     Index,
+    CreateDateColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
+import { Length } from 'class-validator';
 
-@Index(['name'])
+@Index(['birdId', 'name', 'language'], { unique: true })
 @Entity('common_names')
 export class CommonName {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
+    @Length(1, 255)
     name: string;
 
     @Column({ type: 'varchar', length: 10, default: 'en' })
+    @Length(2, 10)
     language: string;
 
     @Column()
@@ -31,4 +36,10 @@ export class CommonName {
     })
     @JoinColumn({ name: 'bird_id' })
     bird: Bird;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
 }

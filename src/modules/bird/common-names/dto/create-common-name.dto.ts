@@ -1,7 +1,7 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
+// Use this for standalone creation via API
 export class CreateCommonNameDto {
-    @IsNumber()
     @IsNotEmpty()
     birdId: number;
 
@@ -12,4 +12,22 @@ export class CreateCommonNameDto {
     @IsOptional()
     @IsString()
     language?: string;
+
+    @IsOptional()
+    @IsString()
+    region?: string;
+}
+
+export class CreateCommonNameNestedDto {
+    @IsString()
+    @IsNotEmpty()
+    name: string;
+
+    @IsOptional()
+    @IsString()
+    language?: string;
+
+    @IsOptional()
+    @IsString()
+    region?: string;
 }

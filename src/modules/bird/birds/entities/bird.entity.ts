@@ -92,14 +92,14 @@ export class Bird {
     @ApiProperty({ type: () => ConservationStatus, required: false })
     conservationStatus: ConservationStatus;
 
-    @OneToMany(() => Observation, (observation) => observation.bird)
-    observations: Observation[];
-
     @OneToMany(() => CommonName, (commonName) => commonName.bird, {
         cascade: true,
     })
     @ApiProperty({ type: () => [CommonName] })
     commonNames: CommonName[];
+    
+    @OneToMany(() => Observation, (observation) => observation.bird)
+    observations: Observation[];
 
     @OneToMany(() => Media, (media) => media.bird, { cascade: true })
     @ApiProperty({ type: () => [Media] })
