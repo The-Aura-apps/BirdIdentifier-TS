@@ -29,12 +29,12 @@ export class Habitat {
     })
     description: string;
 
-    @Column({
-        type: 'varchar',
-        length: 500,
-        nullable: true,
-    })
-    iconUrl: string; // Icon for mobile UI
+    // @Column({
+    //     type: 'varchar',
+    //     length: 500,
+    //     nullable: true,
+    // })
+    // iconUrl: string; // Icon for mobile UI
 
     @ManyToMany(() => Bird, bird => bird.habitats)
     birds: Bird[];

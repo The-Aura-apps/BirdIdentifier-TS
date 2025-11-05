@@ -6,7 +6,7 @@ import {
     ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Bird } from './entities/bird.entity';
 import { CreateBirdDto } from './dto/create-bird.dto';
 import { UpdateBirdDto } from './dto/update-bird.dto';
@@ -38,7 +38,7 @@ export class BirdsService {
         private readonly commonNameRepo: Repository<CommonName>,
         private readonly taxonomyService: TaxonomyService,
         private readonly conservationStatusService: ConservationStatusService,
-        private readonly birdInfoWrapper: BirdInfoWrapper
+        private readonly birdInfoWrapper: BirdInfoWrapper,
     ) {}
 
     /**
@@ -66,12 +66,12 @@ export class BirdsService {
         });
         if (existing) {
             throw new ConflictException(
-                `Bird with scientific name "${scientificName}" already exists`
+                `Bird with scientific name "${scientificName}" already exists`,
             );
         }
 
         // Handle taxonomy find-or-create using TaxonomyService
-        let taxonomy = taxDto; // any fucked up
+        let taxonomy; // any fucked up  &&  taxonomy: taxDto bug (should be entity, not DTO)
         if (taxDto) {
             taxonomy = await this.taxonomyService.findOrCreate(taxDto);
         }
@@ -79,27 +79,35 @@ export class BirdsService {
         // Handle conservation status find-or-create
         let conservationStatus;
         if (consDto) {
-            conservationStatus =
-                await this.conservationStatusService.findOrCreate(consDto);
+            conservationStatus = await this.conservationStatusService.findOrCreate(consDto);
         }
 
-        // Handle habitats if provided
+        // How to handle in service:
         let habitats: Habitat[] = [];
         if (habitatIds && habitatIds.length > 0) {
-            habitats = await this.habitatRepo.findByIds(habitatIds);
+            habitats = await this.habitatRepo.find({
+                where: { id: In(habitatIds) }, // ✅ Must use In() operator
+            });
+
+            // Validate all IDs found
             if (habitats.length !== habitatIds.length) {
-                throw new NotFoundException('One or more habitats not found');
+                const foundIds = habitats.map((h) => h.id);
+                const missingIds = habitatIds.filter((id) => !foundIds.includes(id));
+                throw new NotFoundException(
+                    `Habitats not found with IDs: ${missingIds.join(', ')}`,
+                );
             }
         }
 
+        // Handel Common Name
         let commonNames: CommonName[] = [];
         if (cmnDto && cmnDto.length > 0) {
-            commonNames = cmnDto.map(cnDto =>
+            commonNames = cmnDto.map((cnDto) =>
                 this.commonNameRepo.create({
                     name: cnDto.name,
                     language: cnDto.language || 'en',
                     region: cnDto.region || '',
-                })
+                }),
             );
         }
 
@@ -109,21 +117,13 @@ export class BirdsService {
             taxonomy,
             conservationStatus,
             commonNames,
+            habitats,
             ...rest,
         });
 
-        //← NOW bird exists → link common names
-        // if (commonNames.length > 0) {
-        //     commonNames.forEach((cn) => (cn.bird = bird));
-        //     bird.commonNames = commonNames;
-        // }
-
-        // Save bird (cascade will save common names automatically)
         const saved = await this.birdRepo.save(bird);
 
-        this.logger.log(
-            `Bird created: ${saved.scientificName} (ID: ${saved.id})`
-        );
+        this.logger.log(`Bird created: ${saved.scientificName} (ID: ${saved.id})`);
 
         // Re-fetch the bird with all relations for return
         const fullBird = await this.birdRepo.findOne({
@@ -143,9 +143,7 @@ export class BirdsService {
         });
 
         if (!fullBird) {
-            throw new NotFoundException(
-                `Saved bird with id ${saved.id} not found`
-            );
+            throw new NotFoundException(`Saved bird with id ${saved.id} not found`);
         }
 
         return fullBird;
@@ -205,9 +203,7 @@ export class BirdsService {
         });
 
         if (!bird) {
-            throw new NotFoundException(
-                `Bird with scientific name "${scientificName}" not found`
-            );
+            throw new NotFoundException(`Bird with scientific name "${scientificName}" not found`);
         }
 
         return bird;
@@ -225,12 +221,7 @@ export class BirdsService {
         data: Bird[];
         total: number;
     }> {
-        const {
-            page = 1,
-            limit = 20,
-            sortBy = 'createdAt',
-            order = 'DESC',
-        } = options;
+        const { page = 1, limit = 20, sortBy = 'createdAt', order = 'DESC' } = options;
 
         if (page < 1 || limit < 1) {
             throw new BadRequestException('Invalid pagination parameters');
@@ -247,12 +238,7 @@ export class BirdsService {
             order: {
                 [sortBy]: order,
             },
-            relations: [
-                'media',
-                'commonNames',
-                'conservationStatus',
-                'taxonomy',
-            ],
+            relations: ['media', 'commonNames', 'conservationStatus', 'taxonomy'],
         });
 
         return {
@@ -268,10 +254,7 @@ export class BirdsService {
         const bird = await this.findOne(id);
 
         // Check for scientific name conflict if updating it
-        if (
-            updateBirdDto?.scientificName &&
-            updateBirdDto.scientificName !== bird.scientificName
-        ) {
+        if (updateBirdDto?.scientificName && updateBirdDto.scientificName !== bird.scientificName) {
             const existing = await this.birdRepo.findOne({
                 where: {
                     scientificName: updateBirdDto.scientificName.trim(),
@@ -280,7 +263,7 @@ export class BirdsService {
 
             if (existing) {
                 throw new ConflictException(
-                    `Bird with scientific name "${updateBirdDto.scientificName}" already exists`
+                    `Bird with scientific name "${updateBirdDto.scientificName}" already exists`,
                 );
             }
         }
@@ -307,7 +290,7 @@ export class BirdsService {
         // Check if bird has no observations
         if (bird.observations && bird.observations.length > 0) {
             throw new BadRequestException(
-                `Cannot delete bird ${id}: ${bird.observations.length} observations are linked to it`
+                `Cannot delete bird ${id}: ${bird.observations.length} observations are linked to it`,
             );
         }
 
@@ -352,9 +335,7 @@ export class BirdsService {
         try {
             birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
         } catch (err) {
-            this.logger.warn(
-                `Failed to fetch bird info for ${normalizedName}: ${err.message}`
-            );
+            this.logger.warn(`Failed to fetch bird info for ${normalizedName}: ${err.message}`);
         }
 
         bird = this.birdRepo.create({
@@ -364,9 +345,7 @@ export class BirdsService {
         });
 
         const savedBird = await this.birdRepo.save(bird);
-        this.logger.log(
-            `Bird created: ${savedBird.id} - ${savedBird.scientificName}`
-        );
+        this.logger.log(`Bird created: ${savedBird.id} - ${savedBird.scientificName}`);
 
         // Enrich bird data if possible
         if (birdInfo && savedBird.id) {
@@ -389,7 +368,7 @@ export class BirdsService {
                 );
             } catch (err) {
                 this.logger.error(
-                    `Failed to enrich bird data for ${normalizedName}: ${err.message}`
+                    `Failed to enrich bird data for ${normalizedName}: ${err.message}`,
                 );
             }
         }
@@ -405,7 +384,7 @@ export class BirdsService {
         options: {
             page?: number;
             limit?: number;
-        } = {}
+        } = {},
     ): Promise<{
         data: Bird[];
         total: number;
@@ -436,47 +415,9 @@ export class BirdsService {
     }
 
     /**
-     * Get birds by habitat
-     */
-    async findByHabitat(
-        habitatId: number,
-        options: {
-            page?: number;
-            limit?: number;
-        } = {}
-    ): Promise<{
-        data: Bird[];
-        total: number;
-    }> {
-        const { page = 1, limit = 20 } = options;
-
-        const [data, total] = await this.birdRepo
-            .createQueryBuilder('bird')
-            .innerJoin('bird.habitats', 'habitat')
-            .leftJoinAndSelect('bird.media', 'media')
-            .leftJoinAndSelect('bird.commonNames', 'commonNames')
-            .leftJoinAndSelect('bird.taxonomy', 'taxonomy')
-            .where('habitat.id = :habitatId', {
-                habitatId,
-            })
-            .skip((page - 1) * limit)
-            .take(limit)
-            .orderBy('bird.scientificName', 'ASC')
-            .getManyAndCount();
-
-        return {
-            data,
-            total,
-        };
-    }
-
-    /**
      * Enrich bird data with additional information
      */
-    private async enrichBirdData(
-        birdId: number,
-        birdInfo: BirdInfo
-    ): Promise<void> {
+    private async enrichBirdData(birdId: number, birdInfo: BirdInfo): Promise<void> {
         const updateData: Partial<Bird> = {};
 
         if (birdInfo.description) {
@@ -554,14 +495,14 @@ export class BirdsService {
             throw new NotFoundException(`Bird with ID ${birdId} not found`);
         }
 
-        const activeFoods = bird.birdFoods.filter(bf => bf.isActive);
+        const activeFoods = bird.birdFoods.filter((bf) => bf.isActive);
 
         return {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
             },
-            foods: activeFoods.map(bf => ({
+            foods: activeFoods.map((bf) => ({
                 relationshipId: bf.id,
                 isActive: bf.isActive,
                 food: {
@@ -594,13 +535,11 @@ export class BirdsService {
                 existing.isActive = true;
                 const activated = await this.birdFoodRepo.save(existing);
                 this.logger.log(
-                    `Reactivated bird-food relationship: ${birdId}-${createBirdFoodDto.foodId}`
+                    `Reactivated bird-food relationship: ${birdId}-${createBirdFoodDto.foodId}`,
                 );
                 return activated;
             }
-            throw new ConflictException(
-                'Bird-food relationship already exists'
-            );
+            throw new ConflictException('Bird-food relationship already exists');
         }
 
         const birdFood = this.birdFoodRepo.create({
@@ -610,17 +549,11 @@ export class BirdsService {
         });
 
         const saved = await this.birdFoodRepo.save(birdFood);
-        this.logger.log(
-            `Bird-food relationship created: ${birdId}-${createBirdFoodDto.foodId}`
-        );
+        this.logger.log(`Bird-food relationship created: ${birdId}-${createBirdFoodDto.foodId}`);
         return saved;
     }
 
-    async updateFood(
-        birdId: number,
-        foodId: number,
-        updateBirdFoodDto: UpdateBirdFoodDto
-    ) {
+    async updateFood(birdId: number, foodId: number, updateBirdFoodDto: UpdateBirdFoodDto) {
         const birdFood = await this.birdFoodRepo.findOne({
             where: {
                 birdId,
@@ -671,7 +604,7 @@ export class BirdsService {
         const updated = await this.birdFoodRepo.save(birdFood);
 
         this.logger.log(
-            `Bird-food relationship ${birdId}-${foodId} active status: ${updated.isActive}`
+            `Bird-food relationship ${birdId}-${foodId} active status: ${updated.isActive}`,
         );
         return updated;
     }
@@ -701,45 +634,8 @@ export class BirdsService {
     }
 
     async addHabitat(birdId: number, habitatId: number) {
-        const bird = await this.findOne(birdId.toString());
-
-        const habitat = await this.habitatRepo.findOne({
-            where: {
-                id: habitatId,
-            },
-        });
-
-        if (!habitat) {
-            throw new NotFoundException(
-                `Habitat with ID ${habitatId} not found`
-            );
-        }
-
-        // Check if relationship already exists
-        if (bird.habitats?.some(h => h.id === habitatId)) {
-            throw new ConflictException(
-                'Bird-habitat relationship already exists'
-            );
-        }
-
-        if (!bird.habitats) {
-            bird.habitats = [];
-        }
-
-        bird.habitats.push(habitat);
-        const updated = await this.birdRepo.save(bird);
-
-        this.logger.log(
-            `Bird-habitat relationship created: ${birdId}-${habitatId}`
-        );
-        return updated;
-    }
-
-    async removeHabitat(birdId: number, habitatId: number) {
         const bird = await this.birdRepo.findOne({
-            where: {
-                id: birdId,
-            },
+            where: { id: birdId },
             relations: ['habitats'],
         });
 
@@ -747,13 +643,93 @@ export class BirdsService {
             throw new NotFoundException(`Bird with ID ${birdId} not found`);
         }
 
-        bird.habitats = bird.habitats.filter(h => h.id !== habitatId);
-        const updated = await this.birdRepo.save(bird);
+        const habitat = await this.habitatRepo.findOne({
+            where: { id: habitatId },
+        });
 
-        this.logger.log(
-            `Bird-habitat relationship deleted: ${birdId}-${habitatId}`
-        );
-        return updated;
+        if (!habitat) {
+            throw new NotFoundException(`Habitat with ID ${habitatId} not found`);
+        }
+
+        // Check if already associated
+        const isAlreadyAssociated = bird.habitats.some((h) => h.id === habitatId);
+        if (isAlreadyAssociated) {
+            throw new ConflictException(
+                `Habitat "${habitat.name}" is already associated with this bird`,
+            );
+        }
+
+        // Add habitat
+        bird.habitats.push(habitat);
+        await this.birdRepo.save(bird);
+
+        this.logger.log(`Habitat ${habitatId} added to bird ${birdId}`);
+
+        return {
+            message: 'Habitat added successfully',
+            bird: {
+                id: bird.id,
+                scientificName: bird.scientificName,
+            },
+            habitat: {
+                id: habitat.id,
+                name: habitat.name,
+            },
+        };
+    }
+
+    async removeHabitat(birdId: number, habitatId: number) {
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+            relations: ['habitats'],
+        });
+
+        if (!bird) {
+            throw new NotFoundException(`Bird with ID ${birdId} not found`);
+        }
+
+        const habitatIndex = bird.habitats.findIndex((h) => h.id === habitatId);
+        if (habitatIndex === -1) {
+            throw new NotFoundException(
+                `Habitat with ID ${habitatId} is not associated with this bird`,
+            );
+        }
+
+        // Remove habitat
+        bird.habitats.splice(habitatIndex, 1);
+        await this.birdRepo.save(bird);
+
+        this.logger.log(`Habitat ${habitatId} removed from bird ${birdId}`);
+    }
+
+    async findByHabitat(
+        habitatId: number,
+        options: {
+            page?: number;
+            limit?: number;
+        } = {},
+    ): Promise<{
+        data: Bird[];
+        total: number;
+    }> {
+        const { page = 1, limit = 20 } = options;
+
+        const queryBuilder = await this.birdRepo
+            .createQueryBuilder('bird')
+            .innerJoin('bird.habitats', 'habitat')
+            .leftJoinAndSelect('bird.media', 'media')
+            .leftJoinAndSelect('bird.commonNames', 'commonNames')
+            .leftJoinAndSelect('bird.taxonomy', 'taxonomy')
+            .where('habitat.id = :habitatId', {
+                habitatId,
+            })
+            .skip((page - 1) * limit)
+            .take(limit)
+            .orderBy('bird.scientificName', 'ASC');
+
+        const [data, total] = await queryBuilder.getManyAndCount();
+
+        return { data, total };
     }
 
     /**
@@ -785,10 +761,7 @@ export class BirdsService {
         };
     }
 
-    async addCommonName(
-        birdId: number,
-        createCommonNameDto: CreateCommonNameDto
-    ) {
+    async addCommonName(birdId: number, createCommonNameDto: CreateCommonNameDto) {
         const bird = await this.birdRepo.findOne({
             where: {
                 id: birdId,
@@ -809,7 +782,7 @@ export class BirdsService {
 
         if (existing) {
             throw new ConflictException(
-                `Common name "${createCommonNameDto.name}" already exists for this bird`
+                `Common name "${createCommonNameDto.name}" already exists for this bird`,
             );
         }
 

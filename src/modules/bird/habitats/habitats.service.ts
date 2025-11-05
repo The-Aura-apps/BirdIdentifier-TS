@@ -159,7 +159,6 @@ export class HabitatService {
                 id: habitat.id,
                 name: habitat.name,
                 description: habitat.description,
-                iconUrl: habitat.iconUrl,
             },
             birds: habitat.birds,
         };
