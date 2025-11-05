@@ -15,11 +15,18 @@ export class Habitat {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ type: 'varchar', length: 100, unique: true })
+    @Column({
+        type: 'varchar',
+        length: 100,
+        unique: true,
+    })
     @Index()
     name: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     description: string;
 
     @Column({
@@ -29,6 +36,6 @@ export class Habitat {
     })
     iconUrl: string; // Icon for mobile UI
 
-    @ManyToMany(() => Bird, (bird) => bird.habitats)
+    @ManyToMany(() => Bird, bird => bird.habitats)
     birds: Bird[];
 }

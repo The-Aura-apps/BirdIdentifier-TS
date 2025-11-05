@@ -6,7 +6,7 @@ abstract class CollectionResult<T = unknown> {
         public readonly source: string,
         public readonly success: boolean,
         public readonly data?: T,
-        public readonly error?: string,
+        public readonly error?: string
     ) {}
 
     isSuccess(): this is SuccessResult<T> {

@@ -7,12 +7,7 @@ import { BirdsModule } from '../bird/birds/birds.module';
 
 @Module({
     imports: [forwardRef(() => BirdsModule)],
-    providers: [
-        AiService,
-        ImageAiWrapper,
-        AudioAiWrapper,
-        BirdInfoWrapper,
-    ],
+    providers: [AiService, ImageAiWrapper, AudioAiWrapper, BirdInfoWrapper],
     exports: [AiService],
 })
 export class AiModule {}

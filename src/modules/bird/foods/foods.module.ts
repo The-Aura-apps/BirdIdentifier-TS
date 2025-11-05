@@ -6,10 +6,7 @@ import { Food } from './entities/food.entity';
 import { BirdFoodsModule } from '../bird-foods/bird-foods.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Food]),
-        BirdFoodsModule,
-    ],
+    imports: [TypeOrmModule.forFeature([Food]), BirdFoodsModule],
     controllers: [FoodController],
     providers: [FoodService],
     exports: [FoodService],

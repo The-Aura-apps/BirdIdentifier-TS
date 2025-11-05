@@ -12,62 +12,68 @@ import { UpdateHabitatDto } from './dto/update-habitat.dto';
 
 @Injectable()
 export class HabitatService {
-    private readonly logger = new Logger(
-        HabitatService.name,
-    );
+    private readonly logger = new Logger(HabitatService.name);
 
     constructor(
         @InjectRepository(Habitat)
-        private readonly habitatRepo: Repository<Habitat>,
+        private readonly habitatRepo: Repository<Habitat>
     ) {}
 
-    async create(
-        createDto: CreateHabitatDto,
-    ): Promise<Habitat> {
+    async create(createDto: CreateHabitatDto): Promise<Habitat> {
         const existing = await this.habitatRepo.findOne({
-            where: { name: createDto.name },
+            where: {
+                name: createDto.name,
+            },
         });
 
         if (existing) {
             throw new ConflictException(
-                `Habitat with name "${createDto.name}" already exists`,
+                `Habitat with name "${createDto.name}" already exists`
             );
         }
 
         const habitat = this.habitatRepo.create(createDto);
         const saved = await this.habitatRepo.save(habitat);
 
-        this.logger.log(
-            `Habitat created: ${saved.id} - ${saved.name}`,
-        );
+        this.logger.log(`Habitat created: ${saved.id} - ${saved.name}`);
         return saved;
     }
 
     async findAll(
-        options: { page?: number; limit?: number } = {},
-    ): Promise<{ data: Habitat[]; total: number }> {
+        options: {
+            page?: number;
+            limit?: number;
+        } = {}
+    ): Promise<{
+        data: Habitat[];
+        total: number;
+    }> {
         const { page = 1, limit = 20 } = options;
 
-        const [data, total] =
-            await this.habitatRepo.findAndCount({
-                skip: (page - 1) * limit,
-                take: limit,
-                order: { name: 'ASC' },
-            });
+        const [data, total] = await this.habitatRepo.findAndCount({
+            skip: (page - 1) * limit,
+            take: limit,
+            order: {
+                name: 'ASC',
+            },
+        });
 
-        return { data, total };
+        return {
+            data,
+            total,
+        };
     }
 
     async findOne(id: number): Promise<Habitat> {
         const habitat = await this.habitatRepo.findOne({
-            where: { id },
+            where: {
+                id,
+            },
             relations: ['birds'],
         });
 
         if (!habitat) {
-            throw new NotFoundException(
-                `Habitat with ID ${id} not found`,
-            );
+            throw new NotFoundException(`Habitat with ID ${id} not found`);
         }
 
         return habitat;
@@ -75,49 +81,42 @@ export class HabitatService {
 
     async findByName(name: string): Promise<Habitat> {
         const habitat = await this.habitatRepo.findOne({
-            where: { name },
+            where: {
+                name,
+            },
             relations: ['birds'],
         });
 
         if (!habitat) {
             throw new NotFoundException(
-                `Habitat with name "${name}" not found`,
+                `Habitat with name "${name}" not found`
             );
         }
 
         return habitat;
     }
 
-    async update(
-        id: number,
-        updateDto: UpdateHabitatDto,
-    ): Promise<Habitat> {
+    async update(id: number, updateDto: UpdateHabitatDto): Promise<Habitat> {
         const habitat = await this.findOne(id);
 
-        if (
-            updateDto.name &&
-            updateDto.name !== habitat.name
-        ) {
-            const existing = await this.habitatRepo.findOne(
-                {
-                    where: { name: updateDto.name },
+        if (updateDto.name && updateDto.name !== habitat.name) {
+            const existing = await this.habitatRepo.findOne({
+                where: {
+                    name: updateDto.name,
                 },
-            );
+            });
 
             if (existing) {
                 throw new ConflictException(
-                    `Habitat with name "${updateDto.name}" already exists`,
+                    `Habitat with name "${updateDto.name}" already exists`
                 );
             }
         }
 
         Object.assign(habitat, updateDto);
-        const updated =
-            await this.habitatRepo.save(habitat);
+        const updated = await this.habitatRepo.save(habitat);
 
-        this.logger.log(
-            `Habitat updated: ${updated.id} - ${updated.name}`,
-        );
+        this.logger.log(`Habitat updated: ${updated.id} - ${updated.name}`);
         return updated;
     }
 
@@ -128,12 +127,14 @@ export class HabitatService {
         const birdsCount = await this.habitatRepo
             .createQueryBuilder('habitat')
             .innerJoin('habitat.birds', 'bird')
-            .where('habitat.id = :id', { id })
+            .where('habitat.id = :id', {
+                id,
+            })
             .getCount();
 
         if (birdsCount > 0) {
             throw new ConflictException(
-                `Cannot delete habitat ${id}: ${birdsCount} birds are associated with it`,
+                `Cannot delete habitat ${id}: ${birdsCount} birds are associated with it`
             );
         }
 
@@ -143,18 +144,14 @@ export class HabitatService {
 
     async getBirds(id: number) {
         const habitat = await this.habitatRepo.findOne({
-            where: { id },
-            relations: [
-                'birds',
-                'birds.conservationStatus',
-                'birds.media',
-            ],
+            where: {
+                id,
+            },
+            relations: ['birds', 'birds.conservationStatus', 'birds.media'],
         });
 
         if (!habitat) {
-            throw new NotFoundException(
-                `Habitat with ID ${id} not found`,
-            );
+            throw new NotFoundException(`Habitat with ID ${id} not found`);
         }
 
         return {

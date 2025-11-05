@@ -1,13 +1,5 @@
-import {
-    IsString,
-    IsOptional,
-    IsNotEmpty,
-    Length,
-} from 'class-validator';
-import {
-    ApiProperty,
-    ApiPropertyOptional,
-} from '@nestjs/swagger';
+import { IsString, IsOptional, IsNotEmpty, Length } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTaxonomyDto {
     @ApiPropertyOptional({

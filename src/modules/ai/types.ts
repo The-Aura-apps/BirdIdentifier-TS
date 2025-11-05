@@ -20,9 +20,18 @@ export interface BirdInfo {
     eggsDescription?: string;
     coolFacts?: string[];
     size?: {
-        lengthCm: { min: number; max: number };
-        wingspanCm: { min: number; max: number };
-        weightGrams: { min: number; max: number };
+        lengthCm: {
+            min: number;
+            max: number;
+        };
+        wingspanCm: {
+            min: number;
+            max: number;
+        };
+        weightGrams: {
+            min: number;
+            max: number;
+        };
     };
     lifeExpectancyYears?: number;
 
@@ -54,29 +63,29 @@ export type BirdAiResponse =
           error?: string;
       };
 
-export function isIdentified(
-    response: BirdAiResponse,
-): response is Extract<
+export function isIdentified(response: BirdAiResponse): response is Extract<
     BirdAiResponse,
-    { status: 'identified' }
+    {
+        status: 'identified';
+    }
 > {
     return response.status === 'identified';
 }
 
-export function isUncertain(
-    response: BirdAiResponse,
-): response is Extract<
+export function isUncertain(response: BirdAiResponse): response is Extract<
     BirdAiResponse,
-    { status: 'uncertain' }
+    {
+        status: 'uncertain';
+    }
 > {
     return response.status === 'uncertain';
 }
 
-export function isFailed(
-    response: BirdAiResponse,
-): response is Extract<
+export function isFailed(response: BirdAiResponse): response is Extract<
     BirdAiResponse,
-    { status: 'failed' }
+    {
+        status: 'failed';
+    }
 > {
     return response.status === 'failed';
 }

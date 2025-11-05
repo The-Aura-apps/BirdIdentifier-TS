@@ -31,16 +31,25 @@ export class Taxonomy {
     })
     class: string;
 
-    @Column({ type: 'varchar', length: 100 })
+    @Column({
+        type: 'varchar',
+        length: 100,
+    })
     order: string;
 
-    @Column({ type: 'varchar', length: 100 })
+    @Column({
+        type: 'varchar',
+        length: 100,
+    })
     family: string;
 
-    @Column({ type: 'varchar', length: 100 })
+    @Column({
+        type: 'varchar',
+        length: 100,
+    })
     genus: string;
 
-    @OneToMany(() => Bird, (bird) => bird.taxonomy)
+    @OneToMany(() => Bird, bird => bird.taxonomy)
     birds: Bird[];
 
     @CreateDateColumn()

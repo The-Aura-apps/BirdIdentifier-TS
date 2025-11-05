@@ -14,16 +14,16 @@ import { Bird } from '../birds/entities/bird.entity';
 export class CommonNamesService {
     constructor(
         @InjectRepository(CommonName)
-        private readonly commonNameRepo: Repository<CommonName>,
+        private readonly commonNameRepo: Repository<CommonName>
     ) {}
 
-    async create(
-        createDto: CreateCommonNameDto,
-    ): Promise<CommonName> {
+    async create(createDto: CreateCommonNameDto): Promise<CommonName> {
         // Check for duplicate name for the same bird
         const existing = await this.commonNameRepo.findOne({
             where: {
-                bird: { id: createDto.birdId },
+                bird: {
+                    id: createDto.birdId,
+                },
                 name: createDto.name,
                 language: createDto.language || 'en',
             },
@@ -31,7 +31,7 @@ export class CommonNamesService {
 
         if (existing) {
             throw new ConflictException(
-                'Common name already exists for this bird',
+                'Common name already exists for this bird'
             );
         }
 
@@ -39,32 +39,38 @@ export class CommonNamesService {
             name: createDto.name,
             language: createDto.language || 'en',
             region: createDto.region,
-            bird: { id: createDto.birdId } as Bird, // ← LINK BY ID
+            bird: {
+                id: createDto.birdId,
+            } as Bird, // ← LINK BY ID
         });
 
         return this.commonNameRepo.save(commonName);
     }
 
-    async findByBirdId(
-        birdId: number,
-    ): Promise<CommonName[]> {
+    async findByBirdId(birdId: number): Promise<CommonName[]> {
         return await this.commonNameRepo.find({
-            where: { bird: { id: birdId}  as Bird},
-            order: { language: 'ASC', name: 'ASC' },
+            where: {
+                bird: {
+                    id: birdId,
+                } as Bird,
+            },
+            order: {
+                language: 'ASC',
+                name: 'ASC',
+            },
         });
     }
 
     async findOne(id: number): Promise<CommonName> {
-        const commonName =
-            await this.commonNameRepo.findOne({
-                where: { id },
-                relations: ['bird'],
-            });
+        const commonName = await this.commonNameRepo.findOne({
+            where: {
+                id,
+            },
+            relations: ['bird'],
+        });
 
         if (!commonName) {
-            throw new NotFoundException(
-                `Common name with ID ${id} not found`,
-            );
+            throw new NotFoundException(`Common name with ID ${id} not found`);
         }
 
         return commonName;
@@ -72,22 +78,21 @@ export class CommonNamesService {
 
     async update(
         id: number,
-        updateDto: UpdateCommonNameDto,
+        updateDto: UpdateCommonNameDto
     ): Promise<CommonName> {
         const commonName = await this.findOne(id);
         if (updateDto.name || updateDto.language) {
             const conflict = await this.commonNameRepo.findOne({
                 where: {
-                    bird: { id: commonName.bird.id },
+                    bird: {
+                        id: commonName.bird.id,
+                    },
                     name: updateDto.name || commonName.name,
-                    language:
-                        updateDto.language || commonName.language,
+                    language: updateDto.language || commonName.language,
                 },
             });
             if (conflict && conflict.id !== id)
-                throw new ConflictException(
-                    'Duplicate name',
-                );
+                throw new ConflictException('Duplicate name');
         }
         Object.assign(commonName, updateDto);
         return await this.commonNameRepo.save(commonName);

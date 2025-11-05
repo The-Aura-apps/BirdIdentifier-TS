@@ -31,13 +31,14 @@ import { TaxonomyService } from '../taxonomy/taxonomy.service';
 @ApiTags('birds')
 @Controller('birds')
 export class BirdsController {
-    constructor(
-        private readonly birdService: BirdsService,
-    ) {}
+    constructor(private readonly birdService: BirdsService) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
-    create(@Body() dto: CreateBirdDto): Promise<Bird> {
+    create(
+        @Body()
+        dto: CreateBirdDto
+    ): Promise<Bird> {
         return this.birdService.create(dto);
     }
 
@@ -67,11 +68,18 @@ export class BirdsController {
         enum: ['ASC', 'DESC'],
     })
     findAll(
-        @Query('page') page = '1',
-        @Query('limit') limit = '20',
-        @Query('sortBy') sortBy = 'createdAt',
-        @Query('order') order: 'ASC' | 'DESC' = 'DESC',
-    ): Promise<{ data: Bird[]; total: number }> {
+        @Query('page')
+        page = '1',
+        @Query('limit')
+        limit = '20',
+        @Query('sortBy')
+        sortBy = 'createdAt',
+        @Query('order')
+        order: 'ASC' | 'DESC' = 'DESC'
+    ): Promise<{
+        data: Bird[];
+        total: number;
+    }> {
         return this.birdService.findAll({
             page: Number(page),
             limit: Number(limit),
@@ -82,16 +90,24 @@ export class BirdsController {
 
     @Get('search/:query')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Search birds by name' })
+    @ApiOperation({
+        summary: 'Search birds by name',
+    })
     @ApiParam({
         name: 'query',
         description: 'Search query',
     })
     search(
-        @Param('query') query: string,
-        @Query('page') page = '1',
-        @Query('limit') limit = '20',
-    ): Promise<{ data: Bird[]; total: number }> {
+        @Param('query')
+        query: string,
+        @Query('page')
+        page = '1',
+        @Query('limit')
+        limit = '20'
+    ): Promise<{
+        data: Bird[];
+        total: number;
+    }> {
         return this.birdService.search(query, {
             page: Number(page),
             limit: Number(limit),
@@ -108,32 +124,44 @@ export class BirdsController {
         description: 'Scientific name',
     })
     findByScientificName(
-        @Param('scientificName') scientificName: string,
+        @Param('scientificName')
+        scientificName: string
     ): Promise<Bird | null> {
-        return this.birdService.findByScientificName(
-            scientificName,
-        );
+        return this.birdService.findByScientificName(scientificName);
     }
 
     @Get(':id')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Get bird by ID' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    findOne(@Param('id') id: string): Promise<Bird> {
+    @ApiOperation({
+        summary: 'Get bird by ID',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
+    findOne(
+        @Param('id')
+        id: string
+    ): Promise<Bird> {
         return this.birdService.findOne(id);
     }
 
     @Put(':id')
     update(
-        @Param('id') id: string,
-        @Body() updateBirdDto: UpdateBirdDto,
+        @Param('id')
+        id: string,
+        @Body()
+        updateBirdDto: UpdateBirdDto
     ): Promise<Bird> {
         return this.birdService.update(id, updateBirdDto);
     }
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    delete(@Param('id') id: string): Promise<void> {
+    delete(
+        @Param('id')
+        id: string
+    ): Promise<void> {
         return this.birdService.remove(id);
     }
 
@@ -142,83 +170,99 @@ export class BirdsController {
     @ApiOperation({
         summary: 'Get observation count for a bird',
     })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
     getObservationCount(
-        @Param('id') id: string,
+        @Param('id')
+        id: string
     ): Promise<number> {
         return this.birdService.getObservationCount(id);
     }
 
     // Food relationships
     @Get(':id/foods')
-    @ApiOperation({ summary: 'Get all foods for a bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    getFoods(@Param('id') id: string) {
+    @ApiOperation({
+        summary: 'Get all foods for a bird',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
+    getFoods(
+        @Param('id')
+        id: string
+    ) {
         return this.birdService.getFoods(+id);
     }
 
     @Post(':id/foods')
     @HttpCode(HttpStatus.CREATED)
     addFood(
-        @Param('id') id: string,
-        @Body() createBirdFoodDto: CreateBirdFoodDto,
+        @Param('id')
+        id: string,
+        @Body()
+        createBirdFoodDto: CreateBirdFoodDto
     ) {
-        return this.birdService.addFood(
-            +id,
-            createBirdFoodDto,
-        );
+        return this.birdService.addFood(+id, createBirdFoodDto);
     }
 
     @Put(':birdId/foods/:foodId')
     updateFood(
-        @Param('birdId') birdId: string,
-        @Param('foodId') foodId: string,
-        @Body() updateBirdFoodDto: UpdateBirdFoodDto,
+        @Param('birdId')
+        birdId: string,
+        @Param('foodId')
+        foodId: string,
+        @Body()
+        updateBirdFoodDto: UpdateBirdFoodDto
     ) {
-        return this.birdService.updateFood(
-            +birdId,
-            +foodId,
-            updateBirdFoodDto,
-        );
+        return this.birdService.updateFood(+birdId, +foodId, updateBirdFoodDto);
     }
 
     @Delete(':birdId/foods/:foodId')
     @HttpCode(HttpStatus.NO_CONTENT)
     removeFood(
-        @Param('birdId') birdId: string,
-        @Param('foodId') foodId: string,
+        @Param('birdId')
+        birdId: string,
+        @Param('foodId')
+        foodId: string
     ) {
-        return this.birdService.removeFood(
-            +birdId,
-            +foodId,
-        );
+        return this.birdService.removeFood(+birdId, +foodId);
     }
 
     @Patch(':birdId/foods/:foodId/toggle-active')
     @HttpCode(HttpStatus.OK)
     toggleFoodActive(
-        @Param('birdId') birdId: string,
-        @Param('foodId') foodId: string,
+        @Param('birdId')
+        birdId: string,
+        @Param('foodId')
+        foodId: string
     ) {
-        return this.birdService.toggleFoodActive(
-            +birdId,
-            +foodId,
-        );
+        return this.birdService.toggleFoodActive(+birdId, +foodId);
     }
 
     // Habitat relationships
     @Get('habitat/:habitatId')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Get birds by habitat' })
+    @ApiOperation({
+        summary: 'Get birds by habitat',
+    })
     @ApiParam({
         name: 'habitatId',
         description: 'Habitat ID',
     })
     findByHabitat(
-        @Param('habitatId') habitatId: string,
-        @Query('page') page = '1',
-        @Query('limit') limit = '20',
-    ): Promise<{ data: Bird[]; total: number }> {
+        @Param('habitatId')
+        habitatId: string,
+        @Query('page')
+        page = '1',
+        @Query('limit')
+        limit = '20'
+    ): Promise<{
+        data: Bird[];
+        total: number;
+    }> {
         return this.birdService.findByHabitat(+habitatId, {
             page: Number(page),
             limit: Number(limit),
@@ -229,16 +273,24 @@ export class BirdsController {
     @ApiOperation({
         summary: 'Get all habitats for a bird',
     })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    getHabitats(@Param('id') id: string) {
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
+    getHabitats(
+        @Param('id')
+        id: string
+    ) {
         return this.birdService.getHabitats(+id);
     }
 
     @Post(':id/habitats/:habitatId')
     @HttpCode(HttpStatus.CREATED)
     addHabitat(
-        @Param('id') id: string,
-        @Param('habitatId') habitatId: string,
+        @Param('id')
+        id: string,
+        @Param('habitatId')
+        habitatId: string
     ) {
         return this.birdService.addHabitat(+id, +habitatId);
     }
@@ -246,13 +298,12 @@ export class BirdsController {
     @Delete(':id/habitats/:habitatId')
     @HttpCode(HttpStatus.NO_CONTENT)
     removeHabitat(
-        @Param('id') id: string,
-        @Param('habitatId') habitatId: string,
+        @Param('id')
+        id: string,
+        @Param('habitatId')
+        habitatId: string
     ) {
-        return this.birdService.removeHabitat(
-            +id,
-            +habitatId,
-        );
+        return this.birdService.removeHabitat(+id, +habitatId);
     }
 
     // Common names
@@ -260,38 +311,64 @@ export class BirdsController {
     @ApiOperation({
         summary: 'Get all common names for a bird',
     })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    getCommonNames(@Param('id') id: string) {
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
+    getCommonNames(
+        @Param('id')
+        id: string
+    ) {
         return this.birdService.getCommonNames(+id);
     }
 
     @Post(':id/commonNames')
     @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Add common name to bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
+    @ApiOperation({
+        summary: 'Add common name to bird',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
     addCommonName(
-        @Param('id') id: string,
-        @Body() createCommonNameDto: CreateCommonNameDto,
+        @Param('id')
+        id: string,
+        @Body()
+        createCommonNameDto: CreateCommonNameDto
     ) {
-        return this.birdService.addCommonName(
-            +id,
-            createCommonNameDto,
-        );
+        return this.birdService.addCommonName(+id, createCommonNameDto);
     }
 
     // Media
     @Get(':id/media')
-    @ApiOperation({ summary: 'Get all media for a bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    getMedia(@Param('id') id: string) {
+    @ApiOperation({
+        summary: 'Get all media for a bird',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
+    getMedia(
+        @Param('id')
+        id: string
+    ) {
         return this.birdService.getMedia(+id);
     }
 
     // Taxonomy
     @Get(':id/taxonomy')
-    @ApiOperation({ summary: 'Get taxonomy for a bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    getTaxonomy(@Param('id') id: string) {
+    @ApiOperation({
+        summary: 'Get taxonomy for a bird',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
+    getTaxonomy(
+        @Param('id')
+        id: string
+    ) {
         return this.birdService.getTaxonomy(+id);
     }
 
@@ -300,17 +377,22 @@ export class BirdsController {
     @ApiOperation({
         summary: 'Get conservation status for a bird',
     })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
     @ApiResponse({
         status: 200,
-        description:
-            'Returns the conservation status of the bird',
+        description: 'Returns the conservation status of the bird',
     })
     @ApiResponse({
         status: 404,
         description: 'Bird not found',
     })
-    getConservationStatus(@Param('id') id: string) {
+    getConservationStatus(
+        @Param('id')
+        id: string
+    ) {
         return this.birdService.getConservationStatus(+id);
     }
 
@@ -319,8 +401,14 @@ export class BirdsController {
     @ApiOperation({
         summary: 'Get distributions for a bird',
     })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
-    getDistributions(@Param('id') id: string) {
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
+    getDistributions(
+        @Param('id')
+        id: string
+    ) {
         return this.birdService.getDistributions(+id);
     }
 }

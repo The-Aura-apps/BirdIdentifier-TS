@@ -149,9 +149,18 @@ interface OpenAIBirdData {
     eggsDescription?: string;
     coolFacts?: string[];
     size?: {
-        lengthCm: { min: number; max: number };
-        wingspanCm: { min: number; max: number };
-        weightGrams: { min: number; max: number };
+        lengthCm: {
+            min: number;
+            max: number;
+        };
+        wingspanCm: {
+            min: number;
+            max: number;
+        };
+        weightGrams: {
+            min: number;
+            max: number;
+        };
     };
     lifeExpectancyYears?: number;
     taxonomy?: {
@@ -166,7 +175,12 @@ interface OpenAIBirdData {
         language: string;
         region?: string;
     }>;
-    habitats?: Array<{ name: string } | string>;
+    habitats?: Array<
+        | {
+              name: string;
+          }
+        | string
+    >;
     birdFoods?: string[];
     conservationStatus?: {
         code: string;

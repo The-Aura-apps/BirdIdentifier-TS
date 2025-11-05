@@ -20,51 +20,85 @@ import { ConservationStatus } from '../../conservation-status/entities/conservat
 import { Taxonomy } from '../../taxonomy/entities/taxonomy.entity';
 import { BirdDistribution } from '../../bird-distribution/entities/bird-distribution.entity';
 import { Habitat } from '../../habitats/entities/habitat.entity';
-import { BirdInfo } from 'src/modules/ai/types';
 import { Observation } from 'src/modules/observation/observations/entities/observation.entity';
-import { Food } from '../../foods/entities/food.entity';
 
 @Entity('birds')
-@Index(['scientificName'], { unique: true })
+@Index(['scientificName'], {
+    unique: true,
+})
 export class Bird {
     @PrimaryGeneratedColumn()
     @ApiProperty()
     id: number;
 
-    @Column({ type: 'varchar', length: 255, unique: true })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        unique: true,
+    })
     @ApiProperty()
     scientificName: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     @ApiProperty()
     description: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     @ApiProperty()
     behavior: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     @ApiProperty()
     nestingHabits: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     @ApiProperty()
     feedingHabits: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     @ApiProperty()
     eggsDescription: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     @ApiProperty()
     coolFacts: string;
 
-    @Column({ type: 'jsonb', nullable: true })
+    @Column({
+        type: 'jsonb',
+        nullable: true,
+    })
     @ApiProperty()
     size: {
-        lengthCm: { min: number; max: number };
-        wingspanCm: { min: number; max: number };
-        weightGrams: { min: number; max: number };
+        lengthCm: {
+            min: number;
+            max: number;
+        };
+        wingspanCm: {
+            min: number;
+            max: number;
+        };
+        weightGrams: {
+            min: number;
+            max: number;
+        };
     };
 
     @Column({
@@ -76,79 +110,68 @@ export class Bird {
     @ApiProperty()
     lifeExpectancyYears: number;
 
-    @ManyToOne(
-        () => Taxonomy,
-        (taxonomy) => taxonomy.birds,
-        {
-            eager: true,
-            nullable: true,
-            onDelete: 'SET NULL', // Important: Don't cascade delete taxonomies
-        },
-    )
-    @JoinColumn({ name: 'taxonomy_id' })
+    @ManyToOne(() => Taxonomy, taxonomy => taxonomy.birds, {
+        eager: true,
+        nullable: true,
+        onDelete: 'SET NULL', // Important: Don't cascade delete taxonomies
+    })
+    @JoinColumn({
+        name: 'taxonomy_id',
+    })
     @ApiProperty({
         type: () => Taxonomy,
         required: false,
     })
     taxonomy: Taxonomy;
 
-    @ManyToOne(
-        () => ConservationStatus,
-        (conservation) => conservation.birds,
-        {
-            eager: true,
-            nullable: true,
-            onDelete: 'SET NULL',
-        },
-    )
-    @JoinColumn({ name: 'conservation_status_id' })
+    @ManyToOne(() => ConservationStatus, conservation => conservation.birds, {
+        eager: true,
+        nullable: true,
+        onDelete: 'SET NULL',
+    })
+    @JoinColumn({
+        name: 'conservation_status_id',
+    })
     @ApiProperty({
         type: () => ConservationStatus,
         required: false,
     })
     conservationStatus: ConservationStatus;
 
-    @OneToMany(
-        () => CommonName,
-        (commonName) => commonName.bird,
-        {
-            cascade: true,
-            orphanedRowAction: 'delete',
-        },
-    )
-    @ApiProperty({ type: () => [CommonName] })
+    @OneToMany(() => CommonName, commonName => commonName.bird, {
+        cascade: true,
+        orphanedRowAction: 'delete',
+    })
+    @ApiProperty({
+        type: () => [CommonName],
+    })
     commonNames: CommonName[];
 
-    @OneToMany(
-        () => Observation,
-        (observation) => observation.bird,
-    )
+    @OneToMany(() => Observation, observation => observation.bird)
     observations: Observation[];
 
-    @OneToMany(() => Media, (media) => media.bird, {
+    @OneToMany(() => Media, media => media.bird, {
         cascade: true,
     })
-    @ApiProperty({ type: () => [Media] })
+    @ApiProperty({
+        type: () => [Media],
+    })
     media: Media[];
 
-    @OneToMany(
-        () => BirdFood,
-        (birdFood) => birdFood.bird,
-        { cascade: true },
-    )
-    @ApiProperty({ type: () => [BirdFood] })
+    @OneToMany(() => BirdFood, birdFood => birdFood.bird, {
+        cascade: true,
+    })
+    @ApiProperty({
+        type: () => [BirdFood],
+    })
     birdFoods: BirdFood[];
 
-    @OneToMany(
-        () => BirdDistribution,
-        (distribution) => distribution.bird,
-        {
-            cascade: true,
-        },
-    )
+    @OneToMany(() => BirdDistribution, distribution => distribution.bird, {
+        cascade: true,
+    })
     distributions: BirdDistribution[];
 
-    @ManyToMany(() => Habitat, (habitat) => habitat.birds)
+    @ManyToMany(() => Habitat, habitat => habitat.birds)
     @JoinTable({
         name: 'bird_habitats',
         joinColumn: {

@@ -6,10 +6,7 @@ import { Upload } from './entities/upload.entity';
 import { ObservationsModule } from '../observation/observations/observations.module';
 
 @Module({
-    imports: [
-        ObservationsModule,
-        TypeOrmModule.forFeature([Upload]),
-    ],
+    imports: [ObservationsModule, TypeOrmModule.forFeature([Upload])],
     controllers: [UploadsController],
     providers: [UploadsService],
     exports: [UploadsService],

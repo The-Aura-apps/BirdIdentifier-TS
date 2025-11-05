@@ -29,7 +29,10 @@ export class Observation {
     @Column()
     deviceId: string;
 
-    @Column({ type: 'varchar', length: 10 })
+    @Column({
+        type: 'varchar',
+        length: 10,
+    })
     type: 'image' | 'audio';
 
     @Column({
@@ -39,32 +42,40 @@ export class Observation {
     })
     status: ObservationStatus;
 
-    @Column({ name: 'upload_id' })
+    @Column({
+        name: 'upload_id',
+    })
     uploadId: number;
 
-    @ManyToOne(
-        () => Upload,
-        (upload) => upload.observations,
-        {
-            nullable: false,
-            eager: true, // Eager load upload for processing
-        },
-    )
-    @JoinColumn({ name: 'upload_id' })
+    @ManyToOne(() => Upload, upload => upload.observations, {
+        nullable: false,
+        eager: true, // Eager load upload for processing
+    })
+    @JoinColumn({
+        name: 'upload_id',
+    })
     upload: Upload;
 
     // Foreign key for Bird (nullable because might not be identified)
-    @Column({ name: 'bird_id', nullable: true })
+    @Column({
+        name: 'bird_id',
+        nullable: true,
+    })
     birdId: number | null;
 
-    @ManyToOne(() => Bird, (bird) => bird.observations, {
+    @ManyToOne(() => Bird, bird => bird.observations, {
         nullable: true,
         eager: true, // Eager load bird for API responses
     })
-    @JoinColumn({ name: 'bird_id' })
+    @JoinColumn({
+        name: 'bird_id',
+    })
     bird: Bird | null;
 
-    @Column({ type: 'jsonb', nullable: true })
+    @Column({
+        type: 'jsonb',
+        nullable: true,
+    })
     aiResult: BirdAiResponse | null;
 
     @Column({
@@ -75,7 +86,10 @@ export class Observation {
     })
     confidence: number | null;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     errorMessage: string | null;
 
     @CreateDateColumn()
@@ -94,10 +108,7 @@ export class Observation {
         this.updatedAt = new Date();
     }
 
-    markAsCompleted(
-        bird: Bird,
-        aiResponse: BirdAiResponse,
-    ): void {
+    markAsCompleted(bird: Bird, aiResponse: BirdAiResponse): void {
         this.status = ObservationStatus.COMPLETED;
         this.bird = bird;
         this.birdId = bird.id;
@@ -107,10 +118,7 @@ export class Observation {
         this.updatedAt = new Date();
     }
 
-    markAsFailed(
-        error: string,
-        aiResponse?: BirdAiResponse,
-    ): void {
+    markAsFailed(error: string, aiResponse?: BirdAiResponse): void {
         this.status = ObservationStatus.FAILED;
         this.errorMessage = error;
         this.aiResult = aiResponse || null;

@@ -11,7 +11,9 @@ import {
 import { Bird } from '../../birds/entities/bird.entity';
 import { Length } from 'class-validator';
 
-@Index(['bird', 'name', 'language'], { unique: true })
+@Index(['bird', 'name', 'language'], {
+    unique: true,
+})
 @Entity('common_names')
 export class CommonName {
     @PrimaryGeneratedColumn()
@@ -21,7 +23,11 @@ export class CommonName {
     @Length(1, 255)
     name: string;
 
-    @Column({ type: 'varchar', length: 10, default: 'en' })
+    @Column({
+        type: 'varchar',
+        length: 10,
+        default: 'en',
+    })
     @Length(2, 10)
     language: string;
 
@@ -33,11 +39,13 @@ export class CommonName {
     // @Column({ name: 'bird_id' })
     // birdId: number;
 
-    @ManyToOne(() => Bird, (bird) => bird.commonNames, {
+    @ManyToOne(() => Bird, bird => bird.commonNames, {
         onDelete: 'CASCADE',
         nullable: false,
     })
-    @JoinColumn({ name: 'bird_id' })
+    @JoinColumn({
+        name: 'bird_id',
+    })
     bird: Bird;
 
     @CreateDateColumn()
