@@ -73,7 +73,7 @@ export class BirdsService {
         }
 
         // Handle taxonomy find-or-create using TaxonomyService
-        let taxonomy; // any fucked up
+        let taxonomy = taxDto; // any fucked up
         if (taxDto) {
             taxonomy =
                 await this.taxonomyService.findOrCreate(
@@ -104,33 +104,35 @@ export class BirdsService {
             }
         }
 
-        // Create the bird entity - taxonomy is a SINGLE object, not an array!
-        const bird = this.birdRepo.create({
-            scientificName,
-            taxonomy, // Assign directly (ManyToOne relationship)
-            conservationStatus,
-            ...rest,
-        });
-
-        const savedBird = await this.birdRepo.save(bird); // ← NOW bird has ID!
-
-        // Handle common names - create the entities and associate with bird
+        let commonNames: CommonName[] = [];
         if (cmnDto && cmnDto.length > 0) {
-            const commonNames = cmnDto.map((cnDto) =>
+            commonNames = cmnDto.map((cnDto) =>
                 this.commonNameRepo.create({
-                    ...cnDto,
                     name: cnDto.name,
                     language: cnDto.language || 'en',
                     region: cnDto.region || '',
-                    bird: savedBird, // Link to bird entity
                 }),
             );
-            savedBird.commonNames = commonNames;
-            await this.commonNameRepo.save(commonNames); // ← cascade or manual save
         }
+
+        // Create the bird entity
+        const bird = this.birdRepo.create({
+            scientificName,
+            taxonomy,
+            conservationStatus,
+            commonNames,
+            ...rest,
+        });
+
+        //← NOW bird exists → link common names
+        // if (commonNames.length > 0) {
+        //     commonNames.forEach((cn) => (cn.bird = bird));
+        //     bird.commonNames = commonNames;
+        // }
 
         // Save bird (cascade will save common names automatically)
         const saved = await this.birdRepo.save(bird);
+
         this.logger.log(
             `Bird created: ${saved.scientificName} (ID: ${saved.id})`,
         );
@@ -867,12 +869,12 @@ export class BirdsService {
             );
         }
 
-    const commonName = this.commonNameRepo.create({
-        name: createCommonNameDto.name,
-        language: createCommonNameDto.language || 'en',
-        region: createCommonNameDto.region || '',
-        bird: bird, // Link bird entity
-    });
+        const commonName = this.commonNameRepo.create({
+            name: createCommonNameDto.name,
+            language: createCommonNameDto.language || 'en',
+            region: createCommonNameDto.region || '',
+            bird: bird, // Link bird entity
+        });
 
         const saved =
             await this.commonNameRepo.save(commonName);

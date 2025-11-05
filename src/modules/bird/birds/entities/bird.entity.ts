@@ -113,6 +113,7 @@ export class Bird {
         (commonName) => commonName.bird,
         {
             cascade: true,
+            orphanedRowAction: 'delete',
         },
     )
     @ApiProperty({ type: () => [CommonName] })
