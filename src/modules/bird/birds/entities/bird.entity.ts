@@ -147,6 +147,14 @@ export class Bird {
     })
     commonNames: CommonName[];
 
+    @ManyToMany(() => Habitat, habitat => habitat.birds, { eager: true })
+    @JoinTable({
+        name: 'bird_habitats',
+        joinColumn: { name: 'bird_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'habitat_id', referencedColumnName: 'id' },
+    })
+    habitats: Habitat[];
+
     @OneToMany(() => Observation, observation => observation.bird)
     observations: Observation[];
 
@@ -170,20 +178,6 @@ export class Bird {
         cascade: true,
     })
     distributions: BirdDistribution[];
-
-    @ManyToMany(() => Habitat, habitat => habitat.birds)
-    @JoinTable({
-        name: 'bird_habitats',
-        joinColumn: {
-            name: 'bird_id',
-            referencedColumnName: 'id',
-        },
-        inverseJoinColumn: {
-            name: 'habitat_id',
-            referencedColumnName: 'id',
-        },
-    })
-    habitats: Habitat[];
 
     @CreateDateColumn()
     @Exclude()

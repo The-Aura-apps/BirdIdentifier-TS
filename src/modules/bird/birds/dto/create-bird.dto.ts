@@ -37,12 +37,7 @@ export class CreateBirdDto {
 
     @IsOptional()
     @IsArray()
-    @IsNumber(
-        {},
-        {
-            each: true,
-        }
-    )
+    @IsNumber({}, { each: true })
     habitatIds?: number[];
 
     @IsOptional()
