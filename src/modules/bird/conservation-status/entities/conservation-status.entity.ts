@@ -27,10 +27,14 @@ export enum ConservationStatusCode {
 }
 
 @Entity('conservation_statuses')
-@Index(['code'], { unique: true })
+@Index(['code'], {
+    unique: true,
+})
 export class ConservationStatus {
     @PrimaryGeneratedColumn()
-    @ApiProperty({ description: 'Unique identifier' })
+    @ApiProperty({
+        description: 'Unique identifier',
+    })
     id: number;
 
     @Column({
@@ -45,25 +49,32 @@ export class ConservationStatus {
     })
     code: ConservationStatusCode;
 
-    @Column({ type: 'varchar', length: 100 })
+    @Column({
+        type: 'varchar',
+        length: 100,
+    })
     @ApiProperty({
         description: 'Full name of conservation status',
         example: 'Least Concern',
     })
     fullName: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     @ApiProperty({
-        description:
-            'Description of what this status means',
+        description: 'Description of what this status means',
         required: false,
     })
     description?: string;
 
-    @Column({ type: 'int', default: 0 })
+    @Column({
+        type: 'int',
+        default: 0,
+    })
     @ApiProperty({
-        description:
-            'Severity ranking (higher = more threatened) 1 to 9',
+        description: 'Severity ranking (higher = more threatened) 1 to 9',
         example: 0,
     })
     severityLevel: number;
@@ -79,10 +90,7 @@ export class ConservationStatus {
     })
     authority: string;
 
-    @OneToMany(
-        () => Bird,
-        (bird) => bird.conservationStatus,
-    )
+    @OneToMany(() => Bird, bird => bird.conservationStatus)
     birds: Bird[];
 
     @CreateDateColumn()

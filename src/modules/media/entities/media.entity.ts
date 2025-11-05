@@ -23,16 +23,23 @@ export class Media {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ name: 'bird_id' })
+    @Column({
+        name: 'bird_id',
+    })
     birdId: number;
 
-    @ManyToOne(() => Bird, (bird) => bird.media, {
+    @ManyToOne(() => Bird, bird => bird.media, {
         onDelete: 'CASCADE',
     })
-    @JoinColumn({ name: 'bird_id' })
+    @JoinColumn({
+        name: 'bird_id',
+    })
     bird: Bird;
 
-    @Column({ type: 'varchar', length: 500 })
+    @Column({
+        type: 'varchar',
+        length: 500,
+    })
     storageKey: string; // S3 key: birds/123/photos/uuid.jpg
 
     @Column({
@@ -42,7 +49,10 @@ export class Media {
     })
     type: mediaType;
 
-    @Column({ type: 'varchar', nullable: true })
+    @Column({
+        type: 'varchar',
+        nullable: true,
+    })
     size: string; // File size as string (e.g., "2.5 MB")
 
     @Column({
@@ -66,10 +76,16 @@ export class Media {
     })
     attribution: string; // Attribution text
 
-    @Column({ type: 'integer', default: 0 })
+    @Column({
+        type: 'integer',
+        default: 0,
+    })
     orderIndex: number; // For sorting media items
 
-    @Column({ type: 'jsonb', nullable: true })
+    @Column({
+        type: 'jsonb',
+        nullable: true,
+    })
     metadata: {
         width?: number; // Image/video width in pixels
         height?: number; // Image/video height in pixels
@@ -82,18 +98,20 @@ export class Media {
         thumbnailKey?: string; // S3 key for video thumbnail
     };
 
-    @CreateDateColumn({ name: 'created_at' })
+    @CreateDateColumn({
+        name: 'created_at',
+    })
     createdAt: Date;
 
-    @UpdateDateColumn({ name: 'updated_at' })
+    @UpdateDateColumn({
+        name: 'updated_at',
+    })
     updatedAt: Date;
 
     // Helper methods for URL generation
     getCdnUrl(variant?: string): string {
         const base = process.env.CDN_URL ?? '';
-        const key = variant
-            ? `${variant}/${this.storageKey}`
-            : this.storageKey;
+        const key = variant ? `${variant}/${this.storageKey}` : this.storageKey;
         return `${base}/${key}`;
     }
 
@@ -104,10 +122,7 @@ export class Media {
 
     getThumbnailUrl(): string {
         // For videos, return thumbnail; for images, return thumbnail variant
-        if (
-            this.type === mediaType.Video &&
-            this.metadata?.thumbnailKey
-        ) {
+        if (this.type === mediaType.Video && this.metadata?.thumbnailKey) {
             return `${process.env.CDN_URL}/${this.metadata.thumbnailKey}`;
         }
         return this.getCdnUrl('thumbnail');

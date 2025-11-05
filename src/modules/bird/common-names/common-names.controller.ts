@@ -16,46 +16,49 @@ import { UpdateCommonNameDto } from './dto/update-common-name.dto';
 
 @Controller('common-names')
 export class CommonNamesController {
-    constructor(
-        private readonly commonNamesService: CommonNamesService,
-    ) {}
+    constructor(private readonly commonNamesService: CommonNamesService) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     create(
-        @Body() createDto: CreateCommonNameDto,
+        @Body()
+        createDto: CreateCommonNameDto
     ): Promise<CommonName> {
         return this.commonNamesService.create(createDto);
     }
 
     @Get('bird/:birdId')
     findByBirdId(
-        @Param('birdId') birdId: string,
+        @Param('birdId')
+        birdId: string
     ): Promise<CommonName[]> {
-        return this.commonNamesService.findByBirdId(
-            +birdId,
-        );
+        return this.commonNamesService.findByBirdId(+birdId);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string): Promise<CommonName> {
+    findOne(
+        @Param('id')
+        id: string
+    ): Promise<CommonName> {
         return this.commonNamesService.findOne(+id);
     }
 
     @Put(':id')
     update(
-        @Param('id') id: string,
-        @Body() updateDto: UpdateCommonNameDto,
+        @Param('id')
+        id: string,
+        @Body()
+        updateDto: UpdateCommonNameDto
     ): Promise<CommonName> {
-        return this.commonNamesService.update(
-            +id,
-            updateDto,
-        );
+        return this.commonNamesService.update(+id, updateDto);
     }
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    remove(@Param('id') id: string): Promise<void> {
+    remove(
+        @Param('id')
+        id: string
+    ): Promise<void> {
         return this.commonNamesService.remove(+id);
     }
 }

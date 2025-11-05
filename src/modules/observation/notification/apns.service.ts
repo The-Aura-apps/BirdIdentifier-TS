@@ -17,31 +17,23 @@ export class ApnsService {
         });
     }
 
-    async sendNotification(
-        deviceToken: string,
-        title: string,
-        body: string,
-    ) {
+    async sendNotification(deviceToken: string, title: string, body: string) {
         const note = new apn.Notification();
 
         note.topic = process.env.APNS_BUNDLE_ID!;
-        note.alert = { title, body };
+        note.alert = {
+            title,
+            body,
+        };
         note.sound = 'defulte';
         note.badge = 1;
 
         try {
-            const result = await this.apnProvider.send(
-                note,
-                deviceToken,
-            );
-            this.logger.log(
-                `APNs response: ${JSON.stringify(result)}`,
-            );
+            const result = await this.apnProvider.send(note, deviceToken);
+            this.logger.log(`APNs response: ${JSON.stringify(result)}`);
             return result;
         } catch (error) {
-            this.logger.error(
-                `APNs error: ${error.message}`,
-            );
+            this.logger.error(`APNs error: ${error.message}`);
             throw error;
         }
     }

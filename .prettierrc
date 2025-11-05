@@ -3,10 +3,9 @@
   "singleQuote": true,
   "tabWidth": 4,
   "useTabs": false,
-  "trailingComma": "all",
-  "printWidth": 60,
-  "arrowParens": "always",
+  "trailingComma": "es5",
+  "printWidth":80,
+  "arrowParens": "avoid",
   "bracketSpacing": true,
-  "endOfLine": "auto",
-  "quoteProps": "consistent"
+  "endOfLine": "lf"
 }

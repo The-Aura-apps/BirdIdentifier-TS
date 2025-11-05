@@ -1,25 +1,20 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Query,
-    Body,
-} from '@nestjs/common';
+import { Controller, Get, Post, Query, Body } from '@nestjs/common';
 import { TaxonomyService } from './taxonomy.service';
 import { CreateTaxonomyDto } from './dto/create-taxonomy.dto';
 
 @Controller('taxonomy')
 export class TaxonomyController {
-    constructor(
-        private readonly taxonomyService: TaxonomyService,
-    ) {}
+    constructor(private readonly taxonomyService: TaxonomyService) {}
 
     /**
      * POST /taxonomy
      * Find or create taxonomy
      */
     @Post()
-    async createOrFind(@Body() dto: CreateTaxonomyDto) {
+    async createOrFind(
+        @Body()
+        dto: CreateTaxonomyDto
+    ) {
         return this.taxonomyService.findOrCreate(dto);
     }
 
@@ -30,11 +25,16 @@ export class TaxonomyController {
      */
     @Get('find')
     async findByClassification(
-        @Query('phylum') phylum?: string,
-        @Query('class') className?: string,
-        @Query('order') order?: string,
-        @Query('family') family?: string,
-        @Query('genus') genus?: string,
+        @Query('phylum')
+        phylum?: string,
+        @Query('class')
+        className?: string,
+        @Query('order')
+        order?: string,
+        @Query('family')
+        family?: string,
+        @Query('genus')
+        genus?: string
     ) {
         return this.taxonomyService.findByClassification({
             phylum,
@@ -52,8 +52,10 @@ export class TaxonomyController {
      */
     @Get()
     async findAll(
-        @Query('page') page?: number,
-        @Query('limit') limit?: number,
+        @Query('page')
+        page?: number,
+        @Query('limit')
+        limit?: number
     ) {
         return this.taxonomyService.findAll({
             page: page ? Number(page) : 1,

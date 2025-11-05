@@ -23,7 +23,9 @@ export class BirdDistribution {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ name: 'bird_id' })
+    @Column({
+        name: 'bird_id',
+    })
     birdId: number;
 
     @Column({
@@ -32,22 +34,34 @@ export class BirdDistribution {
     })
     season: DistributionSeason;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     description: string;
 
-    @Column({ type: 'jsonb', nullable: true })
+    @Column({
+        type: 'jsonb',
+        nullable: true,
+    })
     countries: string[]; // For quick filtering
 
-    @ManyToOne(() => Bird, (bird) => bird.distributions, {
+    @ManyToOne(() => Bird, bird => bird.distributions, {
         onDelete: 'CASCADE',
     })
-    @JoinColumn({ name: 'bird_id' })
+    @JoinColumn({
+        name: 'bird_id',
+    })
     bird: Bird;
 
-    @CreateDateColumn({ name: 'created_at' })
+    @CreateDateColumn({
+        name: 'created_at',
+    })
     createdAt: Date;
 
-    @UpdateDateColumn({ name: 'updated_at' })
+    @UpdateDateColumn({
+        name: 'updated_at',
+    })
     updatedAt: Date;
 
     // Convert to ProcessedBirdData format

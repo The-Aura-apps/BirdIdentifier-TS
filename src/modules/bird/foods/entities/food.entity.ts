@@ -14,10 +14,17 @@ export class Food {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ type: 'varchar', length: 255, unique: true })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        unique: true,
+    })
     name: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({
+        type: 'text',
+        nullable: true,
+    })
     description: string;
 
     @Column({
@@ -27,7 +34,7 @@ export class Food {
     })
     imageStorageKey: string;
 
-    @OneToMany(() => BirdFood, (birdFood) => birdFood.food)
+    @OneToMany(() => BirdFood, birdFood => birdFood.food)
     birdFoods: BirdFood[];
 
     getImageUrl(): string | null {

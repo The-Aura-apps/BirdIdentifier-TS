@@ -17,23 +17,27 @@ import { UpdateFoodDto } from './dto/update-food.dto';
 
 @Controller('foods')
 export class FoodController {
-    constructor(
-        private readonly foodService: FoodService,
-    ) {}
+    constructor(private readonly foodService: FoodService) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     create(
-        @Body() createDto: CreateFoodDto,
+        @Body()
+        createDto: CreateFoodDto
     ): Promise<Food> {
         return this.foodService.create(createDto);
     }
 
     @Get()
     findAll(
-        @Query('page') page = '1',
-        @Query('limit') limit = '20',
-    ): Promise<{ data: Food[]; total: number }> {
+        @Query('page')
+        page = '1',
+        @Query('limit')
+        limit = '20'
+    ): Promise<{
+        data: Food[];
+        total: number;
+    }> {
         return this.foodService.findAll({
             page: Number(page),
             limit: Number(limit),
@@ -41,37 +45,54 @@ export class FoodController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string): Promise<Food> {
+    findOne(
+        @Param('id')
+        id: string
+    ): Promise<Food> {
         return this.foodService.findOne(+id);
     }
 
     @Get('name/:name')
-    findByName(@Param('name') name: string): Promise<Food> {
+    findByName(
+        @Param('name')
+        name: string
+    ): Promise<Food> {
         return this.foodService.findByName(name);
     }
 
     @Put(':id')
     update(
-        @Param('id') id: string,
-        @Body() updateDto: UpdateFoodDto,
+        @Param('id')
+        id: string,
+        @Body()
+        updateDto: UpdateFoodDto
     ): Promise<Food> {
         return this.foodService.update(+id, updateDto);
     }
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    remove(@Param('id') id: string): Promise<void> {
+    remove(
+        @Param('id')
+        id: string
+    ): Promise<void> {
         return this.foodService.remove(+id);
     }
 
     @Get(':id/birds')
-    getBirds(@Param('id') id: string) {
+    getBirds(
+        @Param('id')
+        id: string
+    ) {
         return this.foodService.getBirds(+id);
     }
 
     @Post(':id/toggle-active')
     @HttpCode(HttpStatus.OK)
-    toggleActive(@Param('id') id: string) {
+    toggleActive(
+        @Param('id')
+        id: string
+    ) {
         return this.foodService.toggleActive(+id);
     }
 }

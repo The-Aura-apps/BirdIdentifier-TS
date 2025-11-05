@@ -11,16 +11,10 @@ class EnvVariables {
     PORT: number;
 }
 
-export function validateEnv(
-    config: Record<string, unknown>,
-) {
-    const validated = plainToInstance(
-        EnvVariables,
-        config,
-        {
-            enableImplicitConversion: true,
-        },
-    );
+export function validateEnv(config: Record<string, unknown>) {
+    const validated = plainToInstance(EnvVariables, config, {
+        enableImplicitConversion: true,
+    });
     const errors = validateSync(validated, {
         skipMissingProperties: false,
     });
