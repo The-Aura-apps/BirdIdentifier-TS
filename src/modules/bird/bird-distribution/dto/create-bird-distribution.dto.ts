@@ -24,7 +24,4 @@ export class CreateBirdDistributionDto {
     @IsOptional()
     @IsString()
     description?: string;
-
-    @IsOptional()
-    rangeGeoJson?: any;
 }

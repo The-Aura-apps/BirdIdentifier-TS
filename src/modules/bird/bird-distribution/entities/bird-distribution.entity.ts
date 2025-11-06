@@ -18,21 +18,29 @@ export enum DistributionSeason {
 }
 
 @Entity('bird_distributions')
-@Index(['birdId', 'season'])
+@Index(['season'])
 export class BirdDistribution {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({
-        name: 'bird_id',
-    })
-    birdId: number;
+    @Column({ name: 'month', type: 'int' })
+    month: number; // 1 = Jan, 12 = Dec
 
     @Column({
-        type: 'enum',
-        enum: DistributionSeason,
+        type: 'jsonb',
+        nullable: true,
     })
-    season: DistributionSeason;
+    location: {
+        country?: string;
+        region?: string;
+        coordinates?: { lat: number; lng: number };
+    };
+
+    @Column({
+        type: 'float',
+        nullable: true,
+    })
+    presenceScore?: number; // e.g., 0–1 scale of likelihood
 
     @Column({
         type: 'text',
@@ -46,7 +54,7 @@ export class BirdDistribution {
     })
     countries: string[]; // For quick filtering
 
-    @ManyToOne(() => Bird, bird => bird.distributions, {
+    @ManyToOne(() => Bird, (bird) => bird.distributions, {
         onDelete: 'CASCADE',
     })
     @JoinColumn({
@@ -63,13 +71,4 @@ export class BirdDistribution {
         name: 'updated_at',
     })
     updatedAt: Date;
-
-    // Convert to ProcessedBirdData format
-    toProcessedFormat() {
-        return {
-            season: this.season,
-            description: this.description,
-            countries: this.countries || [],
-        };
-    }
 }
