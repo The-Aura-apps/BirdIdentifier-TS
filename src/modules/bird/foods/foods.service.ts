@@ -17,7 +17,7 @@ export class FoodService {
 
     constructor(
         @InjectRepository(Food)
-        private readonly foodRepo: Repository<Food>
+        private readonly foodRepo: Repository<Food>,
     ) {}
 
     async create(createDto: CreateFoodDto): Promise<Food> {
@@ -29,9 +29,7 @@ export class FoodService {
         });
 
         if (existing) {
-            throw new ConflictException(
-                `Food with name "${createDto.name}" already exists`
-            );
+            throw new ConflictException(`Food with name "${createDto.name}" already exists`);
         }
 
         const food = this.foodRepo.create(createDto);
@@ -45,7 +43,7 @@ export class FoodService {
         options: {
             page?: number;
             limit?: number;
-        } = {}
+        } = {},
     ): Promise<{
         data: Food[];
         total: number;
@@ -55,9 +53,7 @@ export class FoodService {
         const [data, total] = await this.foodRepo.findAndCount({
             skip: (page - 1) * limit,
             take: limit,
-            order: {
-                name: 'ASC',
-            },
+            order: { name: 'ASC' },
         });
 
         return {
@@ -107,9 +103,7 @@ export class FoodService {
             });
 
             if (existing) {
-                throw new ConflictException(
-                    `Food with name "${updateDto.name}" already exists`
-                );
+                throw new ConflictException(`Food with name "${updateDto.name}" already exists`);
             }
         }
 
@@ -134,7 +128,7 @@ export class FoodService {
 
         if (birdsCount > 0) {
             throw new ConflictException(
-                `Cannot delete food ${id}: ${birdsCount} bird relationships exist`
+                `Cannot delete food ${id}: ${birdsCount} bird relationships exist`,
             );
         }
 
@@ -147,11 +141,7 @@ export class FoodService {
             where: {
                 id,
             },
-            relations: [
-                'birdFoods',
-                'birdFoods.bird',
-                'birdFoods.bird.conservationStatus',
-            ],
+            relations: ['birdFoods', 'birdFoods.bird', 'birdFoods.bird.conservationStatus'],
         });
 
         if (!food) {
@@ -159,7 +149,7 @@ export class FoodService {
         }
 
         // Only return active relationships
-        const activeRelations = food.birdFoods.filter(bf => bf.isActive);
+        const activeRelations = food.birdFoods.filter((bf) => bf.isActive);
 
         return {
             food: {
@@ -168,7 +158,7 @@ export class FoodService {
                 description: food.description,
                 imageStorageKey: food.imageStorageKey,
             },
-            birdRelations: activeRelations.map(bf => ({
+            birdRelations: activeRelations.map((bf) => ({
                 id: bf.id,
                 isActive: bf.isActive,
                 bird: bf.bird,
@@ -193,7 +183,7 @@ export class FoodService {
 
         if (activeBirdRelations > 0) {
             throw new BadRequestException(
-                `Cannot deactivate food ${id}: ${activeBirdRelations} active bird relationships exist`
+                `Cannot deactivate food ${id}: ${activeBirdRelations} active bird relationships exist`,
             );
         }
 

@@ -11,6 +11,9 @@ import { Type } from 'class-transformer';
 import { CreateCommonNameNestedDto } from '../../common-names/dto/create-common-name.dto';
 import { CreateTaxonomyDto } from '../../taxonomy/dto/create-taxonomy.dto';
 import { CreateConservationStatusDto } from '../../conservation-status/dto/create-conservation-status.dto';
+import { CreateBirdDistributionDto } from '../../bird-distribution/dto/create-bird-distribution.dto';
+import { CreateBirdFoodDto } from '../../bird-foods/dto/create-bird-food.dto';
+import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
 
 export class CreateBirdDto {
     @IsNotEmpty()
@@ -29,9 +32,7 @@ export class CreateBirdDto {
 
     @IsOptional()
     @IsArray()
-    @ValidateNested({
-        each: true,
-    })
+    @ValidateNested({ each: true })
     @Type(() => CreateCommonNameNestedDto)
     commonNames?: CreateCommonNameNestedDto[];
 
@@ -41,23 +42,29 @@ export class CreateBirdDto {
     habitatIds?: number[];
 
     @IsOptional()
-    @IsString()
-    description?: string;
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CreateMediaDto)
+    media?: CreateMediaDto[];
+
     @IsOptional()
-    @IsString()
-    behavior?: string;
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CreateBirdDistributionDto)
+    distributions?: CreateBirdDistributionDto[];
+
     @IsOptional()
-    @IsString()
-    nestingHabits?: string;
-    @IsOptional()
-    @IsString()
-    feedingHabits?: string;
-    @IsOptional()
-    @IsString()
-    eggsDescription?: string;
-    @IsOptional()
-    @IsString()
-    coolFacts?: string;
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CreateBirdFoodDto)
+    birdFoods: CreateBirdFoodDto[];
+
+    @IsOptional() @IsString() description?: string;
+    @IsOptional() @IsString() behavior?: string;
+    @IsOptional() @IsString() nestingHabits?: string;
+    @IsOptional() @IsString() feedingHabits?: string;
+    @IsOptional() @IsString() eggsDescription?: string;
+    @IsOptional() @IsString() coolFacts?: string;
 
     @IsOptional()
     @IsObject()
@@ -70,10 +77,7 @@ export class CreateBirdDto {
             min: number;
             max: number;
         };
-        weightGrams: {
-            min: number;
-            max: number;
-        };
+        weightGrams: { min: number; max: number };
     };
 
     @IsOptional()

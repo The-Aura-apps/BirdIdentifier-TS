@@ -21,7 +21,6 @@ export class BirdDistributionService {
     ): Promise<BirdDistribution> {
         const existing = await this.distributionRepo.findOne({
             where: {
-                birdId: createDto.birdId,
                 season: createDto.season,
             },
         });
@@ -36,16 +35,16 @@ export class BirdDistributionService {
         return await this.distributionRepo.save(distribution);
     }
 
-    async findByBirdId(birdId: number): Promise<BirdDistribution[]> {
-        return await this.distributionRepo.find({
-            where: {
-                birdId,
-            },
-            order: {
-                season: 'ASC',
-            },
-        });
-    }
+    // async findByBirdId(birdId: number): Promise<BirdDistribution[]> {
+    //     return await this.distributionRepo.find({
+    //         where: {
+    //            // birdId,
+    //         },
+    //         order: {
+    //             season: 'ASC',
+    //         },
+    //     });
+    // }
 
     async findOne(id: number): Promise<BirdDistribution> {
         const distribution = await this.distributionRepo.findOne({

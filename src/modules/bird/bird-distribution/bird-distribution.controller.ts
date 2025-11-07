@@ -29,13 +29,13 @@ export class BirdDistributionController {
         return this.distributionService.create(createDto);
     }
 
-    @Get('bird/:birdId')
-    findByBirdId(
-        @Param('birdId')
-        birdId: string
-    ): Promise<BirdDistribution[]> {
-        return this.distributionService.findByBirdId(+birdId);
-    }
+    // @Get('bird/:birdId')
+    // findByBirdId(
+    //     @Param('birdId')
+    //     birdId: string
+    // ): Promise<BirdDistribution[]> {
+    //     return this.distributionService.findByBirdId(+birdId);
+    // }
 
     @Get(':id')
     findOne(

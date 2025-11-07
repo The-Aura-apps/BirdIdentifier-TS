@@ -17,16 +17,11 @@ export enum mediaType {
 }
 
 @Entity('media')
-@Index(['birdId', 'type'])
-@Index(['birdId', 'orderIndex'])
+@Index(['type'])
+@Index(['orderIndex'])
 export class Media {
     @PrimaryGeneratedColumn()
     id: number;
-
-    @Column({
-        name: 'bird_id',
-    })
-    birdId: number;
 
     @ManyToOne(() => Bird, bird => bird.media, {
         onDelete: 'CASCADE',
@@ -40,8 +35,8 @@ export class Media {
         type: 'varchar',
         length: 500,
     })
-    storageKey: string; // S3 key: birds/123/photos/uuid.jpg
-
+    storageKey: string;
+    
     @Column({
         type: 'enum',
         enum: mediaType,

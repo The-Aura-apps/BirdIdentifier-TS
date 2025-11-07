@@ -16,6 +16,8 @@ import { Taxonomy } from '../taxonomy/entities/taxonomy.entity';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
 import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
 import { ConservationStatusModule } from '../conservation-status/conservation-status.module';
+import { Food } from '../foods/entities/food.entity';
+import { Media } from 'src/modules/media/entities/media.entity';
 
 @Module({
     imports: [
@@ -25,6 +27,8 @@ import { ConservationStatusModule } from '../conservation-status/conservation-st
             BirdFood,
             CommonName,
             Habitat,
+            Food,
+            Media,
         ]),
         TaxonomyModule,
         ConservationStatusModule,

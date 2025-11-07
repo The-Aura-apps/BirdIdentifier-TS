@@ -22,6 +22,9 @@ import { ConservationStatusService } from '../conservation-status/conservation-s
 import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
 import { Taxonomy } from '../taxonomy/entities/taxonomy.entity';
 import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto';
+import { Media } from 'src/modules/media/entities/media.entity';
+import { BirdDistribution } from '../bird-distribution/entities/bird-distribution.entity';
+import { Food } from '../foods/entities/food.entity';
 
 @Injectable()
 export class BirdsService {
@@ -32,10 +35,16 @@ export class BirdsService {
         private readonly birdRepo: Repository<Bird>,
         @InjectRepository(BirdFood)
         private readonly birdFoodRepo: Repository<BirdFood>,
+        @InjectRepository(Food)
+        private readonly foodRepo: Repository<Food>,
         @InjectRepository(Habitat)
         private readonly habitatRepo: Repository<Habitat>,
         @InjectRepository(CommonName)
         private readonly commonNameRepo: Repository<CommonName>,
+        @InjectRepository(Media)
+        private readonly mediaRepo: Repository<Media>,
+        @InjectRepository(BirdDistribution)
+        private readonly distributionRepo: Repository<BirdDistribution>,
         private readonly taxonomyService: TaxonomyService,
         private readonly conservationStatusService: ConservationStatusService,
         private readonly birdInfoWrapper: BirdInfoWrapper,
@@ -51,6 +60,9 @@ export class BirdsService {
             conservationStatus: consDto,
             commonNames: cmnDto,
             habitatIds,
+            media: mediaDto,
+            distributions: distributionsDto,
+            birdFoods: birdFoodsDto,
             ...rest
         } = createBirdDto;
 
@@ -70,19 +82,19 @@ export class BirdsService {
             );
         }
 
-        // Handle taxonomy find-or-create using TaxonomyService
+        // Handle  ManyToOne: Taxonomy     find-or-create using TaxonomyService
         let taxonomy; // any fucked up  &&  taxonomy: taxDto bug (should be entity, not DTO)
         if (taxDto) {
             taxonomy = await this.taxonomyService.findOrCreate(taxDto);
         }
 
-        // Handle conservation status find-or-create
+        // Handle ManyToOne: Conservation Status    find-or-create
         let conservationStatus;
         if (consDto) {
             conservationStatus = await this.conservationStatusService.findOrCreate(consDto);
         }
 
-        // How to handle in service:
+        // Handel ManyToMany: Habitats
         let habitats: Habitat[] = [];
         if (habitatIds && habitatIds.length > 0) {
             habitats = await this.habitatRepo.find({
@@ -99,7 +111,7 @@ export class BirdsService {
             }
         }
 
-        // Handel Common Name
+        // Handel OneToMany: Common Names
         let commonNames: CommonName[] = [];
         if (cmnDto && cmnDto.length > 0) {
             commonNames = cmnDto.map((cnDto) =>
@@ -111,6 +123,60 @@ export class BirdsService {
             );
         }
 
+        // Handel OneToMany: Media
+        // let media: Media[] = [];
+        // if (mediaDto && mediaDto.length > 0) {
+        //     media = mediaDto.map((dto) =>
+        //         this.mediaRepo.create({
+        //             storageKey: dto.storageKey,
+        //             type: dto.type,
+        //             size: dto.size,
+        //             caption: dto.caption,
+        //             source: dto.source,
+        //             attribution: dto.attribution,
+        //             orderIndex: dto.orderIndex || 0,
+        //             metadata: dto.metadata,
+        //         }),
+        //     );
+        // }
+
+        // Handel OneToMany: Distributions
+        // let distributions: BirdDistribution[] = [];
+        // if (distributionsDto && distributionsDto.length > 0) {
+        //     distributions = distributionsDto.map((dto) =>
+        //         this.distributionRepo.create({
+        //             season: dto.season,
+        //             description: dto.description,
+        //             countries: dto.countries,
+        //             rangeGeoJson: dto.rangeGeoJson,
+        //         }),
+        //     );
+        // }
+
+        //Handel ManyToMany with Junction: Bird-Food
+        let birdFoods: BirdFood[] = [];
+        if (birdFoodsDto && birdFoodsDto.length > 0) {
+            const foodIds = birdFoodsDto.map((bf) => bf.foodId);
+            const foods = await this.foodRepo.find({
+                where: { id: In(foodIds) },
+            });
+
+            if (foods.length !== foodIds.length) {
+                const foundIds = foods.map((f) => f.id);
+                const missingIds = foodIds.filter((id) => !foundIds.includes(id));
+                throw new NotFoundException(`Foods not found with IDs: ${missingIds.join(', ')}`);
+            }
+
+            // Step 4: Create junction table entities (BirdFood)
+            birdFoods = birdFoodsDto.map((dto) => {
+                const food = foods.find((f) => f.id === dto.foodId)!;
+                return this.birdFoodRepo.create({
+                    food: food,
+                    isActive: dto.isActive ?? true,
+                });
+            });
+        }
+
         // Create the bird entity
         const bird = this.birdRepo.create({
             scientificName,
@@ -118,6 +184,9 @@ export class BirdsService {
             conservationStatus,
             commonNames,
             habitats,
+            birdFoods,
+            //media, // Array of new entities (OneToMany)
+            //distributions, // Array of new entities (OneToMany)
             ...rest,
         });
 
@@ -488,21 +557,19 @@ export class BirdsService {
             where: {
                 id: birdId,
             },
-            relations: ['birdFoods', 'birdFoods.food', 'commonNames'],
+            relations: ['birdFoods', 'birdFoods.food'],
         });
 
         if (!bird) {
             throw new NotFoundException(`Bird with ID ${birdId} not found`);
         }
 
-        const activeFoods = bird.birdFoods.filter((bf) => bf.isActive);
-
         return {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
             },
-            foods: activeFoods.map((bf) => ({
+            foods: bird.birdFoods.map((bf) => ({
                 relationshipId: bf.id,
                 isActive: bf.isActive,
                 food: {
@@ -516,48 +583,56 @@ export class BirdsService {
     }
 
     async addFood(birdId: number, createBirdFoodDto: CreateBirdFoodDto) {
-        const bird = await this.findOne(birdId.toString());
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+            relations: ['birdFoods', 'birdFoods.food'],
+        });
 
-        if (!bird.id) {
+        if (!bird) {
             throw new BadRequestException('Invalid bird ID');
         }
 
-        // Check if relationship already exists
-        const existing = await this.birdFoodRepo.findOne({
-            where: {
-                birdId: bird.id,
-                foodId: createBirdFoodDto.foodId,
-            },
+        const food = await this.foodRepo.findOne({
+            where: { id: createBirdFoodDto.foodId },
         });
 
+        if (!food) {
+            throw new NotFoundException(`Food with ID ${createBirdFoodDto.foodId} not found`);
+        }
+
+        const existing = bird.birdFoods.find((bf) => bf.food.id === createBirdFoodDto.foodId);
+
         if (existing) {
-            if (!existing.isActive) {
+            if (!existing.isActive && createBirdFoodDto.isActive) {
+                // Reactivate
                 existing.isActive = true;
-                const activated = await this.birdFoodRepo.save(existing);
+                const updated = await this.birdFoodRepo.save(existing);
                 this.logger.log(
                     `Reactivated bird-food relationship: ${birdId}-${createBirdFoodDto.foodId}`,
                 );
-                return activated;
+                return updated;
             }
             throw new ConflictException('Bird-food relationship already exists');
         }
 
+        // Create new rel
         const birdFood = this.birdFoodRepo.create({
-            birdId: bird.id,
-            foodId: createBirdFoodDto.foodId,
-            isActive: true,
+            bird,
+            food,
+            isActive: createBirdFoodDto.isActive ?? true,
         });
 
         const saved = await this.birdFoodRepo.save(birdFood);
         this.logger.log(`Bird-food relationship created: ${birdId}-${createBirdFoodDto.foodId}`);
+
         return saved;
     }
 
     async updateFood(birdId: number, foodId: number, updateBirdFoodDto: UpdateBirdFoodDto) {
         const birdFood = await this.birdFoodRepo.findOne({
             where: {
-                birdId,
-                foodId,
+                bird: { id: birdId },
+                food: { id: foodId },
             },
         });
 
@@ -575,8 +650,8 @@ export class BirdsService {
     async removeFood(birdId: number, foodId: number) {
         const birdFood = await this.birdFoodRepo.findOne({
             where: {
-                birdId,
-                foodId,
+                bird: { id: birdId },
+                food: { id: foodId },
             },
         });
 
@@ -591,9 +666,10 @@ export class BirdsService {
     async toggleFoodActive(birdId: number, foodId: number) {
         const birdFood = await this.birdFoodRepo.findOne({
             where: {
-                birdId,
-                foodId,
+                bird: { id: birdId },
+                food: { id: foodId },
             },
+            relations: ['food'],
         });
 
         if (!birdFood) {
@@ -606,7 +682,14 @@ export class BirdsService {
         this.logger.log(
             `Bird-food relationship ${birdId}-${foodId} active status: ${updated.isActive}`,
         );
-        return updated;
+        return {
+            id: updated.id,
+            isActive: updated.isActive,
+            food: {
+                id: updated.food.id,
+                name: updated.food.name,
+            },
+        };
     }
 
     /**

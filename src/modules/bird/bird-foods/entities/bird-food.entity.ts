@@ -5,47 +5,38 @@ import {
     Column,
     ManyToOne,
     JoinColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
 import { Food } from '../../foods/entities/food.entity';
 
 @Entity('bird_foods')
-@Index(['birdId', 'foodId'], {
-    unique: true,
-})
+@Index(['bird', 'food'], { unique: true })
 export class BirdFood {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({
-        name: 'bird_id',
-    })
-    birdId: number;
-
-    @Column({
-        name: 'food_id',
-    })
-    foodId: number;
-
-    @ManyToOne(() => Bird, bird => bird.birdFoods, {
+    @ManyToOne(() => Bird, (bird) => bird.birdFoods, {
         onDelete: 'CASCADE',
+        nullable: false,
     })
-    @JoinColumn({
-        name: 'bird_id',
-    })
+    @JoinColumn({ name: 'bird_id' })
     bird: Bird;
 
-    @ManyToOne(() => Food, food => food.birdFoods, {
+    @ManyToOne(() => Food, (food) => food.birdFoods, {
         onDelete: 'CASCADE',
+        nullable: false,
     })
-    @JoinColumn({
-        name: 'food_id',
-    })
+    @JoinColumn({ name: 'food_id' })
     food: Food;
 
-    @Column({
-        type: 'boolean',
-        default: false,
-    })
+    @Column({ type: 'boolean', default: true })
     isActive: boolean;
+
+    @CreateDateColumn({ name: 'created_at' })
+    createdAt: Date;
+
+    @UpdateDateColumn({ name: 'updated_at' })
+    updatedAt: Date;
 }
