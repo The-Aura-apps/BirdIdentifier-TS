@@ -1,4 +1,8 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateBirdFoodDto } from './create-bird-food.dto';
+import { IsBoolean, IsOptional } from 'class-validator';
 
-export class UpdateBirdFoodDto extends PartialType(CreateBirdFoodDto) {}
+export class UpdateBirdFoodDto {
+    @IsOptional()
+    @IsBoolean()
+    isActive?: boolean;
+
+}

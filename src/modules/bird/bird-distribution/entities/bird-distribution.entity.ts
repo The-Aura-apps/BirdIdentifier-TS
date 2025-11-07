@@ -9,6 +9,7 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
+import { IsEnum } from 'class-validator';
 
 export enum DistributionSeason {
     Breeding = 'breeding',
@@ -18,13 +19,16 @@ export enum DistributionSeason {
 }
 
 @Entity('bird_distributions')
-@Index(['season'])
+@Index(['location'])
 export class BirdDistribution {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column({ name: 'month', type: 'int' })
     month: number; // 1 = Jan, 12 = Dec
+
+    @IsEnum(DistributionSeason)
+    season: DistributionSeason;
 
     @Column({
         type: 'jsonb',
