@@ -11,7 +11,10 @@ import { Type } from 'class-transformer';
 import { CreateCommonNameNestedDto } from '../../common-names/dto/create-common-name.dto';
 import { CreateTaxonomyDto } from '../../taxonomy/dto/create-taxonomy.dto';
 import { CreateConservationStatusDto } from '../../conservation-status/dto/create-conservation-status.dto';
-import { CreateBirdDistributionDto } from '../../bird-distribution/dto/create-bird-distribution.dto';
+import {
+    CreateBirdDistributionDto,
+    CreateDistributionNestedDto,
+} from '../../bird-distribution/dto/create-bird-distribution.dto';
 import { CreateBirdFoodNestedDto } from '../../bird-foods/dto/create-bird-food.dto';
 import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
 
@@ -50,8 +53,8 @@ export class CreateBirdDto {
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(() => CreateBirdDistributionDto)
-    distributions?: CreateBirdDistributionDto[];
+    @Type(() => CreateDistributionNestedDto)
+    distributions?: CreateDistributionNestedDto[];
 
     @IsOptional()
     @IsArray()

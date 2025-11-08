@@ -90,7 +90,7 @@ export class ConservationStatus {
     })
     authority: string;
 
-    @OneToMany(() => Bird, bird => bird.conservationStatus)
+    @OneToMany(() => Bird, (bird) => bird.conservationStatus)
     birds: Bird[];
 
     @CreateDateColumn()

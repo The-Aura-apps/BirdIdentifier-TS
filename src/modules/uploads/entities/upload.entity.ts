@@ -44,7 +44,7 @@ export class Upload {
     })
     checksum: string;
 
-    @OneToMany(() => Observation, observation => observation.upload)
+    @OneToMany(() => Observation, (observation) => observation.upload)
     observations: Observation[];
 
     @CreateDateColumn()

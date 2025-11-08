@@ -1,13 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-    IsEnum,
-    IsString,
-    IsNumber,
-    IsOptional,
-    Min,
-    Max,
-    Length,
-} from 'class-validator';
+import { IsEnum, IsString, IsNumber, IsOptional, Min, Max, Length } from 'class-validator';
 import { ConservationStatusCode } from '../entities/conservation-status.entity';
 
 export class CreateConservationStatusDto {

@@ -4,5 +4,4 @@ export class UpdateBirdFoodDto {
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
-
 }

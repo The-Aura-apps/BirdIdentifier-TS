@@ -7,11 +7,7 @@ import { BirdsModule } from 'src/modules/bird/birds/birds.module';
 import { AiModule } from 'src/modules/ai/ai.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Observation]),
-        forwardRef(() => BirdsModule),
-        AiModule,
-    ],
+    imports: [TypeOrmModule.forFeature([Observation]), forwardRef(() => BirdsModule), AiModule],
     controllers: [ObservationsController],
     providers: [ObservationsService],
     exports: [ObservationsService],

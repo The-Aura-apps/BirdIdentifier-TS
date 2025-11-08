@@ -1,9 +1,4 @@
-import {
-    Injectable,
-    NotFoundException,
-    Logger,
-    BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { Observation, ObservationStatus } from './entities/observation.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,19 +15,13 @@ export class ObservationsService {
         @InjectRepository(Observation)
         private readonly observationsRepo: Repository<Observation>,
         private readonly aiService: AiService,
-        private readonly birdService: BirdsService
+        private readonly birdService: BirdsService,
     ) {}
 
-    private validateStatusTransition(
-        from: ObservationStatus,
-        to: ObservationStatus
-    ): boolean {
+    private validateStatusTransition(from: ObservationStatus, to: ObservationStatus): boolean {
         const validTransitions = {
             [ObservationStatus.PENDING]: [ObservationStatus.PROCESSING],
-            [ObservationStatus.PROCESSING]: [
-                ObservationStatus.COMPLETED,
-                ObservationStatus.FAILED,
-            ],
+            [ObservationStatus.PROCESSING]: [ObservationStatus.COMPLETED, ObservationStatus.FAILED],
             [ObservationStatus.COMPLETED]: [],
             //    [ObservationStatus.FAILED]: [ObservationStatus.PENDING], // Allow retries func is commented in butt
         };
@@ -61,9 +50,9 @@ export class ObservationsService {
         this.logger.log(`Observation created: ${saved.id}`);
 
         // Start background processing
-        this.processObservationBackground(saved.id).catch(err => {
+        this.processObservationBackground(saved.id).catch((err) => {
             this.logger.error(
-                `Background processing failed for observation ${saved.id}: ${err.message}`
+                `Background processing failed for observation ${saved.id}: ${err.message}`,
             );
         });
 
@@ -75,14 +64,14 @@ export class ObservationsService {
      */
     private async processObservationBackground(id: string): Promise<void> {
         // Small delay to ensure the initial response is sent
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         try {
             await this.processObservation(id);
         } catch (error) {
             this.logger.error(
                 `Unhandled error in background processing: ${error.message}`,
-                error.stack
+                error.stack,
             );
         }
     }
@@ -106,9 +95,7 @@ export class ObservationsService {
         }
 
         if (!observation.isProcessable()) {
-            this.logger.warn(
-                `Observation ${id} not processable, status: ${observation.status}`
-            );
+            this.logger.warn(`Observation ${id} not processable, status: ${observation.status}`);
             return;
         }
 
@@ -124,16 +111,13 @@ export class ObservationsService {
 
             const aiResponse = await this.aiService.process(
                 observation.upload.fileData,
-                observation.type
+                observation.type,
             );
 
             await this.handleAiResponse(observation, aiResponse);
             this.logger.log(`Observation processed successfully: ${id}`);
         } catch (err) {
-            this.logger.error(
-                `Failed to process observation ${id}: ${err.message}`,
-                err.stack
-            );
+            this.logger.error(`Failed to process observation ${id}: ${err.message}`, err.stack);
 
             await this.observationsRepo.update(id, {
                 status: ObservationStatus.FAILED,
@@ -148,23 +132,21 @@ export class ObservationsService {
      */
     private async handleAiResponse(
         observation: Observation,
-        aiResponse: BirdAiResponse
+        aiResponse: BirdAiResponse,
     ): Promise<void> {
         if (isIdentified(aiResponse)) {
             try {
                 // Find or create bird with enriched data
-                const bird = await this.birdService.findOrCreate(
-                    aiResponse.result.scientificName
-                );
+                const bird = await this.birdService.findOrCreate(aiResponse.result.scientificName);
 
                 observation.markAsCompleted(bird, aiResponse);
             } catch (birdError) {
                 this.logger.error(
-                    `Failed to process bird for observation ${observation.id}: ${birdError.message}`
+                    `Failed to process bird for observation ${observation.id}: ${birdError.message}`,
                 );
                 observation.markAsFailed(
                     `Bird processing failed: ${birdError.message}`,
-                    aiResponse
+                    aiResponse,
                 );
             }
         } else if (aiResponse.status === 'uncertain') {
@@ -176,10 +158,7 @@ export class ObservationsService {
             observation.birdId = null;
         } else {
             // Failed
-            observation.markAsFailed(
-                aiResponse.error || 'AI processing failed',
-                aiResponse
-            );
+            observation.markAsFailed(aiResponse.error || 'AI processing failed', aiResponse);
         }
 
         await this.observationsRepo.save(observation);
@@ -220,16 +199,13 @@ export class ObservationsService {
         return observation;
     }
 
-    async update(
-        id: string,
-        partial: Partial<Observation>
-    ): Promise<Observation> {
+    async update(id: string, partial: Partial<Observation>): Promise<Observation> {
         const obs = await this.findOne(id);
 
         if (partial.status && partial.status !== obs.status) {
             if (!this.validateStatusTransition(obs.status, partial.status)) {
                 throw new BadRequestException(
-                    `Invalid status transition from ${obs.status} to ${partial.status}`
+                    `Invalid status transition from ${obs.status} to ${partial.status}`,
                 );
             }
         }

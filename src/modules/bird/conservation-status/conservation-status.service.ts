@@ -2,25 +2,20 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-    ConservationStatus,
-    ConservationStatusCode,
-} from './entities/conservation-status.entity';
+import { ConservationStatus, ConservationStatusCode } from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
 
 @Injectable()
 export class ConservationStatusService {
     constructor(
         @InjectRepository(ConservationStatus)
-        private readonly conservationStatusRepo: Repository<ConservationStatus>
+        private readonly conservationStatusRepo: Repository<ConservationStatus>,
     ) {}
 
     /**
      * Find conservation status by code or create if not exists
      */
-    async findOrCreate(
-        dto: CreateConservationStatusDto
-    ): Promise<ConservationStatus | null> {
+    async findOrCreate(dto: CreateConservationStatusDto): Promise<ConservationStatus | null> {
         const { code } = dto;
 
         // Try to find existing conservation status
@@ -56,9 +51,7 @@ export class ConservationStatusService {
     /**
      * Find conservation status by code
      */
-    async findByCode(
-        code: ConservationStatusCode
-    ): Promise<ConservationStatus | null> {
+    async findByCode(code: ConservationStatusCode): Promise<ConservationStatus | null> {
         return this.conservationStatusRepo.findOne({
             where: {
                 code,

@@ -23,7 +23,7 @@ export class Media {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => Bird, bird => bird.media, {
+    @ManyToOne(() => Bird, (bird) => bird.media, {
         onDelete: 'CASCADE',
     })
     @JoinColumn({
@@ -36,7 +36,7 @@ export class Media {
         length: 500,
     })
     storageKey: string;
-    
+
     @Column({
         type: 'enum',
         enum: mediaType,

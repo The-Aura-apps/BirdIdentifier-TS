@@ -22,7 +22,7 @@ export class ObservationsController {
     @HttpCode(HttpStatus.CREATED)
     create(
         @Body()
-        dto: CreateObservationDto
+        dto: CreateObservationDto,
     ): Promise<Observation> {
         return this.observationsService.create(dto);
     }
@@ -35,7 +35,7 @@ export class ObservationsController {
     @Get(':id')
     findOne(
         @Param('id')
-        id: string
+        id: string,
     ): Promise<Observation> {
         return this.observationsService.findOne(id);
     }
@@ -43,7 +43,7 @@ export class ObservationsController {
     @Get('device/:deviceId')
     findByDevice(
         @Param('deviceId')
-        deviceId: string
+        deviceId: string,
     ): Promise<Observation[]> {
         return this.observationsService.findByDevice(deviceId);
     }
@@ -53,7 +53,7 @@ export class ObservationsController {
         @Param('id')
         id: string,
         @Body()
-        partial: Partial<Observation>
+        partial: Partial<Observation>,
     ): Promise<Observation> {
         return this.observationsService.update(id, partial);
     }
@@ -62,7 +62,7 @@ export class ObservationsController {
     @HttpCode(HttpStatus.NO_CONTENT)
     delete(
         @Param('id')
-        id: string
+        id: string,
     ): Promise<void> {
         return this.observationsService.remove(id);
     }
