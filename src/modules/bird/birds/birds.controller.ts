@@ -22,6 +22,7 @@ import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto'
 import { CreateTaxonomyDto } from '../taxonomy/dto/create-taxonomy.dto';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
+import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
 
 @ApiTags('birds')
 @Controller('birds')
@@ -322,18 +323,18 @@ export class BirdsController {
 
     // Media
     @Get(':id/media')
-    @ApiOperation({
-        summary: 'Get all media for a bird',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
-    getMedia(
-        @Param('id')
-        id: string,
-    ) {
+    @ApiOperation({ summary: 'Get all media for a bird' })
+    @ApiParam({ name: 'id', description: 'Bird ID' })
+    getMedia(@Param('id') id: string) {
         return this.birdService.getMedia(+id);
+    }
+
+    @Post(':id/media')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ summary: 'Add media to bird' })
+    @ApiParam({ name: 'id', description: 'Bird ID' })
+    addMedia(@Param('id') id: string, @Body() createDto: CreateMediaDto) {
+        return this.birdService.addMedia(+id, createDto);
     }
 
     // Taxonomy

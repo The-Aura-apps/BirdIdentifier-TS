@@ -26,6 +26,7 @@ import { Media } from 'src/modules/media/entities/media.entity';
 import { BirdDistribution } from '../bird-distribution/entities/bird-distribution.entity';
 import { Food } from '../foods/entities/food.entity';
 import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
+import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
 
 @Injectable()
 export class BirdsService {
@@ -125,21 +126,21 @@ export class BirdsService {
         }
 
         // Handel OneToMany: Media
-        // let media: Media[] = [];
-        // if (mediaDto && mediaDto.length > 0) {
-        //     media = mediaDto.map((dto) =>
-        //         this.mediaRepo.create({
-        //             storageKey: dto.storageKey,
-        //             type: dto.type,
-        //             size: dto.size,
-        //             caption: dto.caption,
-        //             source: dto.source,
-        //             attribution: dto.attribution,
-        //             orderIndex: dto.orderIndex || 0,
-        //             metadata: dto.metadata,
-        //         }),
-        //     );
-        // }
+        let media: Media[] = [];
+        if (mediaDto && mediaDto.length > 0) {
+            media = mediaDto.map((dto) =>
+                this.mediaRepo.create({
+                    storageKey: dto.storageKey,
+                    type: dto.type,
+                    size: dto.size,
+                    caption: dto.caption,
+                    source: dto.source,
+                    attribution: dto.attribution,
+                    orderIndex: dto.orderIndex || 0,
+                    metadata: dto.metadata,
+                }),
+            );
+        }
 
         // Handel OneToMany: Distributions
         let distributions: BirdDistribution[] = [];
@@ -188,7 +189,7 @@ export class BirdsService {
             commonNames,
             habitats,
             birdFoods,
-            //media, // Array of new entities (OneToMany)
+            media, 
             distributions,
             ...rest,
         });
@@ -887,11 +888,8 @@ export class BirdsService {
      */
     async getMedia(birdId: number) {
         const bird = await this.birdRepo.findOne({
-            where: {
-                id: birdId,
-            },
+            where: { id: birdId },
             relations: ['media'],
-            select: ['id', 'scientificName', 'commonNames'],
         });
 
         if (!bird) {
@@ -902,10 +900,35 @@ export class BirdsService {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
-                commonName: bird.commonNames,
             },
-            media: bird.media,
+            media: bird.media || [],
         };
+    }
+
+    async addMedia(birdId: number, createDto: CreateMediaDto) {
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+        });
+
+        if (!bird) {
+            throw new NotFoundException(`Bird with ID ${birdId} not found`);
+        }
+
+        const media = this.mediaRepo.create({
+            bird,
+            storageKey: createDto.storageKey,
+            type: createDto.type,
+            size: createDto.size,
+            caption: createDto.caption,
+            source: createDto.source,
+            attribution: createDto.attribution,
+            orderIndex: createDto.orderIndex || 0,
+            metadata: createDto.metadata,
+        });
+
+        const saved = await this.mediaRepo.save(media);
+        this.logger.log(`Media added to bird ${birdId}`);
+        return saved;
     }
 
     /**

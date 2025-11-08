@@ -10,7 +10,7 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
-export enum mediaType {
+export enum MediaType {
     Photo = 'photo',
     Audio = 'audio',
     Video = 'video',
@@ -25,115 +25,82 @@ export class Media {
 
     @ManyToOne(() => Bird, (bird) => bird.media, {
         onDelete: 'CASCADE',
+        nullable: false,
     })
-    @JoinColumn({
-        name: 'bird_id',
-    })
+    @JoinColumn({ name: 'bird_id' })
     bird: Bird;
 
-    @Column({
-        type: 'varchar',
-        length: 500,
-    })
-    storageKey: string;
+    @Column({ type: 'varchar', length: 500 })
+    storageKey: string; // e.g., "birds/passer-domesticus/photo1.jpg"
 
     @Column({
         type: 'enum',
-        enum: mediaType,
-        default: mediaType.Photo,
+        enum: MediaType,
+        default: MediaType.Photo,
     })
-    type: mediaType;
+    type: MediaType;
 
-    @Column({
-        type: 'varchar',
-        nullable: true,
-    })
+    @Column({ type: 'varchar', nullable: true })
     size: string; // File size as string (e.g., "2.5 MB")
 
-    @Column({
-        type: 'varchar',
-        length: 255,
-        nullable: true,
-    })
+    @Column({ type: 'varchar', length: 255, nullable: true })
     caption: string;
 
-    @Column({
-        type: 'varchar',
-        length: 255,
-        nullable: true,
-    })
+    @Column({ type: 'varchar', length: 255, nullable: true })
     source: string; // Source/credit for the media
 
-    @Column({
-        type: 'varchar',
-        length: 255,
-        nullable: true,
-    })
+    @Column({ type: 'varchar', length: 255, nullable: true })
     attribution: string; // Attribution text
 
-    @Column({
-        type: 'integer',
-        default: 0,
-    })
+    @Column({ type: 'integer', default: 0 })
     orderIndex: number; // For sorting media items
 
-    @Column({
-        type: 'jsonb',
-        nullable: true,
-    })
+    @Column({ type: 'jsonb', nullable: true })
     metadata: {
-        width?: number; // Image/video width in pixels
-        height?: number; // Image/video height in pixels
-        duration?: number; // Duration in seconds for video/audio
-        fileSize?: number; // File size in bytes
-        mimeType?: string; // e.g., 'image/jpeg', 'audio/mp3', 'video/mp4'
-        format?: string; // File format (e.g., 'jpeg', 'png', 'mp3')
-        bitrate?: number; // For audio/video
-        sampleRate?: number; // For audio
-        thumbnailKey?: string; // S3 key for video thumbnail
+        width?: number;
+        height?: number;
+        duration?: number;
+        fileSize?: number;
+        mimeType?: string;
+        format?: string;
+        bitrate?: number;
+        sampleRate?: number;
+        thumbnailKey?: string;
     };
 
-    @CreateDateColumn({
-        name: 'created_at',
-    })
+    @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
-    @UpdateDateColumn({
-        name: 'updated_at',
-    })
+    @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
-    // Helper methods for URL generation
-    getCdnUrl(variant?: string): string {
-        const base = process.env.CDN_URL ?? '';
-        const key = variant ? `${variant}/${this.storageKey}` : this.storageKey;
-        return `${base}/${key}`;
+    // Helper method for local storage URL
+    getLocalUrl(): string {
+        // For local development
+        const base = process.env.LOCAL_STORAGE_URL || 'http://localhost:3000/uploads';
+        return `${base}/${this.storageKey}`;
     }
 
+    // Helper method for cloud storage URL (future)
+    getCloudUrl(): string {
+        const base = process.env.CDN_URL || process.env.CLOUD_STORAGE_URL;
+        if (!base) return this.getLocalUrl();
+        return `${base}/${this.storageKey}`;
+    }
+
+    // Get appropriate URL based on environment
     getDisplayUrl(): string {
-        // Returns the most appropriate URL for display
-        return this.getCdnUrl();
+        return process.env.USE_CLOUD_STORAGE === 'true' ? this.getCloudUrl() : this.getLocalUrl();
     }
 
     getThumbnailUrl(): string {
-        // For videos, return thumbnail; for images, return thumbnail variant
-        if (this.type === mediaType.Video && this.metadata?.thumbnailKey) {
-            return `${process.env.CDN_URL}/${this.metadata.thumbnailKey}`;
+        if (this.type === MediaType.Video && this.metadata?.thumbnailKey) {
+            const base =
+                process.env.USE_CLOUD_STORAGE === 'true'
+                    ? process.env.CDN_URL || process.env.CLOUD_STORAGE_URL
+                    : process.env.LOCAL_STORAGE_URL || 'http://localhost:3000/uploads';
+            return `${base}/${this.metadata.thumbnailKey}`;
         }
-        return this.getCdnUrl('thumbnail');
-    }
-
-    // Convert to ProcessedBirdData media format
-    toProcessedFormat() {
-        return {
-            type: this.type,
-            storageKey: this.storageKey,
-            size: this.size,
-            caption: this.caption,
-            source: this.source,
-            attribution: this.attribution,
-            orderIndex: this.orderIndex,
-            metadata: this.metadata,
-        };
+        return this.getDisplayUrl();
     }
 }

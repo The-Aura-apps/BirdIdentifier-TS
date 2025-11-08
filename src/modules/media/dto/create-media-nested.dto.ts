@@ -1,10 +1,3 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateMediaDto } from './create-media.dto';
-
-/* export class UpdateMediaDto extends PartialType(CreateMediaDto) {}
- */
-
-// dto/update-media.dto.ts
 import {
     IsOptional,
     IsString,
@@ -55,15 +48,15 @@ class MetadataDto {
     thumbnailKey?: string;
 }
 
-export class UpdateMediaDto {
-    @IsOptional()
+export class CreateMediaNestedDto {
+    // NO birdId - used when creating with bird
+
     @IsString()
     @Length(1, 500)
-    storageKey?: string;
+    storageKey: string;
 
-    @IsOptional()
     @IsEnum(MediaType)
-    type?: MediaType;
+    type: MediaType;
 
     @IsOptional()
     @IsString()

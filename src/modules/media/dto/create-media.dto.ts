@@ -1,4 +1,3 @@
-// dto/create-media.dto.ts
 import {
     IsInt,
     IsOptional,
@@ -10,12 +9,7 @@ import {
     IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-
-enum MediaType {
-    Photo = 'photo',
-    Audio = 'audio',
-    Video = 'video',
-}
+import { MediaType } from '../entities/media.entity';
 
 class MetadataDto {
     @IsOptional()
@@ -57,14 +51,14 @@ class MetadataDto {
 
 export class CreateMediaDto {
     @IsInt()
-    birdId: number; // Required for association
+    birdId: number; 
 
     @IsString()
     @Length(1, 500)
     storageKey: string;
 
     @IsEnum(MediaType)
-    type: MediaType = MediaType.Photo; // Default matches entity
+    type: MediaType;
 
     @IsOptional()
     @IsString()
@@ -86,12 +80,11 @@ export class CreateMediaDto {
     attribution?: string;
 
     @IsOptional()
-    @IsInt()
-    orderIndex?: number = 0; // Default matches entity
+    @IsNumber()
+    orderIndex?: number;
 
     @IsOptional()
     @ValidateNested()
     @Type(() => MetadataDto)
-    @IsObject()
     metadata?: MetadataDto;
 }

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BirdInfo } from '../ai/types';
+import { BirdInfo } from 'src/modules/ai/types';
 
 type MeasurementRange = {
     min: number;
