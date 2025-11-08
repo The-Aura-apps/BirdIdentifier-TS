@@ -25,6 +25,8 @@ import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto'
 import { Media } from 'src/modules/media/entities/media.entity';
 import { BirdDistribution } from '../bird-distribution/entities/bird-distribution.entity';
 import { Food } from '../foods/entities/food.entity';
+import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
+import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
 
 @Injectable()
 export class BirdsService {
@@ -124,34 +126,36 @@ export class BirdsService {
         }
 
         // Handel OneToMany: Media
-        // let media: Media[] = [];
-        // if (mediaDto && mediaDto.length > 0) {
-        //     media = mediaDto.map((dto) =>
-        //         this.mediaRepo.create({
-        //             storageKey: dto.storageKey,
-        //             type: dto.type,
-        //             size: dto.size,
-        //             caption: dto.caption,
-        //             source: dto.source,
-        //             attribution: dto.attribution,
-        //             orderIndex: dto.orderIndex || 0,
-        //             metadata: dto.metadata,
-        //         }),
-        //     );
-        // }
+        let media: Media[] = [];
+        if (mediaDto && mediaDto.length > 0) {
+            media = mediaDto.map((dto) =>
+                this.mediaRepo.create({
+                    storageKey: dto.storageKey,
+                    type: dto.type,
+                    size: dto.size,
+                    caption: dto.caption,
+                    source: dto.source,
+                    attribution: dto.attribution,
+                    orderIndex: dto.orderIndex || 0,
+                    metadata: dto.metadata,
+                }),
+            );
+        }
 
         // Handel OneToMany: Distributions
-        // let distributions: BirdDistribution[] = [];
-        // if (distributionsDto && distributionsDto.length > 0) {
-        //     distributions = distributionsDto.map((dto) =>
-        //         this.distributionRepo.create({
-        //             season: dto.season,
-        //             description: dto.description,
-        //             countries: dto.countries,
-        //             rangeGeoJson: dto.rangeGeoJson,
-        //         }),
-        //     );
-        // }
+        let distributions: BirdDistribution[] = [];
+        if (distributionsDto && distributionsDto.length > 0) {
+            distributions = distributionsDto.map((dto) =>
+                this.distributionRepo.create({
+                    month: dto.month,
+                    season: dto.season,
+                    location: dto.location,
+                    presenceScore: dto.presenceScore,
+                    description: dto.description,
+                    countries: dto.countries,
+                }),
+            );
+        }
 
         //Handel ManyToMany with Junction: Bird-Food
         let birdFoods: BirdFood[] = [];
@@ -185,8 +189,8 @@ export class BirdsService {
             commonNames,
             habitats,
             birdFoods,
-            //media, // Array of new entities (OneToMany)
-            //distributions, // Array of new entities (OneToMany)
+            media, 
+            distributions,
             ...rest,
         });
 
@@ -196,9 +200,7 @@ export class BirdsService {
 
         // Re-fetch the bird with all relations for return
         const fullBird = await this.birdRepo.findOne({
-            where: {
-                id: saved.id,
-            },
+            where: { id: saved.id },
             relations: [
                 'taxonomy',
                 'conservationStatus',
@@ -886,11 +888,8 @@ export class BirdsService {
      */
     async getMedia(birdId: number) {
         const bird = await this.birdRepo.findOne({
-            where: {
-                id: birdId,
-            },
+            where: { id: birdId },
             relations: ['media'],
-            select: ['id', 'scientificName', 'commonNames'],
         });
 
         if (!bird) {
@@ -901,10 +900,35 @@ export class BirdsService {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
-                commonName: bird.commonNames,
             },
-            media: bird.media,
+            media: bird.media || [],
         };
+    }
+
+    async addMedia(birdId: number, createDto: CreateMediaDto) {
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+        });
+
+        if (!bird) {
+            throw new NotFoundException(`Bird with ID ${birdId} not found`);
+        }
+
+        const media = this.mediaRepo.create({
+            bird,
+            storageKey: createDto.storageKey,
+            type: createDto.type,
+            size: createDto.size,
+            caption: createDto.caption,
+            source: createDto.source,
+            attribution: createDto.attribution,
+            orderIndex: createDto.orderIndex || 0,
+            metadata: createDto.metadata,
+        });
+
+        const saved = await this.mediaRepo.save(media);
+        this.logger.log(`Media added to bird ${birdId}`);
+        return saved;
     }
 
     /**
@@ -978,11 +1002,8 @@ export class BirdsService {
      */
     async getDistributions(birdId: number) {
         const bird = await this.birdRepo.findOne({
-            where: {
-                id: birdId,
-            },
+            where: { id: birdId },
             relations: ['distributions'],
-            select: ['id', 'scientificName', 'commonNames'],
         });
 
         if (!bird) {
@@ -993,9 +1014,44 @@ export class BirdsService {
             bird: {
                 id: bird.id,
                 scientificName: bird.scientificName,
-                commonName: bird.commonNames,
             },
-            distributions: bird.distributions,
+            distributions: bird.distributions || [],
         };
+    }
+
+    async addDistribution(birdId: number, createDto: CreateBirdDistributionDto) {
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+            relations: ['distributions'],
+        });
+
+        if (!bird) {
+            throw new NotFoundException(`Bird with ID ${birdId} not found`);
+        }
+
+        // Check for duplicate
+        const existing = bird.distributions.find(
+            (d) => d.season === createDto.season && d.month === createDto.month,
+        );
+
+        if (existing) {
+            throw new ConflictException(
+                `Distribution for ${createDto.season} month ${createDto.month} already exists`,
+            );
+        }
+
+        const distribution = this.distributionRepo.create({
+            bird,
+            month: createDto.month,
+            season: createDto.season,
+            location: createDto.location,
+            presenceScore: createDto.presenceScore,
+            description: createDto.description,
+            countries: createDto.countries,
+        });
+
+        const saved = await this.distributionRepo.save(distribution);
+        this.logger.log(`Distribution added to bird ${birdId}`);
+        return saved;
     }
 }

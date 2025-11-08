@@ -23,7 +23,7 @@ export class HabitatController {
     @HttpCode(HttpStatus.CREATED)
     create(
         @Body()
-        createDto: CreateHabitatDto
+        createDto: CreateHabitatDto,
     ): Promise<Habitat> {
         return this.habitatService.create(createDto);
     }
@@ -33,7 +33,7 @@ export class HabitatController {
         @Query('page')
         page = '1',
         @Query('limit')
-        limit = '20'
+        limit = '20',
     ): Promise<{
         data: Habitat[];
         total: number;
@@ -47,7 +47,7 @@ export class HabitatController {
     @Get(':id')
     findOne(
         @Param('id')
-        id: string
+        id: string,
     ): Promise<Habitat> {
         return this.habitatService.findOne(+id);
     }
@@ -55,7 +55,7 @@ export class HabitatController {
     @Get('name/:name')
     findByName(
         @Param('name')
-        name: string
+        name: string,
     ): Promise<Habitat> {
         return this.habitatService.findByName(name);
     }
@@ -65,7 +65,7 @@ export class HabitatController {
         @Param('id')
         id: string,
         @Body()
-        updateDto: UpdateHabitatDto
+        updateDto: UpdateHabitatDto,
     ): Promise<Habitat> {
         return this.habitatService.update(+id, updateDto);
     }
@@ -74,7 +74,7 @@ export class HabitatController {
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @Param('id')
-        id: string
+        id: string,
     ): Promise<void> {
         return this.habitatService.remove(+id);
     }
@@ -82,7 +82,7 @@ export class HabitatController {
     @Get(':id/birds')
     getBirds(
         @Param('id')
-        id: string
+        id: string,
     ) {
         return this.habitatService.getBirds(+id);
     }

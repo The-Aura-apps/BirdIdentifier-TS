@@ -47,7 +47,7 @@ export class Observation {
     })
     uploadId: number;
 
-    @ManyToOne(() => Upload, upload => upload.observations, {
+    @ManyToOne(() => Upload, (upload) => upload.observations, {
         nullable: false,
         eager: true, // Eager load upload for processing
     })
@@ -63,7 +63,7 @@ export class Observation {
     })
     birdId: number | null;
 
-    @ManyToOne(() => Bird, bird => bird.observations, {
+    @ManyToOne(() => Bird, (bird) => bird.observations, {
         nullable: true,
         eager: true, // Eager load bird for API responses
     })

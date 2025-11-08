@@ -16,7 +16,7 @@ export class AiService {
         private readonly audioAi: AudioAiWrapper,
         private readonly birdInfo: BirdInfoWrapper,
         //private readonly dataCollector: DataCollectorService,
-        private readonly birdsService: BirdsService
+        private readonly birdsService: BirdsService,
     ) {}
 
     /**
@@ -28,13 +28,8 @@ export class AiService {
     async process(fileData: Buffer, type: string): Promise<BirdAiResponse> {
         try {
             // Normalize type to remove extra quotes or unexpected characters
-            const normalizedType = type
-                .replace(/['"]+/g, '')
-                .trim()
-                .toLowerCase();
-            this.logger.log(
-                `Raw type: ${type}, Normalized type: ${normalizedType}`
-            );
+            const normalizedType = type.replace(/['"]+/g, '').trim().toLowerCase();
+            this.logger.log(`Raw type: ${type}, Normalized type: ${normalizedType}`);
 
             // Validate file type
             if (!['image', 'audio'].includes(normalizedType)) {
@@ -64,9 +59,7 @@ export class AiService {
                 };
             }
 
-            this.logger.log(
-                `Processing ${normalizedType} file (${fileData.length} bytes)`
-            );
+            this.logger.log(`Processing ${normalizedType} file (${fileData.length} bytes)`);
 
             // Identify bird species using appropriate wrapper
             const identification = await (normalizedType === 'image'
@@ -82,10 +75,7 @@ export class AiService {
             }
 
             // Validate scientific name
-            if (
-                !identification.scientificName ||
-                identification.scientificName.trim() === ''
-            ) {
+            if (!identification.scientificName || identification.scientificName.trim() === '') {
                 this.logger.warn('AI returned empty scientific name');
                 return {
                     status: 'failed',
@@ -99,7 +89,7 @@ export class AiService {
             // Low confidence = uncertain
             if (confidence < this.MIN_CONFIDENCE) {
                 this.logger.log(
-                    `Low confidence (${confidence}) for ${identification.scientificName}`
+                    `Low confidence (${confidence}) for ${identification.scientificName}`,
                 );
                 return {
                     status: 'uncertain',
@@ -114,12 +104,10 @@ export class AiService {
             // Fetch detailed bird information
             let info: BirdInfo;
             try {
-                info = await this.birdInfo.fetchInfo(
-                    identification.scientificName
-                );
+                info = await this.birdInfo.fetchInfo(identification.scientificName);
             } catch (err) {
                 this.logger.warn(
-                    `Failed to fetch bird info for ${identification.scientificName}: ${err.message}`
+                    `Failed to fetch bird info for ${identification.scientificName}: ${err.message}`,
                 );
 
                 // Fallback: identified but with minimal info
@@ -132,9 +120,7 @@ export class AiService {
                 };
             }
 
-            this.logger.log(
-                `Successfully identified: ${info.scientificName} (${confidence})`
-            );
+            this.logger.log(`Successfully identified: ${info.scientificName} (${confidence})`);
 
             return {
                 status: 'identified',
@@ -142,10 +128,7 @@ export class AiService {
                 result: info,
             };
         } catch (err) {
-            this.logger.error(
-                `AI processing failed: ${err.message}`,
-                err.stack
-            );
+            this.logger.error(`AI processing failed: ${err.message}`, err.stack);
             return {
                 status: 'failed',
                 confidence: null,

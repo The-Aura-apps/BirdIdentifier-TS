@@ -10,7 +10,7 @@ export class TaxonomyService {
 
     constructor(
         @InjectRepository(Taxonomy)
-        private readonly taxonomyRepo: Repository<Taxonomy>
+        private readonly taxonomyRepo: Repository<Taxonomy>,
     ) {}
 
     /**
@@ -37,7 +37,7 @@ export class TaxonomyService {
         taxonomy = await this.taxonomyRepo.save(taxonomy);
 
         this.logger.log(
-            `Created taxonomy: ${taxonomy.order} > ${taxonomy.family} > ${taxonomy.genus}`
+            `Created taxonomy: ${taxonomy.order} > ${taxonomy.family} > ${taxonomy.genus}`,
         );
 
         return taxonomy;

@@ -36,6 +36,6 @@ export class Habitat {
     // })
     // iconUrl: string; // Icon for mobile UI
 
-    @ManyToMany(() => Bird, bird => bird.habitats)
+    @ManyToMany(() => Bird, (bird) => bird.habitats)
     birds: Bird[];
 }

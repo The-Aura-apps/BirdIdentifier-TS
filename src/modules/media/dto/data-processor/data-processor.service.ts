@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BirdInfo } from '../ai/types';
+import { BirdInfo } from 'src/modules/ai/types';
 
 type MeasurementRange = {
     min: number;
@@ -98,10 +98,10 @@ export class DataProcessorService {
             birdFoods: [],
         };
 
-        sources.forEach(source => {
+        sources.forEach((source) => {
             if (!source?.success || !source?.data) {
                 this.logger.warn(
-                    `Skipping source ${source?.source || 'unknown'}: ${source?.error || 'No data'}`
+                    `Skipping source ${source?.source || 'unknown'}: ${source?.error || 'No data'}`,
                 );
                 return;
             }
@@ -113,21 +113,14 @@ export class DataProcessorService {
                     //this.logger.warn(`Unknown source type: ${source.source}`);
                 }
             } catch (error) {
-                this.logger.error(
-                    `Error processing ${source.source} data:`,
-                    error
-                );
+                this.logger.error(`Error processing ${source.source} data:`, error);
             }
         });
 
         // Deduplicate data
-        processed.commonNames = this.deduplicateCommonNames(
-            processed.commonNames
-        );
+        processed.commonNames = this.deduplicateCommonNames(processed.commonNames);
         processed.media = this.deduplicateMedia(processed.media);
-        processed.distributions = this.deduplicateDistributions(
-            processed.distributions
-        );
+        processed.distributions = this.deduplicateDistributions(processed.distributions);
         processed.habitats = [...new Set(processed.habitats)];
         processed.birdFoods = [...new Set(processed.birdFoods)];
 
@@ -137,10 +130,7 @@ export class DataProcessorService {
     /**
      * Process OpenAI generated data (from BirdInfo type)
      */
-    private processOpenAiData(
-        data: BirdInfo,
-        processed: ProcessedBirdData
-    ): void {
+    private processOpenAiData(data: BirdInfo, processed: ProcessedBirdData): void {
         // Update basic information
         if (data.scientificName && !processed.basic.scientificName) {
             processed.basic.scientificName = data.scientificName;
@@ -223,7 +213,7 @@ export class DataProcessorService {
                     if (typeof h === 'string') return h;
                     return h.name || '';
                 })
-                .filter(name => name.length > 0);
+                .filter((name) => name.length > 0);
 
             processed.habitats.push(...habitats);
         }
@@ -237,7 +227,7 @@ export class DataProcessorService {
                     // Access the nested food.name
                     return birdFood.food?.name || '';
                 })
-                .filter(name => name.length > 0);
+                .filter((name) => name.length > 0);
 
             processed.birdFoods.push(...foodNames);
         }
@@ -247,7 +237,7 @@ export class DataProcessorService {
             processed.basic.coolFacts = [];
         }
         processed.basic.coolFacts.push(
-            'Some information enhanced by AI to provide comprehensive details.'
+            'Some information enhanced by AI to provide comprehensive details.',
         );
     }
 
@@ -256,7 +246,7 @@ export class DataProcessorService {
      */
     private deduplicateCommonNames(names: CommonName[]): CommonName[] {
         const seen = new Set<string>();
-        return names.filter(name => {
+        return names.filter((name) => {
             const key = `${name.name}-${name.language}`;
             if (seen.has(key)) return false;
             seen.add(key);
@@ -269,7 +259,7 @@ export class DataProcessorService {
      */
     private deduplicateMedia(media: MediaItem[]): MediaItem[] {
         const seen = new Set<string>();
-        return media.filter(item => {
+        return media.filter((item) => {
             if (seen.has(item.url)) return false;
             seen.add(item.url);
             return true;
@@ -279,11 +269,9 @@ export class DataProcessorService {
     /**
      * Deduplicate distributions
      */
-    private deduplicateDistributions(
-        distributions: Distribution[]
-    ): Distribution[] {
+    private deduplicateDistributions(distributions: Distribution[]): Distribution[] {
         const seen = new Set<string>();
-        return distributions.filter(dist => {
+        return distributions.filter((dist) => {
             const key = `${dist.country}-${dist.region}`;
             if (seen.has(key)) return false;
             seen.add(key);

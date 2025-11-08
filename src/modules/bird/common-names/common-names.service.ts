@@ -1,8 +1,4 @@
-import {
-    Injectable,
-    NotFoundException,
-    ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CommonName } from './entities/common-name.entity';
@@ -14,7 +10,7 @@ import { Bird } from '../birds/entities/bird.entity';
 export class CommonNamesService {
     constructor(
         @InjectRepository(CommonName)
-        private readonly commonNameRepo: Repository<CommonName>
+        private readonly commonNameRepo: Repository<CommonName>,
     ) {}
 
     async create(createDto: CreateCommonNameDto): Promise<CommonName> {
@@ -30,9 +26,7 @@ export class CommonNamesService {
         });
 
         if (existing) {
-            throw new ConflictException(
-                'Common name already exists for this bird'
-            );
+            throw new ConflictException('Common name already exists for this bird');
         }
 
         const commonName = this.commonNameRepo.create({
@@ -76,10 +70,7 @@ export class CommonNamesService {
         return commonName;
     }
 
-    async update(
-        id: number,
-        updateDto: UpdateCommonNameDto
-    ): Promise<CommonName> {
+    async update(id: number, updateDto: UpdateCommonNameDto): Promise<CommonName> {
         const commonName = await this.findOne(id);
         if (updateDto.name || updateDto.language) {
             const conflict = await this.commonNameRepo.findOne({
@@ -91,8 +82,7 @@ export class CommonNamesService {
                     language: updateDto.language || commonName.language,
                 },
             });
-            if (conflict && conflict.id !== id)
-                throw new ConflictException('Duplicate name');
+            if (conflict && conflict.id !== id) throw new ConflictException('Duplicate name');
         }
         Object.assign(commonName, updateDto);
         return await this.commonNameRepo.save(commonName);

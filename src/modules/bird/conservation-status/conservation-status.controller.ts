@@ -13,10 +13,7 @@ import {
 } from '@nestjs/common';
 
 import { ConservationStatusService } from './conservation-status.service';
-import {
-    ConservationStatus,
-    ConservationStatusCode,
-} from './entities/conservation-status.entity';
+import { ConservationStatus, ConservationStatusCode } from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -24,18 +21,16 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 @Controller('conservation-status')
 @UseInterceptors(ClassSerializerInterceptor)
 export class ConservationStatusController {
-    constructor(
-        private readonly conservationStatusService: ConservationStatusService
-    ) {}
+    constructor(private readonly conservationStatusService: ConservationStatusService) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     async create(
         @Body()
-        createConservationStatusDto: CreateConservationStatusDto
+        createConservationStatusDto: CreateConservationStatusDto,
     ): Promise<ConservationStatus> {
         const result = await this.conservationStatusService.findOrCreate(
-            createConservationStatusDto
+            createConservationStatusDto,
         );
         if (!result) {
             throw new Error('Failed to create conservation status');
@@ -59,13 +54,11 @@ export class ConservationStatusController {
     @Get('code/:code')
     async findByCode(
         @Param('code', new ParseEnumPipe(ConservationStatusCode))
-        code: ConservationStatusCode
+        code: ConservationStatusCode,
     ): Promise<ConservationStatus> {
         const status = await this.conservationStatusService.findByCode(code);
         if (!status) {
-            throw new Error(
-                `Conservation status with code "${code}" not found`
-            );
+            throw new Error(`Conservation status with code "${code}" not found`);
         }
         return status;
     }

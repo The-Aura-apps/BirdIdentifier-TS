@@ -23,7 +23,7 @@ export class FoodController {
     @HttpCode(HttpStatus.CREATED)
     create(
         @Body()
-        createDto: CreateFoodDto
+        createDto: CreateFoodDto,
     ): Promise<Food> {
         return this.foodService.create(createDto);
     }
@@ -33,7 +33,7 @@ export class FoodController {
         @Query('page')
         page = '1',
         @Query('limit')
-        limit = '20'
+        limit = '20',
     ): Promise<{
         data: Food[];
         total: number;
@@ -47,7 +47,7 @@ export class FoodController {
     @Get(':id')
     findOne(
         @Param('id')
-        id: string
+        id: string,
     ): Promise<Food> {
         return this.foodService.findOne(+id);
     }
@@ -55,7 +55,7 @@ export class FoodController {
     @Get('name/:name')
     findByName(
         @Param('name')
-        name: string
+        name: string,
     ): Promise<Food> {
         return this.foodService.findByName(name);
     }
@@ -65,7 +65,7 @@ export class FoodController {
         @Param('id')
         id: string,
         @Body()
-        updateDto: UpdateFoodDto
+        updateDto: UpdateFoodDto,
     ): Promise<Food> {
         return this.foodService.update(+id, updateDto);
     }
@@ -74,7 +74,7 @@ export class FoodController {
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @Param('id')
-        id: string
+        id: string,
     ): Promise<void> {
         return this.foodService.remove(+id);
     }
@@ -82,7 +82,7 @@ export class FoodController {
     @Get(':id/birds')
     getBirds(
         @Param('id')
-        id: string
+        id: string,
     ) {
         return this.foodService.getBirds(+id);
     }
@@ -91,7 +91,7 @@ export class FoodController {
     @HttpCode(HttpStatus.OK)
     toggleActive(
         @Param('id')
-        id: string
+        id: string,
     ) {
         return this.foodService.toggleActive(+id);
     }

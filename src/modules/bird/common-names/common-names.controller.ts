@@ -22,7 +22,7 @@ export class CommonNamesController {
     @HttpCode(HttpStatus.CREATED)
     create(
         @Body()
-        createDto: CreateCommonNameDto
+        createDto: CreateCommonNameDto,
     ): Promise<CommonName> {
         return this.commonNamesService.create(createDto);
     }
@@ -30,7 +30,7 @@ export class CommonNamesController {
     @Get('bird/:birdId')
     findByBirdId(
         @Param('birdId')
-        birdId: string
+        birdId: string,
     ): Promise<CommonName[]> {
         return this.commonNamesService.findByBirdId(+birdId);
     }
@@ -38,7 +38,7 @@ export class CommonNamesController {
     @Get(':id')
     findOne(
         @Param('id')
-        id: string
+        id: string,
     ): Promise<CommonName> {
         return this.commonNamesService.findOne(+id);
     }
@@ -48,7 +48,7 @@ export class CommonNamesController {
         @Param('id')
         id: string,
         @Body()
-        updateDto: UpdateCommonNameDto
+        updateDto: UpdateCommonNameDto,
     ): Promise<CommonName> {
         return this.commonNamesService.update(+id, updateDto);
     }
@@ -57,7 +57,7 @@ export class CommonNamesController {
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @Param('id')
-        id: string
+        id: string,
     ): Promise<void> {
         return this.commonNamesService.remove(+id);
     }

@@ -25,7 +25,7 @@ export class UploadsController {
         @Body('deviceId')
         deviceId: string,
         @Body('type')
-        type: 'image' | 'audio'
+        type: 'image' | 'audio',
     ) {
         return this.uploadsService.handleUpload(
             {
@@ -34,7 +34,7 @@ export class UploadsController {
                 buffer: file.buffer,
             },
             deviceId,
-            type
+            type,
         );
     }
 
@@ -43,14 +43,11 @@ export class UploadsController {
         @Param('id')
         id: number,
         @Res()
-        res: Response
+        res: Response,
     ) {
         const file = await this.uploadsService.getFile(id);
         res.setHeader('Content-Type', file.mimeType);
-        res.setHeader(
-            'Content-Disposition',
-            `attachment; filename=${file.fileName}`
-        );
+        res.setHeader('Content-Disposition', `attachment; filename=${file.fileName}`);
         res.send(file.fileData);
     }
 }

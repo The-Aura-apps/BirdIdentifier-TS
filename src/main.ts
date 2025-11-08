@@ -10,15 +10,13 @@ async function bootstrap() {
 
     app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
-    app.useGlobalInterceptors(
-        new ClassSerializerInterceptor(app.get(Reflector))
-    ); // Or use plainToInstance IN controler
+    app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector))); // Or use plainToInstance IN controler
     app.useGlobalPipes(
         new ValidationPipe({
             whitelist: true,
             forbidNonWhitelisted: true,
             transform: true,
-        })
+        }),
     );
 
     const config = new DocumentBuilder()

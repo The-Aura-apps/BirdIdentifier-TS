@@ -49,7 +49,7 @@ export class Taxonomy {
     })
     genus: string;
 
-    @OneToMany(() => Bird, bird => bird.taxonomy)
+    @OneToMany(() => Bird, (bird) => bird.taxonomy)
     birds: Bird[];
 
     @CreateDateColumn()

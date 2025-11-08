@@ -13,7 +13,7 @@ export class TaxonomyController {
     @Post()
     async createOrFind(
         @Body()
-        dto: CreateTaxonomyDto
+        dto: CreateTaxonomyDto,
     ) {
         return this.taxonomyService.findOrCreate(dto);
     }
@@ -34,7 +34,7 @@ export class TaxonomyController {
         @Query('family')
         family?: string,
         @Query('genus')
-        genus?: string
+        genus?: string,
     ) {
         return this.taxonomyService.findByClassification({
             phylum,
@@ -55,7 +55,7 @@ export class TaxonomyController {
         @Query('page')
         page?: number,
         @Query('limit')
-        limit?: number
+        limit?: number,
     ) {
         return this.taxonomyService.findAll({
             page: page ? Number(page) : 1,

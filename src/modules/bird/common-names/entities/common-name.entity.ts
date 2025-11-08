@@ -39,7 +39,7 @@ export class CommonName {
     // @Column({ name: 'bird_id' })
     // birdId: number;
 
-    @ManyToOne(() => Bird, bird => bird.commonNames, {
+    @ManyToOne(() => Bird, (bird) => bird.commonNames, {
         onDelete: 'CASCADE',
         nullable: false,
     })

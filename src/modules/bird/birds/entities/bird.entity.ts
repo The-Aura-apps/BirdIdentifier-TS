@@ -110,7 +110,7 @@ export class Bird {
     @ApiProperty()
     lifeExpectancyYears: number;
 
-    @ManyToOne(() => Taxonomy, taxonomy => taxonomy.birds, {
+    @ManyToOne(() => Taxonomy, (taxonomy) => taxonomy.birds, {
         eager: true,
         nullable: true,
         onDelete: 'SET NULL', // Important: Don't cascade delete taxonomies
@@ -124,7 +124,7 @@ export class Bird {
     })
     taxonomy: Taxonomy;
 
-    @ManyToOne(() => ConservationStatus, conservation => conservation.birds, {
+    @ManyToOne(() => ConservationStatus, (conservation) => conservation.birds, {
         eager: true,
         nullable: true,
         onDelete: 'SET NULL',
@@ -138,7 +138,7 @@ export class Bird {
     })
     conservationStatus: ConservationStatus;
 
-    @OneToMany(() => CommonName, commonName => commonName.bird, {
+    @OneToMany(() => CommonName, (commonName) => commonName.bird, {
         cascade: true,
         orphanedRowAction: 'delete',
     })
@@ -147,7 +147,7 @@ export class Bird {
     })
     commonNames: CommonName[];
 
-    @ManyToMany(() => Habitat, habitat => habitat.birds, { eager: true })
+    @ManyToMany(() => Habitat, (habitat) => habitat.birds, { eager: true })
     @JoinTable({
         name: 'bird_habitats',
         joinColumn: { name: 'bird_id', referencedColumnName: 'id' },
@@ -155,10 +155,10 @@ export class Bird {
     })
     habitats: Habitat[];
 
-    @OneToMany(() => Observation, observation => observation.bird)
+    @OneToMany(() => Observation, (observation) => observation.bird)
     observations: Observation[];
 
-    @OneToMany(() => Media, media => media.bird, {
+    @OneToMany(() => Media, (media) => media.bird, {
         cascade: true,
     })
     @ApiProperty({
@@ -166,7 +166,7 @@ export class Bird {
     })
     media: Media[];
 
-    @OneToMany(() => BirdFood, birdFood => birdFood.bird, {
+    @OneToMany(() => BirdFood, (birdFood) => birdFood.bird, {
         cascade: true,
     })
     @ApiProperty({
@@ -174,7 +174,7 @@ export class Bird {
     })
     birdFoods: BirdFood[];
 
-    @OneToMany(() => BirdDistribution, distribution => distribution.bird, {
+    @OneToMany(() => BirdDistribution, (distribution) => distribution.bird, {
         cascade: true,
     })
     distributions: BirdDistribution[];

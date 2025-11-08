@@ -1,10 +1,4 @@
-import {
-    Entity,
-    Index,
-    PrimaryGeneratedColumn,
-    Column,
-    OneToMany,
-} from 'typeorm';
+import { Entity, Index, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { BirdFood } from '../../bird-foods/entities/bird-food.entity';
 
 @Entity('foods')
@@ -34,7 +28,7 @@ export class Food {
     })
     imageStorageKey: string;
 
-    @OneToMany(() => BirdFood, birdFood => birdFood.food)
+    @OneToMany(() => BirdFood, (birdFood) => birdFood.food)
     birdFoods: BirdFood[];
 
     getImageUrl(): string | null {

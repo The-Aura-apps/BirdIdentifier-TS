@@ -1,16 +1,16 @@
 // dto/create-bird-food.dto.ts
-import { IsNumber, IsBoolean, IsOptional, IsString } from "class-validator";
+import { IsNumber, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class CreateBirdFoodDto {
-  @IsNumber()
-  birdId: number; 
+    @IsNumber()
+    birdId: number;
 
-  @IsNumber()
-  foodId: number;
+    @IsNumber()
+    foodId: number;
 
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean = false; // Default matches entity
+    @IsOptional()
+    @IsBoolean()
+    isActive?: boolean = false; // Default matches entity
 }
 
 // dto/create-bird-food-nested.dto.ts

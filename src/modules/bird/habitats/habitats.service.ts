@@ -1,9 +1,4 @@
-import {
-    Injectable,
-    NotFoundException,
-    ConflictException,
-    Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Habitat } from './entities/habitat.entity';
@@ -16,7 +11,7 @@ export class HabitatService {
 
     constructor(
         @InjectRepository(Habitat)
-        private readonly habitatRepo: Repository<Habitat>
+        private readonly habitatRepo: Repository<Habitat>,
     ) {}
 
     async create(createDto: CreateHabitatDto): Promise<Habitat> {
@@ -27,9 +22,7 @@ export class HabitatService {
         });
 
         if (existing) {
-            throw new ConflictException(
-                `Habitat with name "${createDto.name}" already exists`
-            );
+            throw new ConflictException(`Habitat with name "${createDto.name}" already exists`);
         }
 
         const habitat = this.habitatRepo.create(createDto);
@@ -43,7 +36,7 @@ export class HabitatService {
         options: {
             page?: number;
             limit?: number;
-        } = {}
+        } = {},
     ): Promise<{
         data: Habitat[];
         total: number;
@@ -88,9 +81,7 @@ export class HabitatService {
         });
 
         if (!habitat) {
-            throw new NotFoundException(
-                `Habitat with name "${name}" not found`
-            );
+            throw new NotFoundException(`Habitat with name "${name}" not found`);
         }
 
         return habitat;
@@ -107,9 +98,7 @@ export class HabitatService {
             });
 
             if (existing) {
-                throw new ConflictException(
-                    `Habitat with name "${updateDto.name}" already exists`
-                );
+                throw new ConflictException(`Habitat with name "${updateDto.name}" already exists`);
             }
         }
 
@@ -134,7 +123,7 @@ export class HabitatService {
 
         if (birdsCount > 0) {
             throw new ConflictException(
-                `Cannot delete habitat ${id}: ${birdsCount} birds are associated with it`
+                `Cannot delete habitat ${id}: ${birdsCount} birds are associated with it`,
             );
         }
 
