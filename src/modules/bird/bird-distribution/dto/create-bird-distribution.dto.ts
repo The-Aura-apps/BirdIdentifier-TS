@@ -68,3 +68,35 @@ export class CreateBirdDistributionDto {
     @IsString({ each: true })
     countries?: string[];
 }
+
+export class CreateDistributionNestedDto {
+    // NO birdId - used when creating with bird
+
+    @IsInt()
+    @Min(1)
+    @Max(12)
+    month: number;
+
+    @IsEnum(DistributionSeason)
+    season: DistributionSeason;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => LocationDto)
+    location?: LocationDto;
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Max(1)
+    presenceScore?: number;
+
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    countries?: string[];
+}

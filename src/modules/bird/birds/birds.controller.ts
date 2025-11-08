@@ -11,13 +11,7 @@ import {
     Query,
     Patch,
 } from '@nestjs/common';
-import {
-    ApiTags,
-    ApiOperation,
-    ApiResponse,
-    ApiParam,
-    ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { BirdsService } from './birds.service';
 import { Bird } from './entities/bird.entity';
 import { CreateBirdDto } from './dto/create-bird.dto';
@@ -27,6 +21,7 @@ import { UpdateBirdFoodDto } from '../bird-foods/dto/update-bird-food.dto';
 import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto';
 import { CreateTaxonomyDto } from '../taxonomy/dto/create-taxonomy.dto';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
+import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
 
 @ApiTags('birds')
 @Controller('birds')
@@ -383,17 +378,17 @@ export class BirdsController {
 
     // Distributions
     @Get(':id/distributions')
-    @ApiOperation({
-        summary: 'Get distributions for a bird',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
-    getDistributions(
-        @Param('id')
-        id: string,
-    ) {
+    @ApiOperation({ summary: 'Get all distributions for a bird' })
+    @ApiParam({ name: 'id', description: 'Bird ID' })
+    getDistributions(@Param('id') id: string) {
         return this.birdService.getDistributions(+id);
+    }
+
+    @Post(':id/distributions')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ summary: 'Add distribution to bird' })
+    @ApiParam({ name: 'id', description: 'Bird ID' })
+    addDistribution(@Param('id') id: string, @Body() createDto: CreateBirdDistributionDto) {
+        return this.birdService.addDistribution(+id, createDto);
     }
 }

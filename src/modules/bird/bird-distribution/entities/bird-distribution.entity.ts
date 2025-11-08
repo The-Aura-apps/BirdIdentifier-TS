@@ -9,7 +9,6 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 import { Bird } from '../../birds/entities/bird.entity';
-import { IsEnum } from 'class-validator';
 
 export enum DistributionSeason {
     Breeding = 'breeding',
@@ -19,60 +18,47 @@ export enum DistributionSeason {
 }
 
 @Entity('bird_distributions')
-@Index(['location'])
+@Index(['season'])
+@Index(['month'])
 export class BirdDistribution {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @ManyToOne(() => Bird, (bird) => bird.distributions, {
+        onDelete: 'CASCADE',
+        nullable: false,
+    })
+    @JoinColumn({ name: 'bird_id' })
+    bird: Bird;
+
     @Column({ name: 'month', type: 'int' })
     month: number; // 1 = Jan, 12 = Dec
 
-    @IsEnum(DistributionSeason)
+    @Column({
+        type: 'enum',
+        enum: DistributionSeason,
+    })
     season: DistributionSeason;
 
-    @Column({
-        type: 'jsonb',
-        nullable: true,
-    })
+    @Column({ type: 'jsonb', nullable: true })
     location: {
         country?: string;
         region?: string;
         coordinates?: { lat: number; lng: number };
     };
 
-    @Column({
-        type: 'float',
-        nullable: true,
-    })
-    presenceScore?: number; // e.g., 0–1 scale of likelihood
+    @Column({ type: 'float', nullable: true })
+    presenceScore?: number; // 0–1 scale of likelihood
 
-    @Column({
-        type: 'text',
-        nullable: true,
-    })
+    @Column({ type: 'text', nullable: true })
     description: string;
 
-    @Column({
-        type: 'jsonb',
-        nullable: true,
-    })
-    countries: string[]; // For quick filtering
+    @Column({ type: 'jsonb', nullable: true })
+    countries: string[];
 
-    @ManyToOne(() => Bird, (bird) => bird.distributions, {
-        onDelete: 'CASCADE',
-    })
-    @JoinColumn({
-        name: 'bird_id',
-    })
-    bird: Bird;
-
-    @CreateDateColumn({
-        name: 'created_at',
-    })
+    @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
-    @UpdateDateColumn({
-        name: 'updated_at',
-    })
+    @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 }
