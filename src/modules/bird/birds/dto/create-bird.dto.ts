@@ -12,7 +12,7 @@ import { CreateCommonNameNestedDto } from '../../common-names/dto/create-common-
 import { CreateTaxonomyDto } from '../../taxonomy/dto/create-taxonomy.dto';
 import { CreateConservationStatusDto } from '../../conservation-status/dto/create-conservation-status.dto';
 import { CreateBirdDistributionDto } from '../../bird-distribution/dto/create-bird-distribution.dto';
-import { CreateBirdFoodDto } from '../../bird-foods/dto/create-bird-food.dto';
+import { CreateBirdFoodNestedDto } from '../../bird-foods/dto/create-bird-food.dto';
 import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
 
 export class CreateBirdDto {
@@ -56,8 +56,8 @@ export class CreateBirdDto {
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(() => CreateBirdFoodDto)
-    birdFoods: CreateBirdFoodDto[];
+    @Type(() => CreateBirdFoodNestedDto)
+    birdFoods: CreateBirdFoodNestedDto[];
 
     @IsOptional() @IsString() description?: string;
     @IsOptional() @IsString() behavior?: string;
