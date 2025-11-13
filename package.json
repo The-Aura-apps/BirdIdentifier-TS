@@ -19,13 +19,9 @@
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
         "test:e2e": "jest --config ./test/jest-e2e.json",
         "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-
-        "migration:generate:dev": "npm run typeorm -- migration:generate src/migrations/NewMigration -d src/core/configs/data-source.ts",
+        "migration:generate": "npm run typeorm -- migration:generate src/migrations/NewMigration -d src/core/configs/data-source.ts",
         "migration:run:dev": "npm run typeorm -- migration:run -d src/core/configs/data-source.ts",
-        "migration:revert:dev": "npm run typeorm -- migration:revert -d src/core/configs/data-source.ts",
-
-        "migration:generate": "typeorm migration:generate -d src/core/configs/data-source.js",
-        "migration:run": "typeorm migration:run -d src/core/configs/data-source.js",
+        "migration:run": "typeorm migration:run -d dist/core/configs/data-source.js",
         "migration:revert": "typeorm migration:revert -d src/core/configs/data-source.ts"
     },
     "dependencies": {
