@@ -1,15 +1,15 @@
 import { DataSource } from 'typeorm';
-import { Bird } from './modules/bird/birds/entities/bird.entity';
-import { Upload } from './modules/uploads/entities/upload.entity';
-import { Observation } from './modules/observation/observations/entities/observation.entity';
-import { BirdDistribution } from './modules/bird/bird-distribution/entities/bird-distribution.entity';
-import { BirdFood } from './modules/bird/bird-foods/entities/bird-food.entity';
-import { CommonName } from './modules/bird/common-names/entities/common-name.entity';
-import { ConservationStatus } from './modules/bird/conservation-status/entities/conservation-status.entity';
-import { Food } from './modules/bird/foods/entities/food.entity';
-import { Habitat } from './modules/bird/habitats/entities/habitat.entity';
-import { Taxonomy } from './modules/bird/taxonomy/entities/taxonomy.entity';
-import { Media } from './modules/media/entities/media.entity';
+import { Bird } from '../../modules/bird/birds/entities/bird.entity';
+import { Upload } from '../../modules/uploads/entities/upload.entity';
+import { Observation } from '../../modules/observation/observations/entities/observation.entity';
+import { BirdDistribution } from '../../modules/bird/bird-distribution/entities/bird-distribution.entity';
+import { BirdFood } from '../../modules/bird/bird-foods/entities/bird-food.entity';
+import { CommonName } from '../../modules/bird/common-names/entities/common-name.entity';
+import { ConservationStatus } from '../../modules/bird/conservation-status/entities/conservation-status.entity';
+import { Food } from '../../modules/bird/foods/entities/food.entity';
+import { Habitat } from '../../modules/bird/habitats/entities/habitat.entity';
+import { Taxonomy } from '../../modules/bird/taxonomy/entities/taxonomy.entity';
+import { Media } from '../../modules/media/entities/media.entity';
 
 // Load environment variables
 import * as dotenv from 'dotenv';
