@@ -4,6 +4,7 @@ import {
     Logger,
     BadRequestException,
     ConflictException,
+    UseGuards,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -460,7 +461,7 @@ export class BirdsService {
         data: Bird[];
         total: number;
     }> {
-        const { page = 1, limit = 20 } = options;
+        const { page = 1, limit = 10 } = options;
 
         const [data, total] = await this.birdRepo
             .createQueryBuilder('bird')

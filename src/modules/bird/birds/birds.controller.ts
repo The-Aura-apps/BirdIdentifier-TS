@@ -10,6 +10,7 @@ import {
     HttpStatus,
     Query,
     Patch,
+    UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { BirdsService } from './birds.service';
