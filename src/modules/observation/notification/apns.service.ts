@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as apn from '@parse/node-apn';
+import * as apn from 'apn';
 
 @Injectable()
 export class ApnsService {

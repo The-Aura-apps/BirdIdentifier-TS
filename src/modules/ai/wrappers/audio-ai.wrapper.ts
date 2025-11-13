@@ -4,13 +4,13 @@ import { promises as fs } from 'fs';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import fluentFfmpeg from 'fluent-ffmpeg';
-import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
-import ffprobeInstaller from '@ffprobe-installer/ffprobe';
+import * as ffmpegStatic from 'ffmpeg-static';
+import * as ffprobeStatic from 'ffprobe-static';
 import { Readable } from 'stream';
 
 // Set paths for FFmpeg and FFprobe
-fluentFfmpeg.setFfmpegPath(ffmpegInstaller.path);
-fluentFfmpeg.setFfprobePath(ffprobeInstaller.path);
+fluentFfmpeg.setFfmpegPath(ffmpegStatic);
+fluentFfmpeg.setFfprobePath(ffprobeStatic);
 
 @Injectable()
 export class AudioAiWrapper {
@@ -45,42 +45,42 @@ export class AudioAiWrapper {
     private async convertToWavIfNeeded(buffer: Buffer): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             const inputStream = Readable.from(buffer);
-            fluentFfmpeg.ffprobe(inputStream, (err, metadata) => {
-                if (err) {
-                    this.logger.error(`Format detection failed: ${err.message}`);
-                    return reject(new Error(`Format detection failed: ${err.message}`));
-                }
+fluentFfmpeg(inputStream).ffprobe((err, metadata) => {
+    if (err) {
+        this.logger.error(`Format detection failed: ${err.message}`);
+        return reject(new Error(`Format detection failed: ${err.message}`));
+    }
 
-                const format = metadata.format.format_name.toLowerCase();
-                const supported = ['wav', 'mp3', 'aac', 'm4a'];
-                if (!supported.includes(format)) {
-                    this.logger.error(`Unsupported audio format: ${format}`);
-                    return reject(new Error(`Unsupported audio format: ${format}`));
-                }
+    const format = metadata.format.format_name.toLowerCase();
+    const supported = ['wav', 'mp3', 'aac', 'm4a'];
+    if (!supported.includes(format)) {
+        this.logger.error(`Unsupported audio format: ${format}`);
+        return reject(new Error(`Unsupported audio format: ${format}`));
+    }
 
-                if (format === 'wav') {
-                    this.logger.log('Input is already WAV, no conversion needed');
-                    return resolve(buffer);
-                }
+    if (format === 'wav') {
+        this.logger.log('Input is already WAV, no conversion needed');
+        return resolve(buffer);
+    }
 
-                this.logger.log(`Converting ${format} to WAV`);
-                const outputBuffers: Buffer[] = [];
-                fluentFfmpeg(Readable.from(buffer))
-                    .inputFormat(format)
-                    .audioCodec('pcm_s16le')
-                    .format('wav')
-                    .on('error', (err) => {
-                        this.logger.error(`Conversion to WAV failed: ${err.message}`);
-                        reject(new Error(`Conversion to WAV failed: ${err.message}`));
-                    })
-                    .on('end', () => {
-                        const result = Buffer.concat(outputBuffers);
-                        this.logger.log(`Converted to WAV: ${result.length} bytes`);
-                        resolve(result);
-                    })
-                    .pipe()
-                    .on('data', (chunk) => outputBuffers.push(chunk));
-            });
+    this.logger.log(`Converting ${format} to WAV`);
+    const outputBuffers: Buffer[] = [];
+    fluentFfmpeg(Readable.from(buffer))
+        .inputFormat(format)
+        .audioCodec('pcm_s16le')
+        .format('wav')
+        .on('error', (err) => {
+            this.logger.error(`Conversion to WAV failed: ${err.message}`);
+            reject(new Error(`Conversion to WAV failed: ${err.message}`));
+        })
+        .on('end', () => {
+            const result = Buffer.concat(outputBuffers);
+            this.logger.log(`Converted to WAV: ${result.length} bytes`);
+            resolve(result);
+        })
+        .pipe()
+        .on('data', (chunk) => outputBuffers.push(chunk));
+});
         });
     }
 
