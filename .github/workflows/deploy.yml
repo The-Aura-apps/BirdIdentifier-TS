@@ -38,7 +38,16 @@ jobs:
           # Navigate to app directory
           cd /var/www/bird-identifier
           
-          # Pull latest code
+          # Fetch latest from remote
+          git fetch origin
+          
+          # Clean untracked files (add -n for dry run if testing; remove if you don't want to delete untracked)
+          git clean -fd
+          
+          # Reset hard to match origin/main (discards local modifications)
+          git reset --hard origin/main
+          
+          # Now pull (should be clean)
           git pull origin main
           
           # Install dependencies
