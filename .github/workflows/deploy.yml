@@ -2,7 +2,7 @@ name: CD - Deploy to 46.249.101.76 server
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -35,8 +35,10 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
+          set -e
+
           # Navigate to app directory
-          cd /var/www/bird-identifier
+          cd /var/www/bird-identifier/BirdIdentifier-Backend
           
           # Fetch latest from remote
           git fetch origin
