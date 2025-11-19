@@ -6,6 +6,8 @@ import {
     ConflictException,
     UseGuards,
 } from '@nestjs/common';
+import Fuse from 'fuse.js';
+import { BirdSuggestion } from './types/bird-suggestion.interface';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Bird } from './entities/bird.entity';
@@ -32,6 +34,7 @@ import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
 @Injectable()
 export class BirdsService {
     private readonly logger = new Logger(BirdsService.name);
+    private fuse!: Fuse<BirdSuggestion>;
 
     constructor(
         @InjectRepository(Bird)
@@ -51,7 +54,46 @@ export class BirdsService {
         private readonly taxonomyService: TaxonomyService,
         private readonly conservationStatusService: ConservationStatusService,
         private readonly birdInfoWrapper: BirdInfoWrapper,
-    ) {}
+    ) {
+        this.loadCatalog();
+    }
+
+    /**
+     * Load bird catalog from JSON file on service initialization
+     */
+    private loadCatalog() {
+        try {
+            const catalog: BirdSuggestion[] = require('../data/clements-catalog-2024.json');
+            this.fuse = new Fuse(catalog, {
+                keys: ['englishName', 'scientificName'],
+                threshold: 0.35,
+                includeScore: true,
+                shouldSort: true,
+                ignoreLocation: true,
+            });
+            this.logger.log(`Bird catalog loaded: ${catalog.length} species`);
+        } catch (err) {
+            this.logger.error('Failed to load bird catalog!', err);
+            process.exit(1);
+        }
+    }
+
+    /**
+     * @param query - Search string (common name or scientific name)
+     * @returns Array of up to 20 bird suggestions
+     */
+    searchCatalog(query: string): BirdSuggestion[] {
+        if (!query?.trim()) {
+            return [];
+        }
+
+        const results = this.fuse.search(query.trim());
+
+        return results.slice(0, 20).map((r) => ({
+            scientificName: r.item.scientificName,
+            englishName: r.item.englishName,
+        }));
+    }
 
     /**
      * Create a new bird record
@@ -190,7 +232,7 @@ export class BirdsService {
             commonNames,
             habitats,
             birdFoods,
-            media, 
+            media,
             distributions,
             ...rest,
         });
@@ -397,6 +439,7 @@ export class BirdsService {
         });
 
         if (bird) {
+            this.logger.log(`Bird found in database: ${normalizedName}`);
             return bird;
         }
 

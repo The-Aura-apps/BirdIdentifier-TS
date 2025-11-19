@@ -39,6 +39,39 @@ export class BirdsController {
         return this.birdService.create(dto);
     }
 
+    /**
+     * Search bird catalog (typeahead/autocomplete)
+     * GET /birds/catalog/search?q=robin
+     */
+    @Get('catalog/search')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Search bird catalog for typeahead/autocomplete',
+        description: 'Fast search through Clements catalog. Returns up to 20 suggestions.',
+    })
+    @ApiQuery({
+        name: 'spa',
+        required: true,
+        type: String,
+        description: 'Search query (common name or scientific name)',
+    })
+    searchCatalog(@Query('q') query: string): { scientificName: string; englishName: string }[] {
+        return this.birdService.searchCatalog(query);
+    }
+
+    @Get('scientific/:scientificName')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Get bird by scientific name (creates with AI if not exists)',
+    })
+    @ApiParam({
+        name: 'scientificName',
+        description: 'Scientific name (e.g., "Turdus migratorius")',
+    })
+    async getBirdByScientificName(@Param('scientificName') scientificName: string): Promise<Bird> {
+        return this.birdService.findOrCreate(scientificName);
+    }
+
     @Get()
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
