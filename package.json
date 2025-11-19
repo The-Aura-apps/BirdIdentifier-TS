@@ -40,11 +40,13 @@
         "ffmpeg-static": "^4.4.0",
         "ffprobe-static": "^3.0.0",
         "fluent-ffmpeg": "^2.1.2",
+        "fuse.js": "^7.1.0",
         "openai": "^4.0.0",
         "pg": "^8.11.3",
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.8.1",
-        "typeorm": "^0.3.17"
+        "typeorm": "^0.3.17",
+        "xlsx": "^0.18.5"
     },
     "devDependencies": {
         "@nestjs/cli": "^11.0.10",
