@@ -35,7 +35,102 @@ export class BirdInfoWrapper {
 
         this.logger.log(`Fetching bird info from AI: ${normalizedName}`);
 
-        const prompt = `hi`;
+        const prompt = `You are an expert-level ornithological database API. You will be given a bird's scientific name via the ${normalizedName} variable. Your task is to provide comprehensive, detailed, and specific information that maps directly to the database schema.
+
+Global Rule: Avoid all vague, high-level, or generic statements. You MUST provide specific details, examples, and quantitative data (like measurements, numbers, and specific months) when available and appropriate.
+
+Return ONLY the raw JSON. Do not include any explanatory text, markdown, or apologies.
+
+{
+  "scientificName": "${normalizedName}",
+  "description": "Comprehensive physical description including size, shape, plumage colors, distinctive features, sexual dimorphism, and seasonal variations. Be specific about measurements and color patterns.",
+  "behavior": "Detailed description of observable behaviors including foraging techniques, social structure, flight patterns, vocalizations, and daily activities. Include specific examples.",
+  "nestingHabits": "Specific details about nest construction, location preferences, building materials, and nest appearance. Include height above ground and habitat preferences.",
+  "feedingHabits": "Detailed feeding behavior including hunting techniques, feeding times, food handling methods, and foraging strategies.",
+  "eggsDescription": "Specific description of egg appearance including color, markings, dimensions, and texture. Include clutch size range and incubation details.",
+  "coolFacts": "Array of 3-5 specific, verifiable, and interesting facts that are not commonly known about this species.",
+  "size": {
+    "lengthCm": {
+      "min": "minimum typical length in centimeters",
+      "max": "maximum typical length in centimeters"
+    },
+    "wingspanCm": {
+      "min": "minimum wingspan in centimeters", 
+      "max": "maximum wingspan in centimeters"
+    },
+    "weightGrams": {
+      "min": "minimum typical weight in grams",
+      "max": "maximum typical weight in grams"
+    }
+  },
+  "lifeExpectancyYears": "average lifespan in years in wild, or range if available",
+  "taxonomy": {
+    "phylum": "Chordata",
+    "class": "Aves", 
+    "order": "specific taxonomic order",
+    "family": "specific taxonomic family",
+    "genus": "specific taxonomic genus"
+  },
+  "conservationStatus": {
+    "code": "IUCN conservation code (EX, EW, CR, EN, VU, NT, LC, DD, NE)",
+    "fullName": "full conservation status name",
+    "description": "specific conservation context and population trends",
+    "severityLevel": "number from 1-9 based on threat level",
+    "authority": "IUCN"
+  },
+  "commonNames": [
+    {
+      "name": "most common English name",
+      "language": "en",
+      "region": "primary region where this name is used"
+    },
+    {
+      "name": "additional common name if available",
+      "language": "en", 
+      "region": "region where this name is used"
+    }
+  ],
+  "habitats": [
+    "Desert", "Forest", "Grassland", "Savanna", "Scrub", "Subterranean", "Wetlands", "Marine"
+  ],
+  "birdFoods": [
+    {
+      "foodName": "specific food item",
+      "description": "how and when this food is consumed"
+    }
+  ],
+  "distributions": [
+    {
+      "month": 1,
+      "season": "breeding|non-breeding|year-round|migration",
+      "location": {
+        "country": "specific country",
+        "region": "specific region/state/province",
+        "coordinates": {"lat": approximate_latitude, "lng": approximate_longitude}
+      },
+      "presenceScore": 0.8,
+      "description": "specific distribution details for this month",
+      "countries": ["country1", "country2"]
+    }
+  ],
+  "mediaSuggestions": [
+    {
+      "type": "photo|audio|video",
+      "caption": "suggested caption describing what should be visible/heard",
+      "source": "suggested source or context"
+    }
+  ]
+}
+
+CRITICAL FORMATTING RULES:
+- For habitats: ONLY use exact values from this list: ["Desert", "Forest", "Grassland", "Savanna", "Scrub", "Subterranean", "Wetlands", "Marine"]
+- For conservationStatus.code: ONLY use: "EX", "EW", "CR", "EN", "VU", "NT", "LC", "DD", "NE"
+- For distributions.season: ONLY use: "breeding", "non-breeding", "year-round", "migration"
+- For months: use numbers 1-12 (1=January, 12=December)
+- All measurements must be in metric units (cm, grams)
+- Provide distributions for at least 3 different months showing seasonal patterns
+- Include specific countries and regions in distributions
+- Be extremely specific about behavioral observations and physical characteristics`;
 
         try {
             const response = await this.client.chat.completions.create({
