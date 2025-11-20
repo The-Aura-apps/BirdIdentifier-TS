@@ -24,7 +24,8 @@
         "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
         "migration:run:prod": "node dist/data-source.js",
         "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
-        "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts"
+        "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts",
+        "schema:drop": "npm run typeorm -- schema:drop -d src/data-source.ts"
     },
     "dependencies": {
         "@nestjs/common": "^10.0.0",
