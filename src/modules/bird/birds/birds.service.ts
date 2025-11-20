@@ -424,9 +424,7 @@ export class BirdsService {
 
         // Try to find existing bird
         let bird = await this.birdRepo.findOne({
-            where: {
-                scientificName: normalizedName,
-            },
+            where: { scientificName: normalizedName },
             relations: [
                 'media',
                 'commonNames',
@@ -435,52 +433,59 @@ export class BirdsService {
                 'taxonomy',
                 'distributions',
                 'birdFoods',
+                'birdFoods.food',
             ],
         });
 
         if (bird) {
-            this.logger.log(`Bird found in database: ${normalizedName}`);
+            this.logger.log(`Bird already exists: ${bird.scientificName} (ID: ${bird.id})`);
             return bird;
         }
 
         // Create minimal bird if not found
-        this.logger.log(`Creating new bird record: ${normalizedName}`);
+        this.logger.log(`Creating new bird record with AI enrichment: ${normalizedName}`);
 
+        // Create bird first
+        bird = this.birdRepo.create({
+            scientificName: normalizedName,
+        });
+        const savedBird = await this.birdRepo.save(bird);
+        this.logger.log(`Bird created with ID: ${savedBird.id}`);
+
+        // Fetch comprehensive info from AI
         let birdInfo: BirdInfo | null = null;
         try {
             birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
+            this.logger.log(`AI info fetched successfully for ${normalizedName}`);
         } catch (err) {
-            this.logger.warn(`Failed to fetch bird info for ${normalizedName}: ${err.message}`);
+            this.logger.error(`Failed to fetch bird info for ${normalizedName}: ${err.message}`);
+            return savedBird; // Return minimal bird if AI fetch fails
         }
 
-        bird = this.birdRepo.create({
-            scientificName: normalizedName,
-            description: birdInfo?.description,
-            behavior: birdInfo?.behavior,
-        });
-
-        const savedBird = await this.birdRepo.save(bird);
-        this.logger.log(`Bird created: ${savedBird.id} - ${savedBird.scientificName}`);
-
-        // Enrich bird data if possible
+        // Enrich bird data with all relations
         if (birdInfo && savedBird.id) {
             try {
                 await this.enrichBirdData(savedBird.id, birdInfo);
-                // Reload the bird to get enriched data
-                return (
-                    (await this.birdRepo.findOne({
-                        where: {
-                            id: savedBird.id,
-                        },
-                        relations: [
-                            'commonNames',
-                            'media',
-                            'conservationStatus',
-                            'habitats',
-                            'taxonomy',
-                        ],
-                    })) || savedBird
-                );
+
+                // Reload the bird to get all enriched data
+                const enrichedBird = await this.birdRepo.findOne({
+                    where: { id: savedBird.id },
+                    relations: [
+                        'commonNames',
+                        'media',
+                        'conservationStatus',
+                        'habitats',
+                        'taxonomy',
+                        'distributions',
+                        'birdFoods',
+                        'birdFoods.food',
+                    ],
+                });
+
+                if (enrichedBird) {
+                    this.logger.log(`Bird fully enriched: ${enrichedBird.scientificName}`);
+                    return enrichedBird;
+                }
             } catch (err) {
                 this.logger.error(
                     `Failed to enrich bird data for ${normalizedName}: ${err.message}`,
@@ -533,48 +538,215 @@ export class BirdsService {
      * Enrich bird data with additional information
      */
     private async enrichBirdData(birdId: number, birdInfo: BirdInfo): Promise<void> {
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+            relations: [
+                'taxonomy',
+                'conservationStatus',
+                'habitats',
+                'commonNames',
+                'distributions',
+                'birdFoods',
+            ],
+        });
+
+        if (!bird) {
+            throw new NotFoundException(`Bird with ID ${birdId} not found`);
+        }
+
+        // Update basic text fields
         const updateData: Partial<Bird> = {};
 
-        if (birdInfo.description) {
-            updateData.description = birdInfo.description;
-        }
-
-        if (birdInfo.behavior) {
-            updateData.behavior = birdInfo.behavior;
-        }
-
-        if (birdInfo.feedingHabits) {
-            updateData.feedingHabits = birdInfo.feedingHabits;
-        }
-
-        if (birdInfo.nestingHabits) {
-            updateData.nestingHabits = birdInfo.nestingHabits;
-        }
-
-        if (birdInfo.eggsDescription) {
-            updateData.eggsDescription = birdInfo.eggsDescription;
-        }
-
-        if (birdInfo.coolFacts && birdInfo.coolFacts.length > 0) {
-            updateData.coolFacts = birdInfo.coolFacts.join('\n');
-        }
-
-        if (birdInfo.size) {
-            updateData.size = birdInfo.size;
-        }
-
-        if (birdInfo.lifeExpectancyYears) {
+        if (birdInfo.description) updateData.description = birdInfo.description;
+        if (birdInfo.behavior) updateData.behavior = birdInfo.behavior;
+        if (birdInfo.feedingHabits) updateData.feedingHabits = birdInfo.feedingHabits;
+        if (birdInfo.nestingHabits) updateData.nestingHabits = birdInfo.nestingHabits;
+        if (birdInfo.eggsDescription) updateData.eggsDescription = birdInfo.eggsDescription;
+        if (birdInfo.size) updateData.size = birdInfo.size;
+        if (birdInfo.lifeExpectancyYears)
             updateData.lifeExpectancyYears = birdInfo.lifeExpectancyYears;
+        if (
+            birdInfo.coolFacts &&
+            Array.isArray(birdInfo.coolFacts) &&
+            birdInfo.coolFacts.length > 0
+        ) {
+            updateData.coolFacts = birdInfo.coolFacts.join('\n\n');
         }
 
+        // Apply basic updates
         if (Object.keys(updateData).length > 0) {
             await this.birdRepo.update(birdId, updateData);
             this.logger.log(`Bird data enriched: ${birdId}`);
         }
 
-        // if (birdInfo.commonNames && birdInfo.commonNames.length > 0) {
-        //     await this.handleCommonNames(birdId, birdInfo.commonNames);
-        // }
+        //  Handle Taxonomy (ManyToOne)
+        if (birdInfo.taxonomy) {
+            try {
+                const taxonomy = await this.taxonomyService.findOrCreate(birdInfo.taxonomy);
+                bird.taxonomy = taxonomy;
+                this.logger.log(
+                    `Taxonomy set for bird ${birdId}: ${taxonomy.order} - ${taxonomy.family}`,
+                );
+            } catch (err) {
+                this.logger.error(`Failed to set taxonomy for bird ${birdId}: ${err.message}`);
+            }
+        }
+
+        // Handle Conservation Status (ManyToOne)
+        if (birdInfo.conservationStatus) {
+            try {
+                const conservationStatus = await this.conservationStatusService.findOrCreate(
+                    birdInfo.conservationStatus,
+                );
+                bird.conservationStatus = conservationStatus;
+                this.logger.log(
+                    `Conservation status set for bird ${birdId}: ${conservationStatus.code}`,
+                );
+            } catch (err) {
+                this.logger.error(
+                    `Failed to set conservation status for bird ${birdId}: ${err.message}`,
+                );
+            }
+        }
+        //  Handle Common Names (OneToMany)
+        if (
+            birdInfo.commonNames &&
+            Array.isArray(birdInfo.commonNames) &&
+            birdInfo.commonNames.length > 0
+        ) {
+            try {
+                // Remove existing common names to avoid duplicates
+                if (bird.commonNames && bird.commonNames.length > 0) {
+                    await this.commonNameRepo.remove(bird.commonNames);
+                }
+
+                // Create new common names
+                const commonNameEntities = birdInfo.commonNames.map((cn) =>
+                    this.commonNameRepo.create({
+                        name: cn.name,
+                        language: cn.language || 'en',
+                        region: cn.region || 'General',
+                        bird: bird,
+                    }),
+                );
+
+                await this.commonNameRepo.save(commonNameEntities);
+                this.logger.log(
+                    `Common names added for bird ${birdId}: ${commonNameEntities.length} names`,
+                );
+            } catch (err) {
+                this.logger.error(`Failed to add common names for bird ${birdId}: ${err.message}`);
+            }
+        }
+
+        //  Handle Distributions (OneToMany)
+        if (
+            birdInfo.distributions &&
+            Array.isArray(birdInfo.distributions) &&
+            birdInfo.distributions.length > 0
+        ) {
+            try {
+                // Remove existing distributions to avoid duplicates
+                if (bird.distributions && bird.distributions.length > 0) {
+                    await this.distributionRepo.remove(bird.distributions);
+                }
+
+                // Create new distributions
+                const distributionEntities = birdInfo.distributions.map((dist) =>
+                    this.distributionRepo.create({
+                        month: dist.month,
+                        season: dist.season,
+                        location: dist.location,
+                        presenceScore: dist.presenceScore || 0.5,
+                        description: dist.description,
+                        countries: dist.countries || [],
+                        bird: bird,
+                    }),
+                );
+
+                await this.distributionRepo.save(distributionEntities);
+                this.logger.log(
+                    `Distributions added for bird ${birdId}: ${distributionEntities.length} entries`,
+                );
+            } catch (err) {
+                this.logger.error(`Failed to add distributions for bird ${birdId}: ${err.message}`);
+            }
+        }
+
+        //  Handle Bird Foods (ManyToMany with junction table)
+        if (
+            birdInfo.birdFoods &&
+            Array.isArray(birdInfo.birdFoods) &&
+            birdInfo.birdFoods.length > 0
+        ) {
+            try {
+                // Find or create food entries
+                const foodEntities: any[] = [];
+
+                for (const foodInfo of birdInfo.birdFoods) {
+                    let food = await this.foodRepo.findOne({
+                        where: { name: foodInfo.food.name },
+                    });
+
+                    // Create food if it doesn't exist
+                    if (!food) {
+                        food = this.foodRepo.create({
+                            name: foodInfo.food.name,
+                            description: foodInfo.food.description,
+                        });
+                        food = await this.foodRepo.save(food);
+                        this.logger.log(`Created new food: ${food.name}`);
+                    }
+
+                    foodEntities.push({ food, description: foodInfo.food.description });
+                }
+
+                // Remove existing bird-food relationships
+                if (bird.birdFoods && bird.birdFoods.length > 0) {
+                    await this.birdFoodRepo.remove(bird.birdFoods);
+                }
+
+                // Create new bird-food relationships
+                const birdFoodEntities = foodEntities.map(({ food, description }) =>
+                    this.birdFoodRepo.create({
+                        bird: bird,
+                        food: food,
+                        isActive: true,
+                    }),
+                );
+
+                await this.birdFoodRepo.save(birdFoodEntities);
+                this.logger.log(
+                    `Bird foods added for bird ${birdId}: ${birdFoodEntities.length} items`,
+                );
+            } catch (err) {
+                this.logger.error(`Failed to add bird foods for bird ${birdId}: ${err.message}`);
+            }
+        }
+
+        // Handle Habitats (ManyToMany)
+        if (birdInfo.habitats && Array.isArray(birdInfo.habitats) && birdInfo.habitats.length > 0) {
+            try {
+                const habitatEntities = await this.habitatRepo.find({
+                    where: birdInfo.habitats.map((name) => ({ name: Habitat.name })),
+                });
+
+                if (habitatEntities.length > 0) {
+                    bird.habitats = habitatEntities;
+                    this.logger.log(
+                        `Habitats set for bird ${birdId}: ${habitatEntities.map((h) => h.name).join(', ')}`,
+                    );
+                } else {
+                    this.logger.warn(`No matching habitats found for bird ${birdId}`);
+                }
+            } catch (err) {
+                this.logger.error(`Failed to set habitats for bird ${birdId}: ${err.message}`);
+            }
+        }
+
+        // Save the bird with updated relations
+        await this.birdRepo.save(bird);
+        this.logger.log(`Bird ${birdId} enrichment completed successfully`);
     }
 
     /**

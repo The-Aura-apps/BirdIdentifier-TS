@@ -6,12 +6,12 @@ import { BirdInfo } from '../types';
 export class BirdInfoWrapper {
     private readonly logger = new Logger(BirdInfoWrapper.name);
     private client!: OpenAI;
-    private readonly REQUEST_TIMEOUT = 30000; // 30 seconds
+    private readonly REQUEST_TIMEOUT = 60000; // 60 seconds for comprehensive data
 
     constructor() {
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {
-            this.logger.error('OPENAI_API_KEY·not·set·in·environment·variables');
+            this.logger.error('OPENAI_API_KEY not set in environment variables');
             throw new Error('OPENAI_API_KEY is required');
         }
         this.client = new OpenAI({
@@ -22,7 +22,7 @@ export class BirdInfoWrapper {
     }
 
     /**
-     * Fetch detailed bird information with caching
+     * Fetch detailed bird information
      * @param scientificName The scientific name of the bird
      * @returns BirdInfo object
      */
@@ -32,110 +32,171 @@ export class BirdInfoWrapper {
         }
 
         const normalizedName = scientificName.trim();
+        this.logger.log(`Fetching comprehensive bird info from AI: ${normalizedName}`);
 
-        this.logger.log(`Fetching bird info from AI: ${normalizedName}`);
+        const prompt = `You are an expert ornithological database API. Provide comprehensive, detailed information about the bird species: "${normalizedName}"
 
-        const prompt = `You are an expert-level ornithological database API. You will be given a bird's scientific name via the ${normalizedName} variable. Your task is to provide comprehensive, detailed, and specific information that maps directly to the database schema.
+CRITICAL INSTRUCTIONS:
+1. Return ONLY valid JSON - no markdown, no explanations, no apologies
+2. Be specific and detailed - avoid vague statements
+3. Provide actual measurements, dates, and quantitative data
+4. Use ONLY the allowed values for enums (habitats, conservation codes, seasons)
+5. Fill ALL fields with relevant data - do not leave fields empty unless truly unknown
 
-Global Rule: Avoid all vague, high-level, or generic statements. You MUST provide specific details, examples, and quantitative data (like measurements, numbers, and specific months) when available and appropriate.
-
-Return ONLY the raw JSON. Do not include any explanatory text, markdown, or apologies.
-
+Required JSON Structure:
 {
   "scientificName": "${normalizedName}",
-  "description": "Comprehensive physical description including size, shape, plumage colors, distinctive features, sexual dimorphism, and seasonal variations. Be specific about measurements and color patterns.",
-  "behavior": "Detailed description of observable behaviors including foraging techniques, social structure, flight patterns, vocalizations, and daily activities. Include specific examples.",
-  "nestingHabits": "Specific details about nest construction, location preferences, building materials, and nest appearance. Include height above ground and habitat preferences.",
-  "feedingHabits": "Detailed feeding behavior including hunting techniques, feeding times, food handling methods, and foraging strategies.",
-  "eggsDescription": "Specific description of egg appearance including color, markings, dimensions, and texture. Include clutch size range and incubation details.",
-  "coolFacts": "Array of 3-5 specific, verifiable, and interesting facts that are not commonly known about this species.",
+  "description": "2-3 detailed paragraphs describing the bird's appearance, distinguishing features, and general characteristics. Be specific about colors, patterns, and physical traits.",
+  "behavior": "2-3 detailed paragraphs about behavior patterns, social structure, vocalizations, territorial behavior, and daily activities. Include specific examples.",
+  "nestingHabits": "Detailed description of nesting behavior: where they nest, nest construction materials and methods, nesting season (specific months), clutch size, incubation period in days, and parental care details.",
+  "feedingHabits": "Detailed description of feeding behavior: foraging techniques, preferred feeding times, hunting/gathering methods, and seasonal dietary changes.",
+  "eggsDescription": "Detailed description of eggs: color, size, markings, texture, typical clutch size (e.g., '3-5 eggs'), and any unique characteristics.",
+  "coolFacts": ["Fascinating fact 1 with specific details", "Interesting behavior or adaptation with examples", "Unique characteristic or record", "Cultural or historical significance", "Conservation story or success"],
   "size": {
     "lengthCm": {
-      "min": "minimum typical length in centimeters",
-      "max": "maximum typical length in centimeters"
+      "min": 00.0,
+      "max": 00.0
     },
     "wingspanCm": {
-      "min": "minimum wingspan in centimeters", 
-      "max": "maximum wingspan in centimeters"
+      "min": 00.0,
+      "max": 00.0
     },
     "weightGrams": {
-      "min": "minimum typical weight in grams",
-      "max": "maximum typical weight in grams"
+      "min": 00.0,
+      "max": 00.0
     }
   },
-  "lifeExpectancyYears": "average lifespan in years in wild, or range if available",
+  "lifeExpectancyYears": 0.0,
   "taxonomy": {
     "phylum": "Chordata",
-    "class": "Aves", 
-    "order": "specific taxonomic order",
-    "family": "specific taxonomic family",
-    "genus": "specific taxonomic genus"
+    "class": "Aves",
+    "order": "Actual order name",
+    "family": "Actual family name",
+    "genus": "Actual genus name"
   },
   "conservationStatus": {
-    "code": "IUCN conservation code (EX, EW, CR, EN, VU, NT, LC, DD, NE)",
-    "fullName": "full conservation status name",
-    "description": "specific conservation context and population trends",
-    "severityLevel": "number from 1-9 based on threat level",
+    "code": "MUST BE ONE OF: EX, EW, CR, EN, VU, NT, LC, DD, or NE",
+    "fullName": "Full conservation status name",
+    "description": "Brief description of conservation status and main threats",
+    "severityLevel": 0,
     "authority": "IUCN"
   },
   "commonNames": [
     {
-      "name": "most common English name",
+      "name": "Primary English common name",
       "language": "en",
-      "region": "primary region where this name is used"
+      "region": "General or specific region"
     },
     {
-      "name": "additional common name if available",
-      "language": "en", 
-      "region": "region where this name is used"
+      "name": "Alternative common name if exists",
+      "language": "en",
+      "region": "Regional variant"
+    },
+    {
+      "name": "Common name in another language if applicable",
+      "language": "es/fr/de/etc",
+      "region": "Country or region"
     }
   ],
-  "habitats": [
-    "Desert", "Forest", "Grassland", "Savanna", "Scrub", "Subterranean", "Wetlands", "Marine"
-  ],
+  "habitats": ["Select from: Desert, Forest, Grassland, Savanna, Scrub, Subterranean, Wetlands, Marine - include all that apply"],
   "birdFoods": [
     {
-      "foodName": "specific food item",
-      "description": "how and when this food is consumed"
+      "foodName": "Seeds",
+      "description": "Specific types of seeds consumed, foraging method, and seasonal importance"
+    },
+    {
+      "foodName": "Insects",
+      "description": "Types of insects, hunting methods, and when primarily consumed"
+    },
+    {
+      "foodName": "Fruits",
+      "description": "Fruit types, dispersal role, seasonal availability"
     }
   ],
   "distributions": [
     {
       "month": 1,
-      "season": "breeding|non-breeding|year-round|migration",
+      "season": "MUST BE ONE OF: breeding, non-breeding, year-round, or migration",
       "location": {
-        "country": "specific country",
-        "region": "specific region/state/province",
-        "coordinates": {"lat": approximate_latitude, "lng": approximate_longitude}
+        "country": "Primary country name",
+        "region": "Specific region or state",
+        "coordinates": {
+          "lat": 00.00,
+          "lng": 00.00
+        }
       },
-      "presenceScore": 0.8,
-      "description": "specific distribution details for this month",
-      "countries": ["country1", "country2"]
-    }
-  ],
-  "mediaSuggestions": [
-    {
-      "type": "photo|audio|video",
-      "caption": "suggested caption describing what should be visible/heard",
-      "source": "suggested source or context"
+      "presenceScore": 0.0,
+      "description": "Describe presence and behavior during this period",
+      "countries": ["Country1", "Country2", "Country3"]
     }
   ]
 }
 
-CRITICAL FORMATTING RULES:
-- For habitats: ONLY use exact values from this list: ["Desert", "Forest", "Grassland", "Savanna", "Scrub", "Subterranean", "Wetlands", "Marine"]
-- For conservationStatus.code: ONLY use: "EX", "EW", "CR", "EN", "VU", "NT", "LC", "DD", "NE"
-- For distributions.season: ONLY use: "breeding", "non-breeding", "year-round", "migration"
-- For months: use numbers 1-12 (1=January, 12=December)
-- All measurements must be in metric units (cm, grams)
-- Provide distributions for at least 3 different months showing seasonal patterns
-- Include specific countries and regions in distributions
-- Be extremely specific about behavioral observations and physical characteristics`;
+SPECIFIC FIELD REQUIREMENTS:
+
+**habitats**: ONLY use these exact values (select all that apply):
+- "Desert" - arid, sandy, or rocky dry regions
+- "Forest" - wooded areas (deciduous, coniferous, tropical)
+- "Grassland" - prairies, meadows, open grass areas
+- "Savanna" - tropical grasslands with scattered trees
+- "Scrub" - brushland, chaparral, shrubland
+- "Subterranean" - caves, burrows, underground
+- "Wetlands" - marshes, swamps, bogs, wetlands
+- "Marine" - coastal, oceanic, or marine areas
+
+**conservationStatus.code**: ONLY use these IUCN codes:
+- EX = Extinct (severityLevel: 9)
+- EW = Extinct in the Wild (severityLevel: 8)
+- CR = Critically Endangered (severityLevel: 7)
+- EN = Endangered (severityLevel: 6)
+- VU = Vulnerable (severityLevel: 5)
+- NT = Near Threatened (severityLevel: 4)
+- LC = Least Concern (severityLevel: 3)
+- DD = Data Deficient (severityLevel: 2)
+- NE = Not Evaluated (severityLevel: 1)
+
+**distributions.season**: ONLY use these values:
+- "breeding" - nesting/reproduction period
+- "non-breeding" - outside breeding season
+- "year-round" - resident year-round
+- "migration" - during migration passages
+
+**distributions requirements**:
+- Provide at least 3-6 distribution entries covering different months
+- Include breeding range, wintering range, and migration routes if applicable
+- presenceScore should be 0.0 to 1.0 (0.9+ = primary range, 0.5-0.8 = common, 0.1-0.4 = rare)
+- Coordinates should be approximate center of range
+- Include multiple countries where the bird is found
+
+**birdFoods requirements**:
+- Include 3-8 food items
+- Common food categories: Seeds, Insects, Fruits, Nectar, Small Mammals, Fish, Carrion, Berries, Nuts, Aquatic Plants, Crustaceans, Mollusks, Worms, Grains, Vegetation
+- Be specific about species preferences and foraging behavior
+
+**commonNames requirements**:
+- Include at least the primary English common name
+- Add regional variants if they exist
+- Include names in other languages if commonly used
+- Specify the region where each name is used
+
+**Size measurements**:
+- Always provide ranges (min and max)
+- Length = bill tip to tail tip in cm
+- Wingspan = tip to tip with wings extended in cm
+- Weight in grams
+- If exact ranges unknown, provide reasonable estimates based on similar species
+
+Return ONLY the JSON object. Ensure all numeric values are numbers, not strings.`;
 
         try {
             const response = await this.client.chat.completions.create({
                 model: 'gpt-4o-mini',
                 messages: [
+                    {
+                        role: 'system',
+                        content:
+                            'You are a precise ornithological database API that returns comprehensive bird data in exact JSON format. Never include markdown formatting or explanations.',
+                    },
                     {
                         role: 'user',
                         content: prompt,
@@ -144,6 +205,7 @@ CRITICAL FORMATTING RULES:
                 response_format: {
                     type: 'json_object',
                 },
+                temperature: 0.3, // Lower temperature for more consistent output
             });
 
             const content = response.choices?.[0]?.message?.content;
@@ -153,20 +215,22 @@ CRITICAL FORMATTING RULES:
             }
 
             // Parse JSON
-            let data: BirdInfo;
+            let data: any;
             try {
                 data = JSON.parse(content);
-                this.logger.log(`Received bird info: ${JSON.stringify(data, null, 2)}`);
+                this.logger.log(`Received bird info for: ${normalizedName}`);
+                this.logger.debug(`Raw data: ${JSON.stringify(data, null, 2)}`);
             } catch (parseErr) {
                 this.logger.error(`JSON parsing failed for bird: ${normalizedName}`, parseErr);
+                this.logger.error(`Response content: ${content}`);
                 throw new Error('Invalid JSON from OpenAI API');
             }
 
-            // Validate required fields
-            this.validateBirdInfo(data, normalizedName);
+            // Validate and transform the data
+            const transformedData = this.validateAndTransform(data, normalizedName);
 
-            this.logger.log(`Bird info fetched and cached: ${normalizedName}`);
-            return data;
+            this.logger.log(`Bird info successfully fetched: ${normalizedName}`);
+            return transformedData;
         } catch (err) {
             this.logger.error(
                 `Failed to fetch info for ${normalizedName}: ${err.message}`,
@@ -177,60 +241,111 @@ CRITICAL FORMATTING RULES:
     }
 
     /**
-     * Validate bird info structure
-     * @param data BirdInfo data to validate
-     * @param scientificName Fallback scientific name
+     * Validate and transform the API response to match our BirdInfo interface
      */
-    private validateBirdInfo(data: any, scientificName: string): void {
+    private validateAndTransform(data: any, scientificName: string): BirdInfo {
         const warnings: string[] = [];
 
+        // Ensure scientificName
         if (!data.scientificName) {
-            data.scientificName = scientificName; // Fallback
+            data.scientificName = scientificName;
             warnings.push('scientificName missing, using input');
         }
-        if (!data.commonName) {
-            data.commonName = 'Unknown';
-            warnings.push('commonName missing');
+
+        // Validate habitats
+        const validHabitats = [
+            'Desert',
+            'Forest',
+            'Grassland',
+            'Savanna',
+            'Scrub',
+            'Subterranean',
+            'Wetlands',
+            'Marine',
+        ];
+        if (data.habitats && Array.isArray(data.habitats)) {
+            data.habitats = data.habitats.filter((h: string) => validHabitats.includes(h));
+            if (data.habitats.length === 0) {
+                warnings.push('No valid habitats found');
+            }
+        } else {
+            data.habitats = [];
+            warnings.push('habitats field missing or invalid');
         }
-        // Ensure nested objects exist
-        if (!data.features)
-            data.features = {
-                sizeAndShape: '',
-                colorPattern: '',
-                billShape: '',
-                markings: '',
-            };
-        if (!data.ecology)
-            data.ecology = {
-                habitat: '',
-                behavior: '',
-                diet: '',
-            };
-        if (!data.geography)
-            data.geography = {
-                rangeMap: '',
-                yearRound: '',
-                breeding: '',
-                wintering: '',
-                migration: '',
-                seasonality: '',
-            };
-        if (!data.education)
-            data.education = {
-                conservation: '',
-                nesting: '',
-                eggs: '',
-                coolFacts: [],
-            };
+
+        // Validate conservation status
+        const validCodes = ['EX', 'EW', 'CR', 'EN', 'VU', 'NT', 'LC', 'DD', 'NE'];
+        if (data.conservationStatus?.code && !validCodes.includes(data.conservationStatus.code)) {
+            warnings.push(
+                `Invalid conservation code: ${data.conservationStatus.code}, defaulting to NE`,
+            );
+            data.conservationStatus.code = 'NE';
+            data.conservationStatus.fullName = 'Not Evaluated';
+            data.conservationStatus.severityLevel = 1;
+        }
+
+        // Validate distributions
+        const validSeasons = ['breeding', 'non-breeding', 'year-round', 'migration'];
+        if (data.distributions && Array.isArray(data.distributions)) {
+            data.distributions = data.distributions
+                .filter((d: any) => {
+                    if (!validSeasons.includes(d.season)) {
+                        warnings.push(`Invalid season: ${d.season}`);
+                        return false;
+                    }
+                    if (!d.month || d.month < 1 || d.month > 12) {
+                        warnings.push(`Invalid month: ${d.month}`);
+                        return false;
+                    }
+                    return true;
+                })
+                .map((d: any) => ({
+                    ...d,
+                    presenceScore: d.presenceScore || 0.5,
+                    countries: Array.isArray(d.countries) ? d.countries : [],
+                }));
+        } else {
+            data.distributions = [];
+            warnings.push('distributions field missing or invalid');
+        }
+
+        // Validate commonNames
+        if (
+            !data.commonNames ||
+            !Array.isArray(data.commonNames) ||
+            data.commonNames.length === 0
+        ) {
+            data.commonNames = [{ name: scientificName, language: 'en', region: 'General' }];
+            warnings.push('commonNames missing, using scientific name');
+        }
+
+        // Validate birdFoods
+        if (!data.birdFoods || !Array.isArray(data.birdFoods)) {
+            data.birdFoods = [];
+            warnings.push('birdFoods field missing or invalid');
+        }
 
         // Ensure coolFacts is an array
-        if (!Array.isArray(data.education.coolFacts)) {
-            data.education.coolFacts = [];
+        if (!Array.isArray(data.coolFacts)) {
+            data.coolFacts = [];
             warnings.push('coolFacts not an array');
         }
 
+        // Validate size object
+        if (!data.size || typeof data.size !== 'object') {
+            data.size = {
+                lengthCm: { min: 0, max: 0 },
+                wingspanCm: { min: 0, max: 0 },
+                weightGrams: { min: 0, max: 0 },
+            };
+            warnings.push('size object missing or invalid');
+        }
+
+        // Log warnings
         if (warnings.length > 0) {
             warnings.forEach((w) => this.logger.warn(`[${scientificName}] ${w}`));
         }
+
+        return data as BirdInfo;
     }
 }
