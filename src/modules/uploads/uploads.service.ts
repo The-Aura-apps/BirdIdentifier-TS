@@ -16,6 +16,79 @@ export class UploadsService {
         private readonly observationService: ObservationsService,
     ) {}
 
+    async identifyBird(file: FileUploadDto, deviceId: string, type: 'image' | 'audio') {
+        if (!file?.buffer) {
+            this.logger.error('Upload attempted without file buffer');
+            throw new BadRequestException('No file provided');
+        }
+
+        if (!deviceId) {
+            this.logger.error('Upload attempted without deviceId');
+            throw new BadRequestException('Device ID required');
+        }
+
+        this.logger.log(`Processing ${type} upload for device: ${deviceId} (SYNCHRONOUS)`);
+
+        try {
+            const checksum = crypto.createHash('sha256').update(file.buffer).digest('hex');
+
+            // Check for duplicate upload
+            const existingUpload = await this.uploadRepo.findOne({
+                where: { checksum },
+            });
+
+            let upload: Upload;
+            let observation: any;
+
+            if (existingUpload) {
+                this.logger.warn(`Duplicate file detected: ${checksum}, reusing existing upload`);
+                upload = existingUpload;
+
+                // Create observation for this device
+                observation = await this.observationService.create({
+                    deviceId,
+                    type,
+                    uploadId: existingUpload.id,
+                });
+            } else {
+                // Create new upload
+                upload = this.uploadRepo.create({
+                    fileName: file.originalname,
+                    mimeType: file.mimetype,
+                    fileData: file.buffer,
+                    checksum,
+                    type,
+                });
+                upload = await this.uploadRepo.save(upload);
+                this.logger.log(`File saved with id: ${upload.id}`);
+
+                // Create observation
+                observation = await this.observationService.create({
+                    deviceId,
+                    type,
+                    uploadId: upload.id,
+                });
+            }
+
+            // Wait for AI processing to complete and get bird data
+            // The observation service should handle the AI identification
+            const fullObservation = await this.observationService.findOne(observation.id);
+
+            if (!fullObservation.bird) {
+                throw new BadRequestException('Bird identification failed');
+            }
+
+            // Return complete bird data
+            return fullObservation.bird;
+        } catch (err) {
+            this.logger.error(
+                `Failed to identify bird for device ${deviceId}: ${err.message}`,
+                err.stack,
+            );
+            throw err;
+        }
+    }
+
     async handleUpload(file: FileUploadDto, deviceId: string, type: 'image' | 'audio') {
         if (!file?.buffer) {
             this.logger.error('Upload attempted without file buffer');

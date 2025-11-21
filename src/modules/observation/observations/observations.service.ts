@@ -184,19 +184,20 @@ export class ObservationsService {
             },
         });
     }
-
-    async findOne(id: string): Promise<Observation> {
-        const observation = await this.observationsRepo.findOne({
-            where: {
-                id,
+    async findOne(id: string) {
+        return this.observationsRepo.findOne({
+            where: { id },
+            relations: {
+                bird: {
+                    commonNames: true,
+                    taxonomy: true,
+                    habitats: true,
+                    birdFoods: { food: true },
+                    distributions: true,
+                    media: true,
+                },
             },
-            relations: ['bird', 'upload'],
         });
-
-        if (!observation) {
-            throw new NotFoundException(`Observation ${id} not found`);
-        }
-        return observation;
     }
 
     async update(id: string, partial: Partial<Observation>): Promise<Observation> {
@@ -225,51 +226,4 @@ export class ObservationsService {
         await this.observationsRepo.remove(obs);
         this.logger.log(`Observation deleted: ${id}`);
     }
-
-    // async update(
-    //     id: string,
-    //     partial: Partial<Observation>,
-    // ): Promise<Observation> {
-    //     const observation = await this.findOne(id);
-
-    //     if (partial.status && partial.status !== observation.status) {
-    //         if (
-    //             !this.validateStatusTransition(
-    //                 observation.status,
-    //                 partial.status,
-    //             )
-    //         ) {
-    //             throw new BadRequestException(
-    //                 `Invalid status transition from ${observation.status} to ${partial.status}`,
-    //             );
-    //         }
-    //     }
-
-    //     // Prevent manual updates to protected fields
-    //     const { id: _, createdAt, uploadId, ...safeUpdates } = partial;
-
-    //     Object.assign(observation, safeUpdates, { updatedAt: new Date() });
-    //     return this.observationsRepo.save(observation);
-    // }
-
-    // async retry(id: string): Promise<Observation> {
-    //     const observation = await this.findOne(id);
-
-    //     if (observation.status !== ObservationStatus.FAILED) {
-    //         throw new BadRequestException('Can only retry failed observations');
-    //     }
-
-    //     observation.status = ObservationStatus.PENDING;
-    //     observation.errorMessage = null;
-    //     const updated = await this.observationsRepo.save(observation);
-
-    //     // Restart processing
-    //     this.processObservationBackground(id).catch((err) => {
-    //         this.logger.error(
-    //             `Retry failed for observation ${id}: ${err.message}`,
-    //         );
-    //     });
-
-    //     return updated;
-    // }
 }

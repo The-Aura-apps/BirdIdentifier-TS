@@ -9,6 +9,7 @@ import {
     Delete,
     HttpCode,
     HttpStatus,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { ObservationsService } from './observations.service';
 import { Observation } from './entities/observation.entity';
@@ -33,10 +34,7 @@ export class ObservationsController {
     }
 
     @Get(':id')
-    findOne(
-        @Param('id')
-        id: string,
-    ): Promise<Observation> {
+    findOne(@Param('id') id: string) {
         return this.observationsService.findOne(id);
     }
 

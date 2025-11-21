@@ -61,42 +61,12 @@ export class BirdsController {
 
     @Get('scientific/:scientificName')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Get bird by scientific name (creates with AI if not exists)',
-    })
-    @ApiParam({
-        name: 'scientificName',
-        description: 'Scientific name (e.g., "Turdus migratorius")',
-    })
     async getBirdByScientificName(@Param('scientificName') scientificName: string): Promise<Bird> {
         return this.birdService.findOrCreate(scientificName);
     }
 
     @Get()
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Get all birds with pagination',
-    })
-    @ApiQuery({
-        name: 'page',
-        required: false,
-        type: Number,
-    })
-    @ApiQuery({
-        name: 'limit',
-        required: false,
-        type: Number,
-    })
-    @ApiQuery({
-        name: 'sortBy',
-        required: false,
-        type: String,
-    })
-    @ApiQuery({
-        name: 'order',
-        required: false,
-        enum: ['ASC', 'DESC'],
-    })
     findAll(
         @Query('page')
         page = '1',
@@ -120,13 +90,6 @@ export class BirdsController {
 
     @Get('search/:query')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Search birds by name',
-    })
-    @ApiParam({
-        name: 'query',
-        description: 'Search query',
-    })
     search(
         @Param('query')
         query: string,
@@ -146,13 +109,6 @@ export class BirdsController {
 
     @Get('scientific/:scientificName')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Find bird by scientific name',
-    })
-    @ApiParam({
-        name: 'scientificName',
-        description: 'Scientific name',
-    })
     findByScientificName(
         @Param('scientificName')
         scientificName: string,
@@ -162,13 +118,6 @@ export class BirdsController {
 
     @Get(':id')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Get bird by ID',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
     findOne(
         @Param('id')
         id: string,

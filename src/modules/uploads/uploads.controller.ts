@@ -50,4 +50,15 @@ export class UploadsController {
         res.setHeader('Content-Disposition', `attachment; filename=${file.fileName}`);
         res.send(file.fileData);
     }
+
+    @Post('identify')
+    @UseInterceptors(FileInterceptor('file'))
+    async identifyBid(
+        @UploadedFile() file: FileUploadDto,
+        @Body('deviceId') deviceId: string,
+        @Body('type') type: 'image' | 'audio',
+    ) {
+        return this.uploadsService.identifyBird(file, deviceId, type);
+    }
+
 }
