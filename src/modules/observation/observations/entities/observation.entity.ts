@@ -11,6 +11,7 @@ import {
     Index,
 } from 'typeorm';
 import { BirdAiResponse } from 'src/modules/ai/types';
+import { Exclude } from 'class-transformer';
 
 export enum ObservationStatus {
     PENDING = 'pending',
@@ -49,11 +50,12 @@ export class Observation {
 
     @ManyToOne(() => Upload, (upload) => upload.observations, {
         nullable: false,
-        eager: true, // Eager load upload for processing
+        eager: false, // Eager load upload for processing
     })
     @JoinColumn({
         name: 'upload_id',
     })
+    @Exclude()
     upload: Upload;
 
     // Foreign key for Bird (nullable because might not be identified)
@@ -76,6 +78,7 @@ export class Observation {
         type: 'jsonb',
         nullable: true,
     })
+   // @Exclude()
     aiResult: BirdAiResponse | null;
 
     @Column({

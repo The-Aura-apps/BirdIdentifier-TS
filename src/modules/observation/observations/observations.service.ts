@@ -184,6 +184,7 @@ export class ObservationsService {
             },
         });
     }
+
     async findOne(id: string) {
         return this.observationsRepo.findOne({
             where: { id },

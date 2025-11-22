@@ -20,12 +20,9 @@ export class UploadsController {
     @Post()
     @UseInterceptors(FileInterceptor('file'))
     async uploadFile(
-        @UploadedFile()
-        file: FileUploadDto,
-        @Body('deviceId')
-        deviceId: string,
-        @Body('type')
-        type: 'image' | 'audio',
+        @UploadedFile() file: FileUploadDto,
+        @Body('deviceId') deviceId: string,
+        @Body('type') type: 'image' | 'audio',
     ) {
         return this.uploadsService.handleUpload(
             {
@@ -51,14 +48,13 @@ export class UploadsController {
         res.send(file.fileData);
     }
 
-    @Post('identify')
-    @UseInterceptors(FileInterceptor('file'))
-    async identifyBid(
-        @UploadedFile() file: FileUploadDto,
-        @Body('deviceId') deviceId: string,
-        @Body('type') type: 'image' | 'audio',
-    ) {
-        return this.uploadsService.identifyBird(file, deviceId, type);
-    }
-
+//     @Post('identify')
+//     @UseInterceptors(FileInterceptor('file'))
+//     async identifyBid(
+//         @UploadedFile() file: FileUploadDto,
+//         @Body('deviceId') deviceId: string,
+//         @Body('type') type: 'image' | 'audio',
+//     ) {
+//         return this.uploadsService.identifyBird(file, deviceId, type);
+//     }
 }

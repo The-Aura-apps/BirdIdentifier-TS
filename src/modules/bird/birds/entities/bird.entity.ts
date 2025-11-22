@@ -78,14 +78,12 @@ export class Bird {
         type: 'text',
         nullable: true,
     })
-    @ApiProperty()
     coolFacts: string;
 
     @Column({
         type: 'jsonb',
         nullable: true,
     })
-    @ApiProperty()
     size: {
         lengthCm: {
             min: number;
@@ -107,7 +105,6 @@ export class Bird {
         scale: 1,
         nullable: true,
     })
-    @ApiProperty()
     lifeExpectancyYears: number;
 
     @ManyToOne(() => Taxonomy, (taxonomy) => taxonomy.birds, {
@@ -117,10 +114,6 @@ export class Bird {
     })
     @JoinColumn({
         name: 'taxonomy_id',
-    })
-    @ApiProperty({
-        type: () => Taxonomy,
-        required: false,
     })
     taxonomy: Taxonomy;
 
@@ -132,18 +125,11 @@ export class Bird {
     @JoinColumn({
         name: 'conservation_status_id',
     })
-    @ApiProperty({
-        type: () => ConservationStatus,
-        required: false,
-    })
     conservationStatus: ConservationStatus;
 
     @OneToMany(() => CommonName, (commonName) => commonName.bird, {
         cascade: true,
         orphanedRowAction: 'delete',
-    })
-    @ApiProperty({
-        type: () => [CommonName],
     })
     commonNames: CommonName[];
 
