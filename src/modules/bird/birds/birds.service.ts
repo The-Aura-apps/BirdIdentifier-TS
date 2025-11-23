@@ -573,17 +573,11 @@ export class BirdsService {
             updateData.coolFacts = birdInfo.coolFacts.join('\n\n');
         }
 
-        // Apply basic updates
-        if (Object.keys(updateData).length > 0) {
-            await this.birdRepo.update(birdId, updateData);
-            this.logger.log(`Bird data enriched: ${birdId}`);
-        }
-
         //  Handle Taxonomy (ManyToOne)
         if (birdInfo.taxonomy) {
             try {
                 const taxonomy = await this.taxonomyService.findOrCreate(birdInfo.taxonomy);
-                bird.taxonomy = taxonomy;
+                updateData.taxonomy = taxonomy;
                 this.logger.log(
                     `Taxonomy set for bird ${birdId}: ${taxonomy.order} - ${taxonomy.family}`,
                 );
@@ -598,7 +592,7 @@ export class BirdsService {
                 const conservationStatus = await this.conservationStatusService.findOrCreate(
                     birdInfo.conservationStatus,
                 );
-                bird.conservationStatus = conservationStatus;
+                updateData.conservationStatus = conservationStatus;
                 this.logger.log(
                     `Conservation status set for bird ${birdId}: ${conservationStatus.code}`,
                 );
@@ -608,6 +602,21 @@ export class BirdsService {
                 );
             }
         }
+
+
+
+        // saving birds table filds
+        if (Object.keys(updateData).length > 0) {
+            Object.assign(bird, updateData);
+            await this.birdRepo.save(bird);
+            this.logger.log(
+                `Bird data enriched with ${Object.keys(updateData).length} fields: ${birdId}`,
+            );
+        }
+
+
+
+
         //  Handle Common Names (OneToMany)
         if (
             birdInfo.commonNames &&
