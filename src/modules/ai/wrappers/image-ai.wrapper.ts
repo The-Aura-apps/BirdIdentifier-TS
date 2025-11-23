@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IdentificationResult } from '../types';
 import OpenAI from 'openai';
+import { ConfigService } from '@nestjs/config';
 //import sharp from 'sharp'; // Added for image format conversion
 
 @Injectable()
@@ -10,8 +11,8 @@ export class ImageAiWrapper {
     private readonly REQUEST_TIMEOUT = 30000; // 30 seconds
     private readonly MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
 
-    constructor() {
-        const apiKey = process.env.OPENAI_API_KEY;
+    constructor(private configService: ConfigService) {
+        const apiKey = this.configService.get<string>('OPENAI_API_KEY'); 
         if (!apiKey) {
             this.logger.error('OPENAI_API_KEY not set in environment variables');
             throw new Error('OPENAI_API_KEY is required');
