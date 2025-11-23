@@ -101,15 +101,15 @@ Required JSON Structure:
   "habitats": ["Select from: Desert, Forest, Grassland, Savanna, Scrub, Subterranean, Wetlands, Marine - include all that apply"],
   "birdFoods": [
     {
-      "foodName": "Seeds",
+      "name": "Seeds",
       "description": "Specific types of seeds consumed, foraging method, and seasonal importance"
     },
     {
-      "foodName": "Insects",
+      "name": "Insects",
       "description": "Types of insects, hunting methods, and when primarily consumed"
     },
     {
-      "foodName": "Fruits",
+      "name": "Fruits",
       "description": "Fruit types, dispersal role, seasonal availability"
     }
   ],
