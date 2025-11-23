@@ -4,6 +4,12 @@ import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
+
+        console.log('Fuck NestJS...');
+        console.log('PORT:', process.env.PORT);
+        console.log('OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY);
+        console.log('OPENAI_API_KEY length:', process.env.OPENAI_API_KEY?.length);
+        console.log('OPENAI_API_KEY starts with:', process.env.OPENAI_API_KEY?.substring(0, 7));
     const app = await NestFactory.create(AppModule);
 
     // Enable CORS
