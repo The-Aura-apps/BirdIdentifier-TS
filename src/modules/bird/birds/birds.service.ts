@@ -603,8 +603,6 @@ export class BirdsService {
             }
         }
 
-
-
         // saving birds table filds
         if (Object.keys(updateData).length > 0) {
             Object.assign(bird, updateData);
@@ -613,9 +611,6 @@ export class BirdsService {
                 `Bird data enriched with ${Object.keys(updateData).length} fields: ${birdId}`,
             );
         }
-
-
-
 
         //  Handle Common Names (OneToMany)
         if (
@@ -733,28 +728,50 @@ export class BirdsService {
             }
         }
 
-        // Handle Habitats (ManyToMany)
+        // Handle Habitats (ManyToMany) - Place this AFTER all other saves
         if (birdInfo.habitats && Array.isArray(birdInfo.habitats) && birdInfo.habitats.length > 0) {
             try {
+                // ✅ Reload the bird to ensure clean state
+                const birdWithHabitats = await this.birdRepo.findOne({
+                    where: { id: birdId },
+                    relations: ['habitats'],
+                });
+
+                if (!birdWithHabitats) {
+                    throw new NotFoundException(`Bird ${birdId} not found for habitat assignment`);
+                }
+
                 const habitatEntities = await this.habitatRepo.find({
-                    where: birdInfo.habitats.map((name) => ({ name: Habitat.name })),
+                    where: {
+                        name: In(birdInfo.habitats),
+                    },
                 });
 
                 if (habitatEntities.length > 0) {
-                    bird.habitats = habitatEntities;
+                    // Assign found habitats
+                    birdWithHabitats.habitats = habitatEntities;
+
+                    // Save the bird
+                    await this.birdRepo.save(birdWithHabitats);
+
                     this.logger.log(
                         `Habitats set for bird ${birdId}: ${habitatEntities.map((h) => h.name).join(', ')}`,
                     );
                 } else {
-                    this.logger.warn(`No matching habitats found for bird ${birdId}`);
+                    this.logger.warn(
+                        `No matching habitats found for bird ${birdId}. AI returned: [${birdInfo.habitats.join(', ')}]`,
+                    );
                 }
             } catch (err) {
-                this.logger.error(`Failed to set habitats for bird ${birdId}: ${err.message}`);
+                this.logger.error(
+                    `Failed to set habitats for bird ${birdId}: ${err.message}`,
+                    err.stack,
+                );
             }
         }
 
         // Save the bird with updated relations
-        await this.birdRepo.save(bird);
+        //await this.birdRepo.save(bird);
         this.logger.log(`Bird ${birdId} enrichment completed successfully`);
     }
 

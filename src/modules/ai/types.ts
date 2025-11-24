@@ -39,7 +39,7 @@ export interface BirdInfo {
     conservationStatus?: ConservationStatus;
     commonNames?: CommonName[];
     media?: Media[];
-    habitats?: Habitat[];
+    habitats?: string[];
     taxonomy?: Taxonomy;
     distributions?: BirdDistribution[];
     birdFoods?: BirdFood[];

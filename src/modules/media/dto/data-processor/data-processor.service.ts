@@ -211,7 +211,7 @@ export class DataProcessorService {
             const habitats = data.habitats
                 .map((h): string => {
                     if (typeof h === 'string') return h;
-                    return h.name || '';
+                    return  '';
                 })
                 .filter((name) => name.length > 0);
 
