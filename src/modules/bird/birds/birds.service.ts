@@ -677,7 +677,7 @@ export class BirdsService {
             }
         }
 
-        //  Handle Bird Foods (ManyToMany with junction table)
+        // Handle Bird Foods (ManyToMany with junction table)
         if (
             birdInfo.birdFoods &&
             Array.isArray(birdInfo.birdFoods) &&
@@ -688,21 +688,24 @@ export class BirdsService {
                 const foodEntities: any[] = [];
 
                 for (const foodInfo of birdInfo.birdFoods) {
+                    // Use type assertion to tell TypeScript this is BirdFoodInfo, not BirdFood entity
+                    const foodData = foodInfo as any; // Temporary workaround
+
                     let food = await this.foodRepo.findOne({
-                        where: { name: foodInfo.food.name },
+                        where: { name: foodData.name },
                     });
 
                     // Create food if it doesn't exist
                     if (!food) {
                         food = this.foodRepo.create({
-                            name: foodInfo.food.name,
-                            description: foodInfo.food.description,
+                            name: foodData.name,
+                            description: foodData.description,
                         });
                         food = await this.foodRepo.save(food);
                         this.logger.log(`Created new food: ${food.name}`);
                     }
 
-                    foodEntities.push({ food, description: foodInfo.food.description });
+                    foodEntities.push({ food });
                 }
 
                 // Remove existing bird-food relationships
@@ -711,7 +714,7 @@ export class BirdsService {
                 }
 
                 // Create new bird-food relationships
-                const birdFoodEntities = foodEntities.map(({ food, description }) =>
+                const birdFoodEntities = foodEntities.map(({ food }) =>
                     this.birdFoodRepo.create({
                         bird: bird,
                         food: food,
@@ -728,6 +731,7 @@ export class BirdsService {
             }
         }
 
+        
         // Handle Habitats (ManyToMany) - Place this AFTER all other saves
         if (birdInfo.habitats && Array.isArray(birdInfo.habitats) && birdInfo.habitats.length > 0) {
             try {

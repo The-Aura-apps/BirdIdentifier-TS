@@ -10,6 +10,11 @@ export interface IdentificationResult {
     scientificName: string;
     confidence: number;
 }
+export interface BirdFoodInfo {
+    name: string;
+    description: string;
+}
+
 
 export interface BirdInfo {
     scientificName: string;
@@ -42,7 +47,7 @@ export interface BirdInfo {
     habitats?: string[];
     taxonomy?: Taxonomy;
     distributions?: BirdDistribution[];
-    birdFoods?: BirdFood[];
+    birdFoods?: BirdFoodInfo[];
     primaryImage?: string;
 }
 

@@ -224,8 +224,10 @@ export class DataProcessorService {
                 .map((birdFood): string => {
                     // BirdFood has a food property that contains the actual Food entity
                     if (typeof birdFood === 'string') return birdFood;
+
                     // Access the nested food.name
-                    return birdFood.food?.name || '';
+                    // Need to fix 
+                    return ''; // remove  birdFood.food?.name   
                 })
                 .filter((name) => name.length > 0);
 
