@@ -20,8 +20,7 @@ import { UpdateBirdDto } from './dto/update-bird.dto';
 import { CreateBirdFoodDto } from '../bird-foods/dto/create-bird-food.dto';
 import { UpdateBirdFoodDto } from '../bird-foods/dto/update-bird-food.dto';
 import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto';
-import { CreateTaxonomyDto } from '../taxonomy/dto/create-taxonomy.dto';
-import { TaxonomyService } from '../taxonomy/taxonomy.service';
+
 import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
 import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
 
