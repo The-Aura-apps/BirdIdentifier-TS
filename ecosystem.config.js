@@ -18,6 +18,8 @@ module.exports = {
 
     cwd: '/var/www/bird-identifier/BirdIdentifier-Backend',
 
+    env_file: '.env',
+
     env: {
 
       NODE_ENV: 'production',
@@ -25,6 +27,7 @@ module.exports = {
       PORT: 3000
 
     },
+    node_args: '-r dotenv/config',
 
     env_file: '/var/www/bird-identifier/BirdIdentifier-Backend/.env',
 
