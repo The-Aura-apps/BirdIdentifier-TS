@@ -13,6 +13,16 @@ export class ImageAiWrapper {
 
     constructor(private configService: ConfigService) {
         const apiKey = this.configService.get<string>('OPENAI_API_KEY'); 
+
+         console.log(' Environment check:');
+         console.log('NODE_ENV:', process.env.NODE_ENV);
+         console.log('OPENAI_API_KEY exists in process.env:', !!process.env.OPENAI_API_KEY);
+         console.log(
+             'OPENAI_API_KEY from ConfigService:',
+             apiKey ? apiKey.substring(0, 10) + '...' : 'NOT FOUND',
+         );
+
+
         if (!apiKey) {
             this.logger.error('OPENAI_API_KEY not set in environment variables');
             throw new Error('OPENAI_API_KEY is required');
