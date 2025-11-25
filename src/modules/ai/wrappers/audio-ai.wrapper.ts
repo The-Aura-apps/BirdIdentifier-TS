@@ -125,7 +125,7 @@ export class AudioAiWrapper {
                 this.BIRDNET_IMAGE,
                 '--i',
                 '/workspace',
-                '--output',
+                '--o',
                 '/workspace',
                 '--min_conf',
                 this.MIN_CONFIDENCE.toString(),
