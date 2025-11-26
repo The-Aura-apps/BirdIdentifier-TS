@@ -63,7 +63,7 @@ export class AudioAiWrapper {
 
             fluentFfmpeg(Readable.from(buffer))
                 .audioFrequency(48000) // BirdNET expects 48kHz
-                .audioChannels(1) // Mono
+                .audioChannels(1)      // Mono
                 .audioCodec('pcm_s16le') // 16-bit PCM
                 .format('wav')
                 .on('error', (err) => reject(new Error(`Conversion failed: ${err.message}`)))
@@ -122,15 +122,19 @@ export class AudioAiWrapper {
                 '--rm',
                 '-v',
                 `${this.TMP_DIR}:/workspace`,
+                '--entrypoint',
+                'python3',
                 this.BIRDNET_IMAGE,
+                '-m',
+                'birdnet_analyzer.analyze',
                 '--i',
                 '/workspace',
-                '--output',
+                '--o',
                 '/workspace',
                 '--min_conf',
                 this.MIN_CONFIDENCE.toString(),
                 '--rtype',
-                'csv', // Use CSV format (not JSON)
+                'csv',
             ];
 
             this.logger.log('Starting BirdNET Docker container...');
