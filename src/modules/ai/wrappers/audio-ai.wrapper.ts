@@ -10,15 +10,15 @@ import { Readable } from 'stream';
 @Injectable()
 export class AudioAiWrapper {
     private readonly logger = new Logger(AudioAiWrapper.name);
+    private readonly MODELS_DIR = path.join(os.homedir(), 'birdnet-models'); // Persistent location
     private readonly TMP_DIR = path.join(os.tmpdir(), 'birdnet-audio');
     private readonly DOCKER_TIMEOUT = 120000; // 2 minutes
     private readonly MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB
-    private readonly BIRDNET_IMAGE = 'birdnet-analyzer:latest'; // Updated image name
+    private readonly BIRDNET_IMAGE = 'birdnet-analyzer:latest';
     private readonly MIN_CONFIDENCE = 0.1;
-    private readonly MODELS_DIR = path.join(os.tmpdir(), 'birdnet-models');
 
     constructor() {
-        this.ensureTmpDir();
+        this.ensureDirectories();
         this.checkDockerAvailability();
     }
 
@@ -26,19 +26,10 @@ export class AudioAiWrapper {
         try {
             await fs.mkdir(this.TMP_DIR, { recursive: true });
             await fs.mkdir(this.MODELS_DIR, { recursive: true });
-            this.logger.log(`Directories ready: ${this.TMP_DIR}, ${this.MODELS_DIR}`);
+            this.logger.log(`Temporary directory ready: ${this.TMP_DIR}`);
+            this.logger.log(`Models directory ready: ${this.MODELS_DIR}`);
         } catch (err) {
             this.logger.error(`Failed to create directories: ${err.message}`);
-            throw err;
-        }
-    }
-
-    private async ensureTmpDir(): Promise<void> {
-        try {
-            await fs.mkdir(this.TMP_DIR, { recursive: true });
-            this.logger.log(`Temporary directory ready: ${this.TMP_DIR}`);
-        } catch (err) {
-            this.logger.error(`Failed to create tmp directory: ${err.message}`);
             throw err;
         }
     }
@@ -107,8 +98,10 @@ export class AudioAiWrapper {
 
         try {
             // Convert audio to WAV format
+            this.logger.log('Converting audio to WAV format...');
             const wavBuffer = await this.convertToWav(file);
             await fs.writeFile(inputFile, wavBuffer);
+            this.logger.log(`Saved WAV file: ${inputFile}`);
 
             // Run Docker analysis
             const detections = await this.runDockerAnalysis(inputFile, outputFile);
@@ -125,7 +118,7 @@ export class AudioAiWrapper {
 
     /**
      * Run BirdNET in Docker container
-     * Note: BirdNET-Analyzer outputs CSV by default, not JSON
+     * CORRECT SYNTAX: docker run ... birdnet-analyzer:latest /workspace --output /workspace
      */
     private async runDockerAnalysis(inputFile: string, outputFile: string): Promise<any[]> {
         return new Promise((resolve, reject) => {
@@ -135,12 +128,11 @@ export class AudioAiWrapper {
                 '-v',
                 `${this.TMP_DIR}:/workspace`,
                 '-v',
-                `${this.MODELS_DIR}:/models`, // Mount models directory
+                `${this.MODELS_DIR}:/models`,
                 this.BIRDNET_IMAGE,
-                '--i',
-                '/workspace', 
-                '--o',
-                '/workspace', 
+                '/workspace', // INPUT (positional argument)
+                '--output',
+                '/workspace', // OUTPUT directory
                 '--min_conf',
                 this.MIN_CONFIDENCE.toString(),
                 '--rtype',
@@ -158,40 +150,65 @@ export class AudioAiWrapper {
             let stderr = '';
 
             const timeout = setTimeout(() => {
+                this.logger.warn('Docker execution timeout - killing process');
                 process.kill('SIGTERM');
                 reject(new Error('Docker execution timeout'));
             }, this.DOCKER_TIMEOUT);
 
             process.stdout?.on('data', (data) => {
-                stdout += data.toString();
-                this.logger.debug(`Docker stdout: ${data}`);
+                const output = data.toString();
+                stdout += output;
+                // Log progress but not every line
+                if (output.includes('Analyzing') || output.includes('Species')) {
+                    this.logger.debug(`Docker: ${output.trim()}`);
+                }
             });
 
             process.stderr?.on('data', (data) => {
-                stderr += data.toString();
-                this.logger.debug(`Docker stderr: ${data}`);
+                const output = data.toString();
+                stderr += output;
+                // Log progress
+                if (output.includes('Downloading') || output.includes('%')) {
+                    this.logger.debug(`Docker: ${output.trim()}`);
+                }
             });
 
             process.on('error', (err) => {
                 clearTimeout(timeout);
+                this.logger.error(`Docker spawn error: ${err.message}`);
                 reject(new Error(`Docker spawn failed: ${err.message}`));
             });
 
             process.on('close', async (code) => {
                 clearTimeout(timeout);
 
+                this.logger.log(`Docker process exited with code: ${code}`);
+
                 if (code !== 0) {
-                    this.logger.error(`Docker exited with code ${code}`);
+                    this.logger.error(`Docker failed with code ${code}`);
                     this.logger.error(`STDOUT: ${stdout}`);
                     this.logger.error(`STDERR: ${stderr}`);
-                    return reject(new Error(`BirdNET Docker failed (code ${code}): ${stderr}`));
+                    return reject(
+                        new Error(`BirdNET Docker failed (code ${code}): ${stderr || stdout}`),
+                    );
                 }
 
                 try {
+                    // Check if output file exists
+                    try {
+                        await fs.access(outputFile);
+                        this.logger.log(`Output file created: ${outputFile}`);
+                    } catch (err) {
+                        this.logger.error(`Output file not found: ${outputFile}`);
+                        return reject(new Error('BirdNET did not create output file'));
+                    }
+
+                    // Parse CSV results
                     const detections = await this.parseCSVResults(outputFile);
                     this.logger.log(`Analysis complete: ${detections.length} detections`);
                     resolve(detections);
                 } catch (err) {
+                    this.logger.error(`Failed to parse results: ${err.message}`);
                     reject(new Error(`Failed to parse output: ${err.message}`));
                 }
             });
@@ -207,8 +224,11 @@ export class AudioAiWrapper {
             const data = await fs.readFile(outputFile, 'utf-8');
             const lines = data.trim().split('\n');
 
+            this.logger.debug(`CSV has ${lines.length} lines`);
+
             if (lines.length <= 1) {
                 // Only header or empty
+                this.logger.warn('CSV file is empty or has only header');
                 return [];
             }
 
@@ -238,8 +258,10 @@ export class AudioAiWrapper {
                 }
             }
 
+            this.logger.log(`Parsed ${detections.length} detections from CSV`);
             return detections;
         } catch (err) {
+            this.logger.error(`CSV parsing error: ${err.message}`);
             throw new Error(`CSV parsing failed: ${err.message}`);
         }
     }
@@ -274,7 +296,7 @@ export class AudioAiWrapper {
      */
     private processDetections(detections: any[]): IdentificationResult {
         if (!Array.isArray(detections) || detections.length === 0) {
-            this.logger.warn('No birds detected');
+            this.logger.warn('No birds detected in audio');
             return { scientificName: '', confidence: 0 };
         }
 
@@ -284,10 +306,13 @@ export class AudioAiWrapper {
         });
 
         if (!best || !best.scientific_name) {
+            this.logger.warn('No valid detection found');
             return { scientificName: '', confidence: 0 };
         }
 
-        this.logger.log(`Best match: ${best.scientific_name} (${best.confidence.toFixed(3)})`);
+        this.logger.log(
+            `Best match: ${best.scientific_name} (confidence: ${(best.confidence * 100).toFixed(1)}%)`,
+        );
 
         return {
             scientificName: best.scientific_name.trim(),
