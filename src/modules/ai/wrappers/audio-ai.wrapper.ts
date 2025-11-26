@@ -15,10 +15,22 @@ export class AudioAiWrapper {
     private readonly MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB
     private readonly BIRDNET_IMAGE = 'birdnet-analyzer:latest'; // Updated image name
     private readonly MIN_CONFIDENCE = 0.1;
+    private readonly MODELS_DIR = path.join(os.tmpdir(), 'birdnet-models');
 
     constructor() {
         this.ensureTmpDir();
         this.checkDockerAvailability();
+    }
+
+    private async ensureDirectories(): Promise<void> {
+        try {
+            await fs.mkdir(this.TMP_DIR, { recursive: true });
+            await fs.mkdir(this.MODELS_DIR, { recursive: true });
+            this.logger.log(`Directories ready: ${this.TMP_DIR}, ${this.MODELS_DIR}`);
+        } catch (err) {
+            this.logger.error(`Failed to create directories: ${err.message}`);
+            throw err;
+        }
     }
 
     private async ensureTmpDir(): Promise<void> {
@@ -63,7 +75,7 @@ export class AudioAiWrapper {
 
             fluentFfmpeg(Readable.from(buffer))
                 .audioFrequency(48000) // BirdNET expects 48kHz
-                .audioChannels(1)      // Mono
+                .audioChannels(1) // Mono
                 .audioCodec('pcm_s16le') // 16-bit PCM
                 .format('wav')
                 .on('error', (err) => reject(new Error(`Conversion failed: ${err.message}`)))
@@ -122,14 +134,13 @@ export class AudioAiWrapper {
                 '--rm',
                 '-v',
                 `${this.TMP_DIR}:/workspace`,
-                '--entrypoint',
-                'python3',
+                '-v',
+                `${this.MODELS_DIR}:/models`, // Mount models directory
                 this.BIRDNET_IMAGE,
-                '-m',
-                'birdnet_analyzer.analyze',
-                '/workspace',
-                '--output',
-                '/workspace',
+                '--i',
+                '/workspace', 
+                '--o',
+                '/workspace', 
                 '--min_conf',
                 this.MIN_CONFIDENCE.toString(),
                 '--rtype',
@@ -170,12 +181,13 @@ export class AudioAiWrapper {
                 clearTimeout(timeout);
 
                 if (code !== 0) {
-                    this.logger.error(`Docker exited with code ${code}: ${stderr}`);
-                    return reject(new Error(`BirdNET Docker failed: ${stderr}`));
+                    this.logger.error(`Docker exited with code ${code}`);
+                    this.logger.error(`STDOUT: ${stdout}`);
+                    this.logger.error(`STDERR: ${stderr}`);
+                    return reject(new Error(`BirdNET Docker failed (code ${code}): ${stderr}`));
                 }
 
                 try {
-                    // Parse CSV results
                     const detections = await this.parseCSVResults(outputFile);
                     this.logger.log(`Analysis complete: ${detections.length} detections`);
                     resolve(detections);
