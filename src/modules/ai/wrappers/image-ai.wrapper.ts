@@ -85,7 +85,7 @@ export class ImageAiWrapper {
 Return ONLY valid JSON in this exact format:
 {
   "scientificName": "Genus species",
-  "confidence": 0.85
+  "confidence": 0.xx
 }
 
 Rules:
