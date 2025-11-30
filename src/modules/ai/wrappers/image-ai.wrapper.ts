@@ -80,19 +80,18 @@ export class ImageAiWrapper {
 
             this.logger.log(`Processing image (${file.length} bytes, ${mimeType})`);
 
-            const prompt = `You are an expert ornithologist. Analyze this bird image and identify the species.
-
-Return ONLY valid JSON in this exact format:
+            const prompt = `Identify the bird species. Return ONLY JSON:
 {
   "scientificName": "Genus species",
   "confidence": 0.xx
 }
 
-Rules:
-- scientificName must be in binomial nomenclature (e.g., "Parus major")
-- confidence must be between 0 and 1
-- If you cannot identify the bird, set scientificName to "" and confidence to 0
-- Do not include explanations, only JSON`;
+Confidence guidelines:
+- 0.9+: Clear photo, certain identification
+- 0.7-0.89: Good visibility, confident
+- Below 0.7: Poor quality or uncertain
+
+Be honest with confidence based on image quality and visible features.`;
 
             // Call GPT-4o-mini
             const response = await this.client.chat.completions.create({
