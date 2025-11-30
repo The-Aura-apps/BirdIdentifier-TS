@@ -424,7 +424,7 @@ export class BirdsService {
         
         this.logger.log(`🔍 [BirdsService.findOrCreate] Searching database for: "${normalizedName}"`);
 
-        // Try to find existing bird
+        // Try to find existing bird FIRST
         let bird = await this.birdRepo.findOne({
             where: { scientificName: normalizedName },
             relations: [
@@ -448,22 +448,61 @@ export class BirdsService {
         this.logger.log(`❌ [BirdsService.findOrCreate] NOT found in database: "${normalizedName}"`);
         this.logger.log(`🆕 [BirdsService.findOrCreate] Creating new bird record...`);
 
-        // Create bird first
-        bird = this.birdRepo.create({
-            scientificName: normalizedName,
-        });
-        const savedBird = await this.birdRepo.save(bird);
-        this.logger.log(`✅ [BirdsService.findOrCreate] Bird record created with ID: ${savedBird.id}`);
-
-        // Fetch comprehensive info from AI
+        let savedBird: Bird;
         let birdInfo: BirdInfo | null = null;
+
+        // Try to create bird - handle race condition with unique constraint
         try {
-            this.logger.log(`🤖 [BirdsService.findOrCreate] Calling BirdInfoWrapper.fetchInfo() to get comprehensive data for "${normalizedName}"... (THIS USES TOKENS)`);
-            birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
-            this.logger.log(`AI info fetched successfully for ${normalizedName}`);
-        } catch (err) {
-            this.logger.error(`Failed to fetch bird info for ${normalizedName}: ${err.message}`);
-            return savedBird; // Return minimal bird if AI fetch fails
+            bird = this.birdRepo.create({
+                scientificName: normalizedName,
+            });
+            savedBird = await this.birdRepo.save(bird);
+            this.logger.log(`✅ [BirdsService.findOrCreate] Bird record created with ID: ${savedBird.id}`);
+
+            // Fetch comprehensive info from AI - ONLY if we created the bird
+            try {
+                this.logger.log(`🤖 [BirdsService.findOrCreate] Calling BirdInfoWrapper.fetchInfo() to get comprehensive data for "${normalizedName}"... (THIS USES TOKENS)`);
+                birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
+                this.logger.log(`AI info fetched successfully for ${normalizedName}`);
+            } catch (err) {
+                this.logger.error(`Failed to fetch bird info for ${normalizedName}: ${err.message}`);
+                return savedBird; // Return minimal bird if AI fetch fails
+            }
+        } catch (saveError) {
+            // If save failed due to duplicate (race condition), try to find it again
+            if (saveError.code === '23505' || saveError.message?.includes('duplicate') || saveError.message?.includes('unique')) {
+                this.logger.warn(`⚠️ [BirdsService.findOrCreate] Race condition detected - another request created "${normalizedName}" simultaneously. Fetching existing bird...`);
+                
+                // Wait a bit for the other request to finish
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Try to find it again
+                bird = await this.birdRepo.findOne({
+                    where: { scientificName: normalizedName },
+                    relations: [
+                        'media',
+                        'commonNames',
+                        'conservationStatus',
+                        'habitats',
+                        'taxonomy',
+                        'distributions',
+                        'birdFoods',
+                        'birdFoods.food',
+                    ],
+                });
+                
+                if (bird) {
+                    this.logger.log(`✅ [BirdsService.findOrCreate] Found bird created by concurrent request: "${bird.scientificName}" (ID: ${bird.id}) - ⚡ NO AI CALL`);
+                    return bird;
+                }
+                
+                // If still not found, throw original error
+                this.logger.error(`Failed to find bird after race condition: ${normalizedName}`);
+                throw saveError;
+            }
+            
+            // Other database errors
+            throw saveError;
         }
 
         // Enrich bird data with all relations
