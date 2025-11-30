@@ -101,31 +101,16 @@ export class AiService {
                 };
             }
 
-            // Fetch detailed bird information
-            let info: BirdInfo;
-            try {
-                info = await this.birdInfo.fetchInfo(identification.scientificName);
-            } catch (err) {
-                this.logger.warn(
-                    `Failed to fetch bird info for ${identification.scientificName}: ${err.message}`,
-                );
-
-                // Fallback: identified but with minimal info
-                return {
-                    status: 'identified',
-                    confidence,
-                    result: {
-                        scientificName: identification.scientificName,
-                    } as BirdInfo,
-                };
-            }
-
-            this.logger.log(`Successfully identified: ${info.scientificName} (${confidence})`);
+            // Return identified result with just the scientific name
+            // BirdsService.findOrCreate will handle fetching/reusing bird data
+            this.logger.log(`Successfully identified: ${identification.scientificName} (${confidence})`);
 
             return {
                 status: 'identified',
                 confidence,
-                result: info,
+                result: {
+                    scientificName: identification.scientificName,
+                } as BirdInfo,
             };
         } catch (err) {
             this.logger.error(`AI processing failed: ${err.message}`, err.stack);
