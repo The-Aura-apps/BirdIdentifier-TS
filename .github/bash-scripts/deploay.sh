@@ -15,6 +15,16 @@ if [ ! -f "docker-compose.yml" ]; then
     exit 1
 fi
 
+# Check if port 5432 is already in use (existing PostgreSQL)
+if lsof -Pi :5432 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo "⚠️  Port 5432 is in use (PostgreSQL already running)"
+    echo "Using docker-compose.no-db.yml (without database container)"
+    COMPOSE_FILE="docker-compose.no-db.yml"
+else
+    echo "Using docker-compose.yml (with database container)"
+    COMPOSE_FILE="docker-compose.yml"
+fi
+
 # Pull latest code
 echo "📥 Pulling latest code from GitHub..."
 git pull origin main
@@ -57,11 +67,11 @@ fi
 
 # Build Docker containers
 echo "🐳 Building Docker containers..."
-docker compose build
+docker compose -f $COMPOSE_FILE build
 
 # Start services
 echo "🔄 Starting services with Docker Compose..."
-docker compose up -d
+docker compose -f $COMPOSE_FILE up -d
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to start..."
@@ -69,11 +79,11 @@ sleep 10
 
 # Check container status
 echo "📊 Container status:"
-docker compose ps
+docker compose -f $COMPOSE_FILE ps
 
 # Run database migrations
 echo "🗄️  Running database migrations..."
-docker compose exec -T app npm run migration:run || true
+docker compose -f $COMPOSE_FILE exec -T app npm run migration:run || true
 
 # Health checks
 echo "🏥 Running health checks..."
@@ -83,7 +93,7 @@ if curl -f http://localhost:8080/health > /dev/null 2>&1; then
     echo "✅ BirdNET is healthy"
 else
     echo "⚠️  BirdNET health check failed"
-    docker compose logs birdnet
+    docker compose -f $COMPOSE_FILE logs birdnet
 fi
 
 # Check NestJS API
@@ -91,15 +101,19 @@ if curl -f http://localhost:3000/health > /dev/null 2>&1; then
     echo "✅ NestJS API is healthy"
 else
     echo "⚠️  NestJS API health check failed"
-    docker compose logs app
+    docker compose -f $COMPOSE_FILE logs app
 fi
 
-# Check Database
-if docker compose exec -T db pg_isready -U postgres > /dev/null 2>&1; then
-    echo "✅ Database is healthy"
+# Check Database (only if using docker-compose.yml with db container)
+if [ "$COMPOSE_FILE" = "docker-compose.yml" ]; then
+    if docker compose -f $COMPOSE_FILE exec -T db pg_isready -U postgres > /dev/null 2>&1; then
+        echo "✅ Database is healthy"
+    else
+        echo "⚠️  Database health check failed"
+        docker compose -f $COMPOSE_FILE logs db
+    fi
 else
-    echo "⚠️  Database health check failed"
-    docker compose logs db
+    echo "ℹ️  Using external PostgreSQL database"
 fi
 
 echo ""

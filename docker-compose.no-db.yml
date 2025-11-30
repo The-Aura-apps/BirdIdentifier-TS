@@ -1,23 +1,10 @@
 version: '3.8'
 
-services:
-  # PostgreSQL Database
-  db:
-    image: postgres:15-alpine
-    container_name: bird-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5433:5432"  # Changed: Use external port 5433 to avoid conflict
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - bird-network
+# Docker Compose for servers with existing PostgreSQL
+# Use this if you already have PostgreSQL running on port 5432
 
-  # BirdNET Standalone Service (Mock Data)
+services:
+  # BirdNET Service
   birdnet:
     build:
       context: ./birdnet-service
@@ -44,21 +31,20 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      # Use host.docker.internal to connect to PostgreSQL on host machine
+      DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@host.docker.internal:5432/${DB_NAME}
       BIRDNET_URL: http://birdnet:8080
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       NODE_ENV: production
     depends_on:
-      - db
       - birdnet
     networks:
       - bird-network
     volumes:
       - ./uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   bird-network:
     driver: bridge
-
-volumes:
-  postgres_data:

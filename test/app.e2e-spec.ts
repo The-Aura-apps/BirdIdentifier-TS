@@ -19,4 +19,22 @@ describe('AppController (e2e)', () => {
     it('/ (GET)', () => {
         return request(app.getHttpServer()).get('/').expect(200).expect('Hello World!');
     });
+
+    describe('Birds API (e2e)', () => {
+        it('GET /birds should return list of birds', () => {
+            return request(app.getHttpServer())
+                .get('/birds')
+                .expect(200)
+                .expect(res => {
+                    expect(res.body).toBeInstanceOf(Array);
+                });
+        });
+
+        it('POST /birds should create a bird', () => {
+            return request(app.getHttpServer())
+                .post('/birds')
+                .send({ commonName: 'Robin', scientificName: 'Turdus migratorius' })
+                .expect(201);
+        });
+    });
 });
