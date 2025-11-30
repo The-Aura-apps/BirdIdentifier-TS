@@ -84,38 +84,38 @@ jobs:
           if command -v pm2 &> /dev/null; then
               echo "🛑 Stopping old PM2 processes..."
               pm2 delete all || true
-              pm2 save || true
           fi
           
-          # Detect if PostgreSQL is running on port 5432
-          if lsof -Pi :5432 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-              echo "✅ PostgreSQL detected on port 5432 (using external database)"
-              echo "🐳 Building Docker containers (without database)..."
-              docker compose -f docker-compose.no-db.yml build
-              
-              echo "🔄 Restarting services (without database)..."
-              docker compose -f docker-compose.no-db.yml up -d
-          else
-              echo "⚠️  No PostgreSQL found on port 5432"
-              echo "🐳 Building Docker containers (with database)..."
-              docker compose build
-              
-              echo "🔄 Restarting services (with database)..."
-              docker compose up -d
+          # Check if Docker is available
+          if ! command -v docker &> /dev/null; then
+              echo "❌ Docker not found! Please install Docker first."
+              echo "See SERVER-SETUP.md for installation instructions."
+              exit 1
           fi
+          
+          # Start BirdNET Docker container only
+          echo "🐳 Starting BirdNET Docker container..."
+          docker compose -f docker-compose.birdnet-only.yml up -d --build
+          
+          echo "⏳ Waiting for BirdNET to be ready..."
+          sleep 5
+          
+          # Check BirdNET health
+          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+              echo "✅ BirdNET is healthy"
+          else
+              echo "⚠️  BirdNET health check failed"
+          fi
+          
+          # Start NestJS with PM2
+          echo "🚀 Starting NestJS application with PM2..."
+          pm2 start ecosystem.config.js --update-env
+          pm2 save
           
           echo "⏳ Waiting for services to be ready..."
           sleep 10
           
-          # Check container status
-          echo "📊 Container status:"
-          docker compose ps 2>/dev/null || docker compose -f docker-compose.no-db.yml ps
-          
-          # Run database migrations
-          echo "🗄️  Running database migrations..."
-          docker compose exec -T app npm run migration:run 2>/dev/null || docker compose -f docker-compose.no-db.yml exec -T app npm run migration:run || true
-          
-          # Health check
+          # Health checks
           echo "🏥 Health check..."
           
           # Check BirdNET
@@ -130,10 +130,12 @@ jobs:
               echo "✅ NestJS API is healthy"
           else
               echo "⚠️  NestJS API health check failed"
+              pm2 logs --lines 20
           fi
           
           echo "✨ Deployment completed successfully!"
-          echo "📝 View logs with: docker compose logs -f"
+          echo "📝 View PM2 logs with: pm2 logs"
+          echo "📝 View BirdNET logs with: docker compose -f docker-compose.birdnet-only.yml logs -f"
 
     - name: Notify deployment status
       if: always()
