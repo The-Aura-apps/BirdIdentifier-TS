@@ -20,7 +20,7 @@ import { Habitat } from '../habitats/entities/habitat.entity';
 import { CommonName } from '../common-names/entities/common-name.entity';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
-import { FlickrPhotoWrapper } from 'src/modules/ai/wrappers/flickr-photo.wrapper';
+import { WikimediaPhotoWrapper } from 'src/modules/ai/wrappers/wikimedia-photo.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
 import { ConservationStatusService } from '../conservation-status/conservation-status.service';
 import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
@@ -55,7 +55,7 @@ export class BirdsService {
         private readonly taxonomyService: TaxonomyService,
         private readonly conservationStatusService: ConservationStatusService,
         private readonly birdInfoWrapper: BirdInfoWrapper,
-        private readonly flickrPhotoWrapper: FlickrPhotoWrapper,
+        private readonly wikimediaPhotoWrapper: WikimediaPhotoWrapper,
     ) {
         this.loadCatalog();
     }
@@ -822,21 +822,21 @@ export class BirdsService {
         // Save the bird with updated relations
         //await this.birdRepo.save(bird);
         
-        // Fetch photos from Flickr
+        // Fetch photos from Wikimedia Commons
         try {
             const commonName = bird.commonNames?.[0]?.name;
-            this.logger.log(`Fetching photos from Flickr for ${bird.scientificName}...`);
+            this.logger.log(`Fetching photos from Wikimedia Commons for ${bird.scientificName}...`);
             
-            const photos = await this.flickrPhotoWrapper.fetchPhotos(
+            const photos = await this.wikimediaPhotoWrapper.fetchPhotos(
                 bird.scientificName,
                 commonName,
                 3, // Fetch 3 photos
             );
 
             if (photos.length > 0) {
-                // Remove existing photos from Flickr to avoid duplicates
+                // Remove existing photos from Wikimedia to avoid duplicates
                 const existingMedia = await this.mediaRepo.find({ 
-                    where: { bird: { id: bird.id }, source: 'flickr' } 
+                    where: { bird: { id: bird.id }, source: 'wikimedia' } 
                 });
                 if (existingMedia.length > 0) {
                     await this.mediaRepo.remove(existingMedia);
@@ -847,7 +847,7 @@ export class BirdsService {
                     this.mediaRepo.create({
                         storageKey: photo.url, // Use URL as storageKey for external photos
                         type: MediaType.Photo,
-                        source: 'flickr',
+                        source: 'wikimedia',
                         caption: photo.title,
                         attribution: `${photo.author} - ${photo.license}`,
                         orderIndex: index,
@@ -859,12 +859,12 @@ export class BirdsService {
                 );
 
                 await this.mediaRepo.save(mediaEntities);
-                this.logger.log(`Added ${photos.length} photos from Flickr for bird ${birdId}`);
+                this.logger.log(`Added ${photos.length} photos from Wikimedia Commons for bird ${birdId}`);
             } else {
-                this.logger.warn(`No Flickr photos found for ${bird.scientificName}`);
+                this.logger.warn(`No Wikimedia photos found for ${bird.scientificName}`);
             }
         } catch (err) {
-            this.logger.error(`Failed to fetch Flickr photos for bird ${birdId}: ${err.message}`);
+            this.logger.error(`Failed to fetch Wikimedia photos for bird ${birdId}: ${err.message}`);
         }
 
         this.logger.log(`Bird ${birdId} enrichment completed successfully`);
