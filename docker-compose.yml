@@ -37,6 +37,8 @@ services:
       - PYTHONUNBUFFERED=1
     networks:
       - bird-network
+    # Note: BirdNET model loading can take 1-2 minutes on first startup
+    # Health check allows up to ~4 minutes for initial startup
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s

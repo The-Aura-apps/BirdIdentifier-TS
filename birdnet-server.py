@@ -68,11 +68,12 @@ def load_model():
         
         # Try with .tflite extension if default doesn't exist
         if not os.path.exists(model_path):
-            model_path = model_path + '.tflite'
-            if os.path.exists(model_path):
-                cfg.MODEL_PATH = model_path
+            tflite_path = model_path + '.tflite'
+            if os.path.exists(tflite_path):
+                model_path = tflite_path
+                cfg.MODEL_PATH = tflite_path
         
-        if not os.path.exists(cfg.MODEL_PATH):
+        if not os.path.exists(model_path):
             logger.error(f"Model file not found at: {cfg.MODEL_PATH}")
             logger.info("Available files in checkpoints:")
             for root, dirs, files in os.walk('checkpoints'):

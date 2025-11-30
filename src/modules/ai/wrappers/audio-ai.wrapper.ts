@@ -85,7 +85,8 @@ export class AudioAiWrapper {
 
         for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
             try {
-                // Prepare form data for BirdNET API (must be recreated on each retry)
+                // Prepare form data for BirdNET API (must be recreated on each retry
+                // because streams can only be consumed once)
                 const formData = new FormData();
 
                 // Convert buffer to stream for form-data
@@ -124,6 +125,7 @@ export class AudioAiWrapper {
 
                 // Check if we should retry
                 if (attempt < this.MAX_RETRIES && this.isRetryableError(axiosError)) {
+                    // Exponential backoff: 1s, 2s, 4s for attempts 1, 2, 3
                     const delayTime = this.RETRY_DELAY * Math.pow(2, attempt - 1);
                     this.logger.log(`Retrying in ${delayTime}ms...`);
                     await this.delay(delayTime);
