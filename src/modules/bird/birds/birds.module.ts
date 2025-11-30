@@ -12,6 +12,7 @@ import { BirdFoodsModule } from '../bird-foods/bird-foods.module';
 import { HabitatsModule } from '../habitats/habitats.module';
 import { CommonNamesModule } from '../common-names/common-names.module';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
+import { WikimediaPhotoWrapper } from 'src/modules/ai/wrappers/wikimedia-photo.wrapper';
 import { Taxonomy } from '../taxonomy/entities/taxonomy.entity';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
 import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
@@ -38,7 +39,7 @@ import { Media } from 'src/modules/media/entities/media.entity';
         CommonNamesModule,
     ],
     controllers: [BirdsController],
-    providers: [BirdsService, BirdInfoWrapper],
+    providers: [BirdsService, BirdInfoWrapper, WikimediaPhotoWrapper],
     exports: [BirdsService, TypeOrmModule],
 })
 export class BirdsModule {}
