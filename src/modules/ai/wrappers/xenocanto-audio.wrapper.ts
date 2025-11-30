@@ -15,7 +15,7 @@ export interface BirdAudio {
 @Injectable()
 export class XenoCantoAudioWrapper {
     private readonly logger = new Logger(XenoCantoAudioWrapper.name);
-    private readonly baseUrl = 'https://www.xeno-canto.org/api/2/recordings';
+    private readonly baseUrl = 'https://xeno-canto.org/api/3/recordings';
 
     constructor() {
         this.logger.log('xeno-canto API initialized for bird audio (no API key required)');
