@@ -110,11 +110,43 @@ export class UploadsService {
                 where: {
                     checksum,
                 },
+                relations: ['observations', 'observations.bird'],
             });
+            
             if (existingRepo) {
                 this.logger.warn(`Duplicate file detected: ${checksum}, reusing existing upload`);
 
-                // Link it with an observation
+                // Find a successfully completed observation with bird data
+                const successfulObservation = existingRepo.observations?.find(
+                    obs => obs.status === 'completed' && obs.bird
+                );
+
+                if (successfulObservation) {
+                    // Reuse the existing bird data without processing AI again
+                    this.logger.log(
+                        `Reusing existing bird data from previous observation: ${successfulObservation.bird.scientificName}`
+                    );
+
+                    // Create new observation but link to existing bird (skip AI processing)
+                    const observation = await this.observationService.createWithBird({
+                        deviceId,
+                        type,
+                        uploadId: existingRepo.id,
+                        birdId: successfulObservation.bird.id,
+                        aiResult: successfulObservation.aiResult,
+                        confidence: successfulObservation.confidence,
+                    });
+
+                    return {
+                        upload: existingRepo,
+                        observation,
+                    };
+                }
+
+                // No successful observation found, process normally
+                this.logger.log('Duplicate file but no successful bird identification found, processing with AI...');
+                
+                // Link it with an observation (will trigger AI processing)
                 const observation = await this.observationService.create({
                     deviceId,
                     type,

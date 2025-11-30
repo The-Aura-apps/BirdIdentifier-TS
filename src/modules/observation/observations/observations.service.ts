@@ -60,6 +60,40 @@ export class ObservationsService {
     }
 
     /**
+     * Create observation with existing bird data (skip AI processing)
+     * Used when reusing results from duplicate file uploads
+     */
+    async createWithBird(dto: {
+        deviceId: string;
+        type: 'image' | 'audio';
+        uploadId: number;
+        birdId: number;
+        aiResult: any;
+        confidence: number;
+    }): Promise<Observation> {
+        this.logger.log(
+            `Creating observation for device: ${dto.deviceId} with existing bird ID: ${dto.birdId}`
+        );
+
+        const observation = this.observationsRepo.create({
+            deviceId: dto.deviceId,
+            type: dto.type,
+            uploadId: dto.uploadId,
+            birdId: dto.birdId,
+            aiResult: dto.aiResult,
+            confidence: dto.confidence,
+            status: ObservationStatus.COMPLETED,
+        });
+
+        const saved = await this.observationsRepo.save(observation);
+        this.logger.log(
+            `Observation created with existing bird data: ${saved.id} (bird: ${dto.birdId})`
+        );
+
+        return saved;
+    }
+
+    /**
      * Process observation in background
      */
     private async processObservationBackground(id: string): Promise<void> {
