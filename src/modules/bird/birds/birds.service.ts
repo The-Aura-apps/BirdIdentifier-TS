@@ -21,6 +21,7 @@ import { CommonName } from '../common-names/entities/common-name.entity';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
 import { WikimediaPhotoWrapper } from 'src/modules/ai/wrappers/wikimedia-photo.wrapper';
+import { XenoCantoAudioWrapper } from 'src/modules/ai/wrappers/xenocanto-audio.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
 import { ConservationStatusService } from '../conservation-status/conservation-status.service';
 import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
@@ -56,6 +57,7 @@ export class BirdsService {
         private readonly conservationStatusService: ConservationStatusService,
         private readonly birdInfoWrapper: BirdInfoWrapper,
         private readonly wikimediaPhotoWrapper: WikimediaPhotoWrapper,
+        private readonly xenoCantoAudioWrapper: XenoCantoAudioWrapper,
     ) {
         this.loadCatalog();
     }
@@ -865,6 +867,49 @@ export class BirdsService {
             }
         } catch (err) {
             this.logger.error(`Failed to fetch Wikimedia photos for bird ${birdId}: ${err.message}`);
+        }
+
+        // Fetch audio recordings from xeno-canto
+        try {
+            this.logger.log(`Fetching audio recordings from xeno-canto for ${bird.scientificName}...`);
+            
+            const audioFiles = await this.xenoCantoAudioWrapper.fetchAudio(
+                bird.scientificName,
+                2, // Fetch 1-5 audio samples (default: 2)
+            );
+
+            if (audioFiles.length > 0) {
+                // Remove existing audio from xeno-canto to avoid duplicates
+                const existingAudio = await this.mediaRepo.find({ 
+                    where: { bird: { id: bird.id }, source: 'xeno-canto' } 
+                });
+                if (existingAudio.length > 0) {
+                    await this.mediaRepo.remove(existingAudio);
+                }
+
+                // Create media entries for fetched audio
+                const audioEntities = audioFiles.map((audio, index) =>
+                    this.mediaRepo.create({
+                        storageKey: audio.url, // Use URL as storageKey for external audio
+                        type: MediaType.Audio,
+                        source: 'xeno-canto',
+                        caption: `${audio.type} - ${audio.location}, ${audio.country}`,
+                        attribution: `Recorded by ${audio.recordist} (Quality: ${audio.quality})`,
+                        orderIndex: index,
+                        metadata: {
+                            format: 'mp3',
+                            mimeType: 'audio/mpeg',
+                        },
+                    }),
+                );
+
+                await this.mediaRepo.save(audioEntities);
+                this.logger.log(`Added ${audioFiles.length} audio recordings from xeno-canto for bird ${birdId}`);
+            } else {
+                this.logger.warn(`No xeno-canto audio found for ${bird.scientificName}`);
+            }
+        } catch (err) {
+            this.logger.error(`Failed to fetch xeno-canto audio for bird ${birdId}: ${err.message}`);
         }
 
         this.logger.log(`Bird ${birdId} enrichment completed successfully`);
