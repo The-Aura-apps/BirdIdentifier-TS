@@ -11,11 +11,6 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 import numpy as np
 
-# Import BirdNET modules
-import config as cfg
-import audio
-import model
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -29,16 +24,74 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # Supported audio formats
 ALLOWED_EXTENSIONS = {'wav', 'mp3', 'flac', 'ogg', 'm4a', 'aac'}
 
+# Global variables for model state
+MODEL_LOADED = False
+LABELS = []
+
 def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def load_labels(labels_file):
+    """Load species labels from file"""
+    global LABELS
+    try:
+        if os.path.exists(labels_file):
+            with open(labels_file, 'r', encoding='utf-8') as f:
+                LABELS = [line.strip() for line in f.readlines() if line.strip()]
+            logger.info(f"Loaded {len(LABELS)} species labels from {labels_file}")
+            return True
+        else:
+            logger.error(f"Labels file not found: {labels_file}")
+            return False
+    except Exception as e:
+        logger.error(f"Error loading labels: {str(e)}")
+        return False
+
 def load_model():
     """Load the BirdNET model"""
+    global MODEL_LOADED, LABELS
     logger.info("Loading BirdNET model...")
+    
     try:
+        # Import BirdNET modules
+        import config as cfg
+        import model as birdnet_model
+        
+        # Set model paths
         cfg.MODEL_PATH = 'checkpoints/V2.4/BirdNET_GLOBAL_6K_V2.4_Model'
         cfg.LABELS_FILE = 'checkpoints/V2.4/BirdNET_GLOBAL_6K_V2.4_Labels.txt'
+        
+        # Check if model file exists
+        model_path = cfg.MODEL_PATH
+        labels_path = cfg.LABELS_FILE
+        
+        # Try with .tflite extension if default doesn't exist
+        if not os.path.exists(model_path):
+            model_path = model_path + '.tflite'
+            if os.path.exists(model_path):
+                cfg.MODEL_PATH = model_path
+        
+        if not os.path.exists(cfg.MODEL_PATH):
+            logger.error(f"Model file not found at: {cfg.MODEL_PATH}")
+            logger.info("Available files in checkpoints:")
+            for root, dirs, files in os.walk('checkpoints'):
+                for f in files:
+                    logger.info(f"  {os.path.join(root, f)}")
+            return False
+            
+        if not os.path.exists(labels_path):
+            logger.error(f"Labels file not found at: {labels_path}")
+            return False
+        
+        # Load labels first
+        if not load_labels(labels_path):
+            return False
+        
+        # Set labels in config (BirdNET expects cfg.LABELS)
+        cfg.LABELS = LABELS
+        
+        # Configure audio processing parameters
         cfg.LATITUDE = -1
         cfg.LONGITUDE = -1
         cfg.WEEK = -1
@@ -51,11 +104,21 @@ def load_model():
         cfg.BANDPASS_FMIN = 0
         cfg.BANDPASS_FMAX = 15000
         
-        model.loadModel()
+        # Load the model
+        birdnet_model.loadModel()
+        
+        MODEL_LOADED = True
         logger.info("Model loaded successfully")
         return True
+        
+    except ImportError as e:
+        logger.error(f"Error importing BirdNET modules: {str(e)}")
+        logger.info("Make sure you're running from the BirdNET-Analyzer directory")
+        return False
     except Exception as e:
         logger.error(f"Error loading model: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return False
 
 # Load model on startup
@@ -105,6 +168,7 @@ def analyze():
         
         # Update config with location if provided
         if lat != -1 and lon != -1:
+            import config as cfg
             cfg.LATITUDE = lat
             cfg.LONGITUDE = lon
             cfg.WEEK = week
@@ -143,9 +207,15 @@ def analyze_audio_file(file_path, min_conf=0.1):
     Returns:
         List of detections with scientific names and confidence scores
     """
+    global LABELS
     detections = []
     
     try:
+        # Import BirdNET modules
+        import config as cfg
+        import audio
+        import model as birdnet_model
+        
         # Open audio file
         sig, rate = audio.openAudioFile(file_path, cfg.SAMPLE_RATE)
         
@@ -158,7 +228,7 @@ def analyze_audio_file(file_path, min_conf=0.1):
         for chunk_index, chunk in enumerate(chunks):
             
             # Get prediction
-            p = model.predict(chunk)
+            p = birdnet_model.predict(chunk)
             
             # Get top predictions above threshold
             p_filtered = [(i, p[i]) for i in range(len(p)) if p[i] >= min_conf]
@@ -167,8 +237,12 @@ def analyze_audio_file(file_path, min_conf=0.1):
             # Add detections from this chunk
             for label_index, confidence in p_sorted[:5]:  # Top 5 per chunk
                 
-                # Get label (scientific name)
-                label = cfg.LABELS[label_index]
+                # Get label (scientific name) - use global LABELS
+                if label_index < len(LABELS):
+                    label = LABELS[label_index]
+                else:
+                    logger.warning(f"Label index {label_index} out of range")
+                    continue
                 
                 # Parse label (format: "Scientific Name_Common Name")
                 if '_' in label:
@@ -204,16 +278,19 @@ def analyze_audio_file(file_path, min_conf=0.1):
         
     except Exception as e:
         logger.error(f"Error in analyze_audio_file: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise
 
 @app.route('/species', methods=['GET'])
 def get_species_list():
     """Get list of all bird species the model can identify"""
+    global LABELS
     if not MODEL_LOADED:
         return jsonify({'error': 'Model not loaded'}), 503
     
     species_list = []
-    for label in cfg.LABELS:
+    for label in LABELS:
         if '_' in label:
             scientific_name, common_name = label.split('_', 1)
             species_list.append({

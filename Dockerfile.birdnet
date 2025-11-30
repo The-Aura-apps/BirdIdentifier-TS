@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
   git \
   ffmpeg \
   libsndfile1 \
+  wget \
+  curl \
   && rm -rf /var/lib/apt/lists/*
 
 # Clone BirdNET-Analyzer
@@ -19,7 +21,14 @@ RUN pip install --no-cache-dir \
     resampy \
     Flask \
     tensorflow>=2.5.0 \
-    tensorflow-hub
+    tensorflow-hub \
+    werkzeug
+
+# Download BirdNET model (ensures model is available at startup)
+RUN mkdir -p checkpoints/V2.4 && \
+    cd checkpoints/V2.4 && \
+    wget -q https://github.com/kahst/BirdNET-Analyzer/releases/download/v2.4/BirdNET_GLOBAL_6K_V2.4_Model.tflite -O BirdNET_GLOBAL_6K_V2.4_Model && \
+    wget -q https://github.com/kahst/BirdNET-Analyzer/releases/download/v2.4/BirdNET_GLOBAL_6K_V2.4_Labels.txt
 
 # Create upload directory for audio files
 RUN mkdir -p /app/uploads
