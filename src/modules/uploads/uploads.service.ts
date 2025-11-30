@@ -115,6 +115,12 @@ export class UploadsService {
             
             if (existingRepo) {
                 this.logger.warn(`Duplicate file detected: ${checksum}, reusing existing upload`);
+                this.logger.log(`Existing upload has ${existingRepo.observations?.length || 0} observations`);
+                
+                // Debug: Log all observations and their status
+                existingRepo.observations?.forEach((obs, index) => {
+                    this.logger.log(`Observation ${index}: status=${obs.status}, hasBird=${!!obs.bird}, birdId=${obs.birdId}`);
+                });
 
                 // Find a successfully completed observation with bird data
                 const successfulObservation = existingRepo.observations?.find(
