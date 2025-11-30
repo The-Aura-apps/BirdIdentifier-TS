@@ -125,17 +125,18 @@ jobs:
               echo "⚠️  BirdNET health check failed"
           fi
           
-          # Check NestJS API
-          if curl -f http://localhost:3000/health > /dev/null 2>&1; then
+          # Check NestJS API (test root endpoint instead of /health)
+          if curl -f http://localhost:3000/ > /dev/null 2>&1; then
               echo "✅ NestJS API is healthy"
           else
               echo "⚠️  NestJS API health check failed"
-              pm2 logs --lines 20
+              pm2 logs --lines 20 --nostream
           fi
           
           echo "✨ Deployment completed successfully!"
-          echo "📝 View PM2 logs with: pm2 logs"
-          echo "📝 View BirdNET logs with: docker compose -f docker-compose.birdnet-only.yml logs -f"
+          echo "📊 PM2 Status:"
+          pm2 status
+          echo "📝 View live logs with: pm2 logs"
 
     - name: Notify deployment status
       if: always()
