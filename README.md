@@ -91,6 +91,60 @@ See [TEST-UPLOAD.md](TEST-UPLOAD.md) for complete testing guide.
 
 ## Deployment Options
 
+### Production Server Deployment
+
+**Using Docker Compose (Recommended):**
+
+```bash
+# On your server
+git clone https://github.com/The-Aura-apps/BirdIdentifier-Backend.git
+cd BirdIdentifier-Backend
+
+# Copy and configure environment
+cp .env.production .env
+nano .env  # Update OPENAI_API_KEY, DB_PASSWORD, etc.
+
+# Start all services (Database + BirdNET + NestJS)
+docker-compose up -d --build
+
+# Check status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Test endpoints
+curl http://your-server-ip:3000/health
+curl http://your-server-ip:8080/health
+```
+
+**Using Standalone (No Docker):**
+
+```bash
+# 1. Install dependencies
+npm install
+pip install flask
+
+# 2. Configure environment
+cp .env.production .env
+nano .env  # Update with: BIRDNET_URL=http://localhost:8080
+
+# 3. Setup PostgreSQL database
+createdb bird-idf-x1
+
+# 4. Start BirdNET server
+cd birdnet-service
+nohup python birdnet-server.py > birdnet.log 2>&1 &
+cd ..
+
+# 5. Build and start NestJS
+npm run build
+npm run start:prod
+
+# Or use PM2 for process management
+pm2 start npm --name "bird-api" -- run start:prod
+```
+
 ### Docker Compose (All Services)
 
 Start the full stack (NestJS, BirdNET with ML model, PostgreSQL):
@@ -201,8 +255,11 @@ Supported formats: `.wav`, `.mp3`, `.flac`, `.ogg`
 
 ## Documentation
 
-- [TESTING.md](TESTING.md) - Complete testing guide with both standalone and Docker setups
-- [TEST-UPLOAD.md](TEST-UPLOAD.md) - Quick guide for testing audio uploads
+- **[QUICK-REFERENCE.md](QUICK-REFERENCE.md)** - Quick commands for deployment and maintenance
+- **[SERVER-SETUP.md](SERVER-SETUP.md)** - Complete step-by-step server setup with Docker
+- **[CI-CD-SETUP.md](CI-CD-SETUP.md)** - GitHub Actions automatic deployment guide
+- **[TESTING.md](TESTING.md)** - Complete testing guide with both standalone and Docker setups
+- **[TEST-UPLOAD.md](TEST-UPLOAD.md)** - Quick guide for testing audio uploads
 
 ## License
 

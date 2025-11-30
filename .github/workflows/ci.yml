@@ -17,15 +17,17 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '24'
+        node-version: '20'
         cache: 'npm'
 
     - name: Install dependencies
       run: npm ci
 
-    # - name: Run tests
-    #   run: npm test  # Remove '|| true' if you want failures to stop the workflow
+    - name: Run tests
+      run: npm test
 
+    - name: Build application
+      run: npm run build
 
-    - name: Build application (optional)
-      run: npm run build  # Good to verify build works without deploying
+    - name: Lint code (if configured)
+      run: npm run lint || true

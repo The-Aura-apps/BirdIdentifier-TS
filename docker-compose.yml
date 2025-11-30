@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: bird-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bird-network
+
+  # BirdNET Standalone Service (Mock Data)
+  birdnet:
+    build:
+      context: ./birdnet-service
+      dockerfile: Dockerfile
+    container_name: birdnet-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - bird-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # NestJS Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bird-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      BIRDNET_URL: http://birdnet:8080
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      NODE_ENV: production
+    depends_on:
+      - db
+      - birdnet
+    networks:
+      - bird-network
+    volumes:
+      - ./uploads:/app/uploads
+
+networks:
+  bird-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

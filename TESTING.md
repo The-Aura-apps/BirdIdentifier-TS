@@ -159,6 +159,53 @@ curl http://localhost:3000/test/observations
 
 ## Troubleshooting
 
+### Server Error: "getaddrinfo EAI_AGAIN birdnet"
+
+**Problem:** Your server can't resolve the hostname `birdnet`  
+**Root Cause:** `.env` has `BIRDNET_URL=http://birdnet:8080` but BirdNET container isn't running
+
+**Solution 1 - Use Docker Compose on Server (Recommended):**
+```bash
+# On your server
+cd /path/to/BirdIdentifier-Backend
+
+# Copy production environment file
+cp .env.production .env
+
+# Update with your values (OpenAI key, DB password, etc.)
+nano .env
+
+# Start all services
+docker-compose up -d --build
+
+# Verify all containers running
+docker-compose ps
+
+# Check logs
+docker-compose logs -f
+
+# Test BirdNET health
+curl http://localhost:8080/health
+```
+
+**Solution 2 - Use Standalone Server:**
+```bash
+# On your server
+cd /path/to/BirdIdentifier-Backend/birdnet-service
+
+# Install Flask
+pip install flask
+
+# Start BirdNET server in background
+nohup python birdnet-server.py > birdnet.log 2>&1 &
+
+# Update .env
+BIRDNET_URL=http://localhost:8080
+
+# Restart NestJS
+pm2 restart bird-api  # or your process manager
+```
+
 ### Error: "Failed to connect to localhost port 8080"
 **Problem:** BirdNET server not running  
 **Solution:** Start it in Terminal 1:

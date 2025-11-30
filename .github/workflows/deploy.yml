@@ -1,4 +1,4 @@
-name: CD - Deploy to 46.249.101.76 server
+name: CD - Deploy to Production Server
 
 on:
   push:
@@ -16,19 +16,19 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '24'
+        node-version: '20'
         cache: 'npm'
 
     - name: Install dependencies
       run: npm ci
 
-    - name: Run tests (optional)
-      run: npm test || true
+    - name: Run tests
+      run: npm test
 
     - name: Build application
       run: npm run build
 
-    - name: Deploy to server
+    - name: Deploy to server with Docker
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SERVER_HOST }}
@@ -37,43 +37,95 @@ jobs:
         script: |
           set -e
 
+          echo "🚀 Starting deployment..."
+
           # Navigate to app directory
           cd /var/www/bird-identifier/BirdIdentifier-Backend
           
           # Fetch latest from remote
+          echo "📥 Fetching latest code..."
           git fetch origin
           
-          # Clean untracked files (add -n for dry run if testing; remove if you don't want to delete untracked)
+          # Clean untracked files
           git clean -fd
           
-          # Reset hard to match origin/main (discards local modifications)
+          # Reset hard to match origin/main
           git reset --hard origin/main
           
-          # Now pull (should be clean)
+          # Pull latest changes
           git pull origin main
           
-          # Install dependencies
+          # Install dependencies (needed for migrations and any server-side scripts)
+          echo "📦 Installing dependencies..."
           npm ci
           
-          # Build application
+          # Build application (to verify it compiles before Docker build)
+          echo "🔨 Building application..."
           npm run build
           
+          # Check if Docker is available
+          if ! command -v docker &> /dev/null; then
+              echo "❌ Docker not found! Please install Docker first."
+              echo "See SERVER-SETUP.md for installation instructions."
+              exit 1
+          fi
+          
+          # Check if .env exists
+          if [ ! -f .env ]; then
+              echo "⚠️  .env file not found! Creating from .env.production..."
+              cp .env.production .env
+              echo "🔧 Please update .env with your credentials!"
+          fi
+          
+          # Stop old PM2 processes if running (to avoid port conflicts)
+          if command -v pm2 &> /dev/null; then
+              echo "🛑 Stopping old PM2 processes..."
+              pm2 delete all || true
+              pm2 save || true
+          fi
+          
+          echo "🐳 Building Docker containers..."
+          docker compose build
+          
+          echo "🔄 Restarting services..."
+          docker compose up -d
+          
+          echo "⏳ Waiting for services to be ready..."
+          sleep 10
+          
+          # Check container status
+          echo "📊 Container status:"
+          docker compose ps
+          
           # Run database migrations
-          npm run migration:run || true
+          echo "🗄️  Running database migrations..."
+          docker compose exec -T app npm run migration:run || true
           
-          # Restart application with PM2
-          pm2 reload ecosystem.config.js --update-env
+          # Health check
+          echo "🏥 Health check..."
           
-          # Save PM2 process list
-          pm2 save
+          # Check BirdNET
+          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+              echo "✅ BirdNET is healthy"
+          else
+              echo "⚠️  BirdNET health check failed"
+          fi
           
-          echo "Deployment completed successfully!"
+          # Check NestJS API
+          if curl -f http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✅ NestJS API is healthy"
+          else
+              echo "⚠️  NestJS API health check failed"
+          fi
+          
+          echo "✨ Deployment completed successfully!"
+          echo "📝 View logs with: docker compose logs -f"
 
     - name: Notify deployment status
       if: always()
       run: |
         if [ ${{ job.status }} == 'success' ]; then
-          echo "Deployment successful!"
+          echo "✅ Deployment successful!"
         else
-          echo "Deployment failed!"
+          echo "❌ Deployment failed!"
         fi
