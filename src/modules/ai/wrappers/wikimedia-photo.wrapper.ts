@@ -23,7 +23,7 @@ export class WikimediaPhotoWrapper {
      * Fetch bird photos from Wikimedia Commons
      * @param scientificName Scientific name of the bird
      * @param commonName Common name (optional, improves results)
-     * @param limit Number of photos to fetch (default: 3)
+     * @param limit Number of photos to fetch (min: 1, max: 6, default: 3)
      * @returns Array of bird photos
      */
     async fetchPhotos(
@@ -31,6 +31,9 @@ export class WikimediaPhotoWrapper {
         commonName?: string,
         limit: number = 3,
     ): Promise<BirdPhoto[]> {
+        // Clamp limit between 1 and 6
+        limit = Math.max(1, Math.min(6, limit));
+        
         try {
             // Search query: use scientific name for better accuracy
             const searchTerms = [

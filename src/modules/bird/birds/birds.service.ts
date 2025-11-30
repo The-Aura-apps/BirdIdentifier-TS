@@ -830,7 +830,7 @@ export class BirdsService {
             const photos = await this.wikimediaPhotoWrapper.fetchPhotos(
                 bird.scientificName,
                 commonName,
-                3, // Fetch 3 photos
+                5, // Fetch 1-6 photos (default: 5)
             );
 
             if (photos.length > 0) {
