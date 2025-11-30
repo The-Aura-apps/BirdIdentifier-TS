@@ -170,12 +170,12 @@ export class ObservationsService {
     ): Promise<void> {
         if (isIdentified(aiResponse)) {
             try {
-                this.logger.log(`🔍 [ObservationService] Calling BirdsService.findOrCreate for: "${aiResponse.result.scientificName}"`);
+                this.logger.log(`[ObservationService] Calling BirdsService.findOrCreate for: "${aiResponse.result.scientificName}"`);
                 
                 // Find or create bird with enriched data
                 const bird = await this.birdService.findOrCreate(aiResponse.result.scientificName);
                 
-                this.logger.log(`✅ [ObservationService] Bird obtained from BirdsService: ID ${bird.id}`);
+                this.logger.log(`[ObservationService] Bird obtained from BirdsService: ID ${bird.id}`);
 
                 observation.markAsCompleted(bird, aiResponse);
             } catch (birdError) {

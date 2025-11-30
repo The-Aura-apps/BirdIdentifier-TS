@@ -147,7 +147,7 @@ Be honest with confidence based on image quality and visible features.`;
             data.confidence = Math.max(0, Math.min(1, data.confidence));
 
             this.logger.log(
-                `✅ [ImageAI] Bird identified: "${data.scientificName || 'Unknown'}" (confidence: ${data.confidence})`,
+                `[ImageAI] Bird identified: "${data.scientificName || 'Unknown'}" (confidence: ${data.confidence})`,
             );
 
             return data;

@@ -424,7 +424,7 @@ export class BirdsService {
 
         const normalizedName = scientificName.trim();
         
-        this.logger.log(`🔍 [BirdsService.findOrCreate] Searching database for: "${normalizedName}"`);
+        this.logger.log(`[BirdsService.findOrCreate] Searching database for: "${normalizedName}"`);
 
         // Try to find existing bird FIRST
         let bird = await this.birdRepo.findOne({
@@ -442,13 +442,13 @@ export class BirdsService {
         });
 
         if (bird) {
-            this.logger.log(`✅ [BirdsService.findOrCreate] FOUND in database: "${bird.scientificName}" (ID: ${bird.id}) - ⚡ REUSING, NO AI CALL`);
+            this.logger.log(`[BirdsService.findOrCreate] FOUND in database: "${bird.scientificName}" (ID: ${bird.id}) - REUSING, NO AI CALL`);
             return bird;
         }
 
         // Create minimal bird if not found
-        this.logger.log(`❌ [BirdsService.findOrCreate] NOT found in database: "${normalizedName}"`);
-        this.logger.log(`🆕 [BirdsService.findOrCreate] Creating new bird record...`);
+        this.logger.log(`[BirdsService.findOrCreate] NOT found in database: "${normalizedName}"`);
+        this.logger.log(`[BirdsService.findOrCreate] Creating new bird record...`);
 
         let savedBird: Bird;
         let birdInfo: BirdInfo | null = null;
@@ -459,11 +459,11 @@ export class BirdsService {
                 scientificName: normalizedName,
             });
             savedBird = await this.birdRepo.save(bird);
-            this.logger.log(`✅ [BirdsService.findOrCreate] Bird record created with ID: ${savedBird.id}`);
+            this.logger.log(`[BirdsService.findOrCreate] Bird record created with ID: ${savedBird.id}`);
 
             // Fetch comprehensive info from AI - ONLY if we created the bird
             try {
-                this.logger.log(`🤖 [BirdsService.findOrCreate] Calling BirdInfoWrapper.fetchInfo() to get comprehensive data for "${normalizedName}"... (THIS USES TOKENS)`);
+                this.logger.log(`[BirdsService.findOrCreate] Calling BirdInfoWrapper.fetchInfo() to get comprehensive data for "${normalizedName}"... (THIS USES TOKENS)`);
                 birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
                 this.logger.log(`AI info fetched successfully for ${normalizedName}`);
             } catch (err) {
@@ -473,7 +473,7 @@ export class BirdsService {
         } catch (saveError) {
             // If save failed due to duplicate (race condition), try to find it again
             if (saveError.code === '23505' || saveError.message?.includes('duplicate') || saveError.message?.includes('unique')) {
-                this.logger.warn(`⚠️ [BirdsService.findOrCreate] Race condition detected - another request created "${normalizedName}" simultaneously. Fetching existing bird...`);
+                this.logger.warn(`[BirdsService.findOrCreate] Race condition detected - another request created "${normalizedName}" simultaneously. Fetching existing bird...`);
                 
                 // Wait a bit for the other request to finish
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -494,7 +494,7 @@ export class BirdsService {
                 });
                 
                 if (bird) {
-                    this.logger.log(`✅ [BirdsService.findOrCreate] Found bird created by concurrent request: "${bird.scientificName}" (ID: ${bird.id}) - ⚡ NO AI CALL`);
+                    this.logger.log(`[BirdsService.findOrCreate] Found bird created by concurrent request: "${bird.scientificName}" (ID: ${bird.id}) - NO AI CALL`);
                     return bird;
                 }
                 
