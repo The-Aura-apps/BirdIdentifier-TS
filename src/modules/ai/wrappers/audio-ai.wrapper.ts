@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IdentificationResult } from '../types';
 import { ConfigService } from '@nestjs/config';
-import * as FormData from 'form-data';
+import FormData from 'form-data';
 import axios from 'axios';
 import { Readable } from 'stream';
 
@@ -62,14 +62,17 @@ export class AudioAiWrapper {
             // Minimum confidence threshold
             formData.append('min_conf', this.MIN_CONFIDENCE.toString());
 
+            // Validate file size before upload
+            if (file.length > this.MAX_AUDIO_SIZE) {
+                throw new Error(`Audio file exceeds maximum size of ${this.MAX_AUDIO_SIZE} bytes`);
+            }
+
             // Call BirdNET API
             const response = await axios.post(`${this.birdnetUrl}/analyze`, formData, {
                 headers: {
                     ...formData.getHeaders(),
                 },
                 timeout: this.REQUEST_TIMEOUT,
-                maxContentLength: this.MAX_AUDIO_SIZE,
-                maxBodyLength: this.MAX_AUDIO_SIZE,
             });
 
             // Parse BirdNET response
