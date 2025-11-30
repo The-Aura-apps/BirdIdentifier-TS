@@ -8,83 +8,52 @@ A NestJS backend API for bird identification using image and audio analysis.
 - **Audio Identification**: Uses BirdNET-Analyzer to identify birds from audio recordings
 - **Bird Information**: Comprehensive database of bird species information
 
-## Prerequisites
+## Quick Start (Development)
 
+### Prerequisites
 - Node.js 18+
-- Docker and Docker Compose (for containerized deployment)
-- PostgreSQL 15+ (or use Docker)
+- Python 3.8+ with Flask (`pip install flask`)
+- PostgreSQL 15+ running on port 5432
 
-## Environment Setup
+### 1. Setup Environment
 
-1. Copy the environment example file:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Update `.env` with your configuration:
-   - `DATABASE_URL`: PostgreSQL connection string
-   - `OPENAI_API_KEY`: Your OpenAI API key for image identification
-   - `BIRDNET_URL`: BirdNET service URL (see below)
-
-## Running the Application
-
-### Option 1: Docker Compose (Recommended)
-
-This starts all services (NestJS app, BirdNET, and PostgreSQL):
-
+Copy and configure the environment file:
 ```bash
-# Build and start all services
-docker-compose up --build
-
-# Or run in detached mode
-docker-compose up -d --build
+cp .env.example .env
 ```
 
-**Note**: The BirdNET service may take a few minutes to start as it downloads the ML model.
+Update `.env` with:
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/bird-idf-x1
+DB_USER=postgres
+BIRDNET_URL=http://localhost:8080
+OPENAI_API_KEY=your-openai-api-key
+```
 
-### Option 2: Local Development
+### 2. Start BirdNET Server
 
-#### 1. Start BirdNET Service
+**Option A: Standalone Python Server (Recommended for Development)**
 
-Option A - Using Docker (recommended):
+This uses a lightweight mock server for quick testing:
+
 ```bash
-# Build and run only the BirdNET service
+cd birdnet-service
+python birdnet-server.py
+```
+
+Server starts on `http://localhost:8080` with mock bird data.
+
+**Option B: Docker with Full BirdNET Model (Production)**
+
+For real bird identification using the ML model:
+
+```bash
 docker-compose up birdnet
 ```
 
-Option B - Run BirdNET locally:
-```bash
-# Clone BirdNET-Analyzer
-git clone https://github.com/birdnet-team/BirdNET-Analyzer.git
-cd BirdNET-Analyzer
+See the [TESTING.md](TESTING.md) file for detailed Docker setup instructions.
 
-# Install dependencies
-pip install librosa numpy resampy Flask tensorflow tensorflow-hub werkzeug
-
-# Download model (optional, BirdNET may download automatically)
-mkdir -p checkpoints/V2.4
-cd checkpoints/V2.4
-wget https://github.com/kahst/BirdNET-Analyzer/releases/download/v2.4/BirdNET_GLOBAL_6K_V2.4_Model.tflite -O BirdNET_GLOBAL_6K_V2.4_Model
-wget https://github.com/kahst/BirdNET-Analyzer/releases/download/v2.4/BirdNET_GLOBAL_6K_V2.4_Labels.txt
-
-# Copy server script and run
-cp /path/to/this/repo/birdnet-server.py server.py
-python server.py
-```
-
-#### 2. Configure Environment
-
-For local development, set in `.env`:
-```
-BIRDNET_URL=http://localhost:8080
-```
-
-For Docker deployment:
-```
-BIRDNET_URL=http://birdnet:8080
-```
-
-#### 3. Start NestJS Application
+### 3. Start NestJS Application
 
 ```bash
 # Install dependencies
@@ -92,13 +61,62 @@ npm install
 
 # Run in development mode
 npm run start:dev
-
-# Or build and run in production mode
-npm run build
-npm run start:prod
 ```
 
+API runs on `http://localhost:3000`
+
+### 4. Test the System
+
+Check if services are running:
+
+```bash
+# BirdNET health check
+curl http://localhost:8080/health
+
+# NestJS health check
+curl http://localhost:3000/health
+```
+
+Test audio identification:
+
+```bash
+curl -X POST http://localhost:3000/test/observations/upload-audio \
+  -F "file=@path/to/your/audio.wav" \
+  -F "latitude=37.7749" \
+  -F "longitude=-122.4194" \
+  -F "userId=1"
+```
+
+See [TEST-UPLOAD.md](TEST-UPLOAD.md) for complete testing guide.
+
+## Deployment Options
+
+### Docker Compose (All Services)
+
+Start the full stack (NestJS, BirdNET with ML model, PostgreSQL):
+
+```bash
+docker-compose up --build -d
+```
+
+**Note**: First startup downloads the BirdNET model (~100MB), which takes a few minutes.
+
+### Local Development (Recommended)
+
+1. Run PostgreSQL locally or via Docker
+2. Use standalone Python server (`birdnet-service/birdnet-server.py`)
+3. Run NestJS with `npm run start:dev`
+
+This is faster for development and doesn't require Docker Desktop.
+
+
 ## API Endpoints
+
+### Test Endpoints (Development)
+- `POST /test/observations/upload-audio` - Upload audio file for analysis
+- `GET /test/observations/birdnet-health` - Check BirdNET service status
+- `GET /test/observations` - List all observations
+- `GET /test/observations/:id` - Get specific observation
 
 ### Health Check
 - `GET /health` - Application health status
@@ -107,13 +125,19 @@ npm run start:prod
 - `POST /api/identify/image` - Identify bird from image
 - `POST /api/identify/audio` - Identify bird from audio recording
 
-### BirdNET Service Health
-```bash
-curl http://localhost:8080/health
-```
-
 ## Testing
 
+### Quick Test
+```bash
+# Test audio upload
+curl -X POST http://localhost:3000/test/observations/upload-audio \
+  -F "file=@audio.wav" \
+  -F "latitude=37.7749" \
+  -F "longitude=-122.4194" \
+  -F "userId=1"
+```
+
+### Full Test Suite
 ```bash
 # Unit tests
 npm run test
@@ -125,39 +149,62 @@ npm run test:e2e
 npm run test:cov
 ```
 
+See [TESTING.md](TESTING.md) for comprehensive testing documentation.
+
 ## Troubleshooting
 
-### ENOTFOUND birdnet error
-This error occurs when the NestJS app can't reach the BirdNET service:
+### BirdNET Connection Error (ECONNREFUSED)
 
-1. **Check if BirdNET is running**:
-   ```bash
-   curl http://localhost:8080/health
-   ```
+**Check if BirdNET is running:**
+```bash
+curl http://localhost:8080/health
+```
 
-2. **Check your BIRDNET_URL**:
-   - Local development: `BIRDNET_URL=http://localhost:8080`
-   - Docker: `BIRDNET_URL=http://birdnet:8080`
+**If not running:**
+- Standalone mode: `cd birdnet-service && python birdnet-server.py`
+- Docker mode: `docker-compose up birdnet`
 
-3. **Check Docker network**:
-   ```bash
-   docker network ls
-   docker network inspect birdidentifier-backend_bird-network
-   ```
+**Check BIRDNET_URL in .env:**
+- Local development: `BIRDNET_URL=http://localhost:8080`
+- Docker: `BIRDNET_URL=http://birdnet:8080`
 
-### BirdNET model not loaded
-If health check returns `model_loaded: false`:
+### Database Connection Error
 
-1. Check if model files exist in the container:
-   ```bash
-   docker exec birdnet-analyzer ls -la checkpoints/V2.4/
-   ```
+**Verify PostgreSQL is running:**
+```bash
+# Check if PostgreSQL is running on port 5432
+netstat -an | grep 5432
+```
 
-2. Check BirdNET logs:
-   ```bash
-   docker logs birdnet-analyzer
-   ```
+**Verify credentials in .env:**
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/bird-idf-x1
+DB_USER=postgres
+```
+
+### Python Flask Module Not Found
+
+Install Flask:
+```bash
+pip install flask
+```
+
+### Audio Upload 400 Bad Request
+
+**Ensure all required fields are provided:**
+- `file`: Audio file (required)
+- `userId`: User ID (required)
+- `latitude` and `longitude`: Location coordinates (required)
+
+**Check file format:**
+Supported formats: `.wav`, `.mp3`, `.flac`, `.ogg`
+
+## Documentation
+
+- [TESTING.md](TESTING.md) - Complete testing guide with both standalone and Docker setups
+- [TEST-UPLOAD.md](TEST-UPLOAD.md) - Quick guide for testing audio uploads
 
 ## License
 
 MIT
+

@@ -1,33 +1,356 @@
 # Bird Identifier Backend - Testing Guide
 
-## Prerequisites
+## Two Ways to Run BirdNET
 
-1. **Docker Desktop** must be running
-2. **Environment variables** configured in `.env` file
-3. **Test audio files** (sample bird recordings)
+### Option 1: Standalone Python Server (Recommended for Development)
+- No Docker required
+- Fast startup
+- Easy debugging
+- Uses mock data (returns same bird for all audio)
+
+### Option 2: Docker with Full BirdNET Model
+- Production-ready
+- Full ML model
+- Requires Docker Desktop
+- Slower startup
 
 ---
 
-## 1. Setup Environment
+## Quick Start (Standalone - No Docker)
 
-### Create `.env` file:
+### 1. Start BirdNET Python Server
 
+**Terminal 1:**
 ```bash
-# Database
-DATABASE_URL=postgresql://postgres:birdpass123@db:5432/bird-identifier
+cd E:/aura-apps/Bird-Identifier/BirdIdentifier-Backend/birdnet-service
+pip install flask  # First time only
+python birdnet-server.py
+```
+
+You should see:
+```
+==================================================
+BirdNET Standalone Server
+==================================================
+Server running on http://localhost:8080
+Health check: http://localhost:8080/health
+==================================================
+```
+
+**Keep this terminal running!**
+
+### 2. Start NestJS Application
+
+**Terminal 2:**
+```bash
+cd E:/aura-apps/Bird-Identifier/BirdIdentifier-Backend
+npm run start:dev
+```
+
+**Keep this terminal running too!**
+
+### 3. Test the System
+
+**Terminal 3 (or use Postman):**
+
+#### A. Check BirdNET Health
+```bash
+curl http://localhost:8080/health
+```
+
+Expected response:
+```json
+{
+  "status": "healthy",
+  "model_loaded": true,
+  "version": "1.0-standalone"
+}
+```
+
+#### B. Check NestJS API Health
+```bash
+curl http://localhost:3000/test/observations/birdnet-health
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "birdnet": {
+    "status": "healthy",
+    "url": "http://localhost:8080"
+  }
+}
+```
+
+#### C. Upload Audio File
+
+**Windows PowerShell:**
+```powershell
+# Replace with your actual audio file path
+curl.exe -X POST http://localhost:3000/test/observations/upload-audio `
+  -F "audio=@C:\path\to\your\audio.mp3" `
+  -F "latitude=40.7128" `
+  -F "longitude=-74.0060"
+```
+
+**Git Bash / Linux / Mac:**
+```bash
+curl -X POST http://localhost:3000/test/observations/upload-audio \
+  -F "audio=@/path/to/your/audio.mp3" \
+  -F "latitude=40.7128" \
+  -F "longitude=-74.0060"
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "message": "Audio analyzed successfully",
+  "identification": {
+    "scientificName": "Turdus migratorius",
+    "confidence": 0.85
+  },
+  "file": {
+    "name": "audio.mp3",
+    "size": 123456,
+    "mimeType": "audio/mpeg"
+  }
+}
+```
+
+#### D. Get All Observations
+```bash
+curl http://localhost:3000/test/observations
+```
+
+---
+
+## Using Postman or Insomnia
+
+### Test Audio Upload:
+
+1. **Create new request**
+   - Method: `POST`
+   - URL: `http://localhost:3000/test/observations/upload-audio`
+
+2. **Set Body to form-data:**
+   - `audio` (File): Select your audio file
+   - `latitude` (Text): `40.7128`
+   - `longitude` (Text): `-74.0060`
+
+3. **Send request**
+
+4. **Check Terminal 2** for detailed logs showing the analysis process
+
+---
+
+## Test Endpoints Reference
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `http://localhost:8080/health` | GET | BirdNET service health |
+| `http://localhost:3000/test/observations/birdnet-health` | GET | Check BirdNET from NestJS |
+| `http://localhost:3000/test/observations/upload-audio` | POST | Upload audio & analyze |
+| `http://localhost:3000/test/observations` | GET | Get all observations |
+| `http://localhost:3000/test/observations/:id` | GET | Get single observation |
+
+---
+
+## Troubleshooting
+
+### Error: "Failed to connect to localhost port 8080"
+**Problem:** BirdNET server not running  
+**Solution:** Start it in Terminal 1:
+```bash
+cd E:/aura-apps/Bird-Identifier/BirdIdentifier-Backend/birdnet-service
+python birdnet-server.py
+```
+
+### Error: "ModuleNotFoundError: No module named 'flask'"
+**Problem:** Flask not installed  
+**Solution:**
+```bash
+pip install flask
+```
+
+### Error: "Failed to open/read local data from file/application"
+**Problem:** Invalid file path  
+**Solution:** Use absolute path to an actual audio file:
+```bash
+# Windows
+curl -X POST http://localhost:3000/test/observations/upload-audio \
+  -F "audio=@C:/Users/YourName/Downloads/bird.mp3"
+
+# Linux/Mac
+curl -X POST http://localhost:3000/test/observations/upload-audio \
+  -F "audio=@/home/user/Downloads/bird.mp3"
+```
+
+### BirdNET returns same bird for all audio
+**This is normal!** The standalone server uses mock data. To get real analysis, use Docker option below.
+
+---
+
+## Docker Setup (Full BirdNET Model)
+
+### Prerequisites
+1. Docker Desktop installed and running
+2. At least 4GB RAM available for Docker
+
+### 1. Configure Environment
+
+Make sure `.env` has:
+```bash
+BIRDNET_URL=http://birdnet:8080
+DATABASE_URL=postgresql://postgres:yourpassword@db:5432/bird-identifier
 DB_NAME=bird-identifier
 DB_USER=postgres
-DB_PASSWORD=birdpass123
+DB_PASSWORD=yourpassword
+```
 
-# OpenAI API
-OPENAI_API_KEY=sk-your-openai-api-key-here
+### 2. Build and Start
 
-# BirdNET Service
-BIRDNET_URL=http://birdnet:8080
+```bash
+# Build containers
+docker-compose build
 
-# Application
-NODE_ENV=development
-PORT=3000
+# Start services
+docker-compose up -d
+
+# Check status
+docker-compose ps
+```
+
+### 3. Test Docker Services
+
+```bash
+# BirdNET health
+curl http://localhost:8080/health
+
+# NestJS API
+curl http://localhost:3000/test/observations/birdnet-health
+
+# Upload audio (same as standalone)
+curl -X POST http://localhost:3000/test/observations/upload-audio \
+  -F "audio=@bird.mp3" \
+  -F "latitude=40.7128" \
+  -F "longitude=-74.0060"
+```
+
+### 4. View Logs
+
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f birdnet
+docker-compose logs -f app
+```
+
+### 5. Stop Services
+
+```bash
+docker-compose down
+```
+
+---
+
+## Supported Audio Formats
+
+- ✅ `.mp3` - MPEG Audio
+- ✅ `.wav` - Waveform Audio
+- ✅ `.flac` - Free Lossless Audio Codec
+- ✅ `.ogg` - Ogg Vorbis
+- ✅ `.m4a` - MPEG-4 Audio
+- ✅ `.aac` - Advanced Audio Coding
+
+---
+
+## Sample Audio Files
+
+### Where to get test audio:
+
+1. **Xeno-canto** (Free bird recordings): https://www.xeno-canto.org/
+2. **Macaulay Library**: https://www.macaulaylibrary.org/
+3. **Use any short audio/music file** for testing (standalone mode returns mock data anyway)
+
+---
+
+## Console Output Example
+
+When you upload audio, **Terminal 2** (NestJS) shows:
+
+```
+==================================================
+TEST: Audio Upload
+==================================================
+File: bird-recording.mp3
+Size: 245678 bytes
+MIME: audio/mpeg
+Latitude: 40.7128
+Longitude: -74.006
+--------------------------------------------------
+Step 1: Analyzing audio with BirdNET...
+Identification Result:
+  Scientific Name: Turdus migratorius
+  Confidence: 0.85
+--------------------------------------------------
+Step 2: Creating observation...
+Observation Data: { ... }
+==================================================
+```
+
+---
+
+## Quick Test Checklist
+
+### Standalone Mode:
+- [ ] BirdNET server running on port 8080
+- [ ] NestJS app running on port 3000
+- [ ] Health check passes
+- [ ] Audio upload works
+- [ ] Console shows analysis logs
+
+### Docker Mode:
+- [ ] Docker Desktop running
+- [ ] `.env` configured
+- [ ] `docker-compose ps` shows all containers up
+- [ ] BirdNET health check passes
+- [ ] Audio analysis works
+
+---
+
+## Next Steps
+
+1. ✅ Test audio upload - **DONE**
+2. 📝 Save observations to database
+3. 🔒 Add authentication
+4. 💾 Implement file storage (S3/local)
+5. 🧪 Write unit tests
+6. 🚀 Deploy to production
+
+See **TEST-UPLOAD.md** for more detailed testing instructions!
+
+---
+
+## Common Commands Reference
+
+```bash
+# Standalone Mode
+cd birdnet-service && python birdnet-server.py
+npm run start:dev
+
+# Docker Mode
+docker-compose up -d
+docker-compose logs -f
+docker-compose down
+
+# Test
+curl http://localhost:8080/health
+curl http://localhost:3000/test/observations/birdnet-health
+curl -X POST http://localhost:3000/test/observations/upload-audio -F "audio=@bird.mp3"
 ```
 
 ---
