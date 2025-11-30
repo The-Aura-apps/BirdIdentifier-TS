@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Docker Compose - Only BirdNET service
 # NestJS runs via PM2, PostgreSQL on server
 

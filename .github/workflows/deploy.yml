@@ -73,11 +73,11 @@ jobs:
               exit 1
           fi
           
-          # Check if .env exists
+          # Create .env from .env.example if needed
           if [ ! -f .env ]; then
-              echo "⚠️  .env file not found! Creating from .env.production..."
-              cp .env.production .env
-              echo "🔧 Please update .env with your credentials!"
+              echo "⚠️  .env file not found! Please create it manually."
+              echo "See .env.example for reference."
+              exit 1
           fi
           
           # Stop old PM2 processes if running (to avoid port conflicts)
