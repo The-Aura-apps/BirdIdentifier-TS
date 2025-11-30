@@ -5,11 +5,26 @@ Provides a REST API for bird audio identification
 """
 
 import os
+import sys
 import tempfile
 import logging
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 import numpy as np
+
+# Add current directory to path to find BirdNET modules
+sys.path.append(os.path.dirname(__file__))
+
+# Import BirdNET modules (these are from the cloned repository)
+try:
+    import config as cfg
+    import audio
+    import model
+except ImportError as e:
+    print(f"ERROR: Could not import BirdNET modules: {e}")
+    print(f"Current directory: {os.getcwd()}")
+    print(f"Files in directory: {os.listdir('.')}")
+    sys.exit(1)
 
 # Configure logging
 logging.basicConfig(
@@ -22,77 +37,19 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Supported audio formats
-ALLOWED_EXTENSIONS = {'wav', 'mp3', 'flac', 'ogg', 'm4a', 'aac'}
-
-# Global variables for model state
-MODEL_LOADED = False
-LABELS = []
+ALLOWED_EXTENSIONS = {'wav', 'mp3', 'flac', 'ogg', 'm4a', 'aac', 'mp4'}
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def load_labels(labels_file):
-    """Load species labels from file"""
-    global LABELS
-    try:
-        if os.path.exists(labels_file):
-            with open(labels_file, 'r', encoding='utf-8') as f:
-                LABELS = [line.strip() for line in f.readlines() if line.strip()]
-            logger.info(f"Loaded {len(LABELS)} species labels from {labels_file}")
-            return True
-        else:
-            logger.error(f"Labels file not found: {labels_file}")
-            return False
-    except Exception as e:
-        logger.error(f"Error loading labels: {str(e)}")
-        return False
-
 def load_model():
     """Load the BirdNET model"""
-    global MODEL_LOADED, LABELS
     logger.info("Loading BirdNET model...")
-    
     try:
-        # Import BirdNET modules
-        import config as cfg
-        import model as birdnet_model
-        
-        # Set model paths
+        # Use default BirdNET configuration
         cfg.MODEL_PATH = 'checkpoints/V2.4/BirdNET_GLOBAL_6K_V2.4_Model'
         cfg.LABELS_FILE = 'checkpoints/V2.4/BirdNET_GLOBAL_6K_V2.4_Labels.txt'
-        
-        # Check if model file exists
-        model_path = cfg.MODEL_PATH
-        labels_path = cfg.LABELS_FILE
-        
-        # Try with .tflite extension if default doesn't exist
-        if not os.path.exists(model_path):
-            tflite_path = model_path + '.tflite'
-            if os.path.exists(tflite_path):
-                model_path = tflite_path
-                cfg.MODEL_PATH = tflite_path
-        
-        if not os.path.exists(model_path):
-            logger.error(f"Model file not found at: {cfg.MODEL_PATH}")
-            logger.info("Available files in checkpoints:")
-            for root, dirs, files in os.walk('checkpoints'):
-                for f in files:
-                    logger.info(f"  {os.path.join(root, f)}")
-            return False
-            
-        if not os.path.exists(labels_path):
-            logger.error(f"Labels file not found at: {labels_path}")
-            return False
-        
-        # Load labels first
-        if not load_labels(labels_path):
-            return False
-        
-        # Set labels in config (BirdNET expects cfg.LABELS)
-        cfg.LABELS = LABELS
-        
-        # Configure audio processing parameters
         cfg.LATITUDE = -1
         cfg.LONGITUDE = -1
         cfg.WEEK = -1
@@ -106,20 +63,12 @@ def load_model():
         cfg.BANDPASS_FMAX = 15000
         
         # Load the model
-        birdnet_model.loadModel()
+        model.loadModel()
         
-        MODEL_LOADED = True
-        logger.info("Model loaded successfully")
+        logger.info(f"Model loaded successfully. Total species: {len(cfg.LABELS)}")
         return True
-        
-    except ImportError as e:
-        logger.error(f"Error importing BirdNET modules: {str(e)}")
-        logger.info("Make sure you're running from the BirdNET-Analyzer directory")
-        return False
     except Exception as e:
-        logger.error(f"Error loading model: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
+        logger.error(f"Error loading model: {str(e)}", exc_info=True)
         return False
 
 # Load model on startup
@@ -131,7 +80,8 @@ def health():
     return jsonify({
         'status': 'healthy' if MODEL_LOADED else 'unhealthy',
         'model_loaded': MODEL_LOADED,
-        'version': '2.4'
+        'version': '2.4',
+        'total_species': len(cfg.LABELS) if MODEL_LOADED else 0
     }), 200 if MODEL_LOADED else 503
 
 @app.route('/analyze', methods=['POST'])
@@ -154,34 +104,36 @@ def analyze():
         return jsonify({'error': f'Invalid file format. Allowed: {ALLOWED_EXTENSIONS}'}), 400
     
     # Get optional parameters
-    min_conf = float(request.form.get('min_conf', 0.1))
-    lat = float(request.form.get('lat', -1))
-    lon = float(request.form.get('lon', -1))
-    week = int(request.form.get('week', -1))
+    try:
+        min_conf = float(request.form.get('min_conf', 0.1))
+        lat = float(request.form.get('lat', -1))
+        lon = float(request.form.get('lon', -1))
+        week = int(request.form.get('week', -1))
+    except ValueError as e:
+        return jsonify({'error': f'Invalid parameter value: {str(e)}'}), 400
     
     # Save uploaded file temporarily
+    temp_path = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp_file:
-            tmp_path = tmp_file.name
-            file.save(tmp_path)
+        # Create temp file with proper extension
+        suffix = os.path.splitext(file.filename)[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
+            temp_path = tmp_file.name
+            file.save(temp_path)
         
-        logger.info(f"Processing audio file: {file.filename} (min_conf={min_conf})")
+        logger.info(f"Processing audio file: {file.filename} (size: {os.path.getsize(temp_path)} bytes, min_conf={min_conf})")
         
         # Update config with location if provided
         if lat != -1 and lon != -1:
-            import config as cfg
             cfg.LATITUDE = lat
             cfg.LONGITUDE = lon
             cfg.WEEK = week
             logger.info(f"Using location: lat={lat}, lon={lon}, week={week}")
         
         # Analyze audio file
-        detections = analyze_audio_file(tmp_path, min_conf)
+        detections = analyze_audio_file(temp_path, min_conf)
         
-        # Clean up temp file
-        os.unlink(tmp_path)
-        
-        logger.info(f"Found {len(detections)} detections")
+        logger.info(f"Analysis complete. Found {len(detections)} detections")
         
         return jsonify({
             'success': True,
@@ -191,11 +143,16 @@ def analyze():
         }), 200
         
     except Exception as e:
-        logger.error(f"Error analyzing audio: {str(e)}")
-        # Clean up temp file if it exists
-        if 'tmp_path' in locals() and os.path.exists(tmp_path):
-            os.unlink(tmp_path)
+        logger.error(f"Error analyzing audio: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
+        
+    finally:
+        # Clean up temp file
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception as e:
+                logger.warning(f"Could not delete temp file {temp_path}: {e}")
 
 def analyze_audio_file(file_path, min_conf=0.1):
     """
@@ -208,16 +165,11 @@ def analyze_audio_file(file_path, min_conf=0.1):
     Returns:
         List of detections with scientific names and confidence scores
     """
-    global LABELS
     detections = []
     
     try:
-        # Import BirdNET modules
-        import config as cfg
-        import audio
-        import model as birdnet_model
-        
         # Open audio file
+        logger.info(f"Opening audio file: {file_path}")
         sig, rate = audio.openAudioFile(file_path, cfg.SAMPLE_RATE)
         
         # Split audio into chunks
@@ -229,7 +181,7 @@ def analyze_audio_file(file_path, min_conf=0.1):
         for chunk_index, chunk in enumerate(chunks):
             
             # Get prediction
-            p = birdnet_model.predict(chunk)
+            p = model.predict(chunk)
             
             # Get top predictions above threshold
             p_filtered = [(i, p[i]) for i in range(len(p)) if p[i] >= min_conf]
@@ -238,12 +190,8 @@ def analyze_audio_file(file_path, min_conf=0.1):
             # Add detections from this chunk
             for label_index, confidence in p_sorted[:5]:  # Top 5 per chunk
                 
-                # Get label (scientific name) - use global LABELS
-                if label_index < len(LABELS):
-                    label = LABELS[label_index]
-                else:
-                    logger.warning(f"Label index {label_index} out of range")
-                    continue
+                # Get label (scientific name)
+                label = cfg.LABELS[label_index]
                 
                 # Parse label (format: "Scientific Name_Common Name")
                 if '_' in label:
@@ -278,20 +226,17 @@ def analyze_audio_file(file_path, min_conf=0.1):
         return unique_detections
         
     except Exception as e:
-        logger.error(f"Error in analyze_audio_file: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
+        logger.error(f"Error in analyze_audio_file: {str(e)}", exc_info=True)
         raise
 
 @app.route('/species', methods=['GET'])
 def get_species_list():
     """Get list of all bird species the model can identify"""
-    global LABELS
     if not MODEL_LOADED:
         return jsonify({'error': 'Model not loaded'}), 503
     
     species_list = []
-    for label in LABELS:
+    for label in cfg.LABELS:
         if '_' in label:
             scientific_name, common_name = label.split('_', 1)
             species_list.append({
@@ -309,4 +254,5 @@ if __name__ == '__main__':
     host = os.environ.get('HOST', '0.0.0.0')
     
     logger.info(f"Starting BirdNET API server on {host}:{port}")
+    logger.info(f"Working directory: {os.getcwd()}")
     app.run(host=host, port=port, debug=False, threaded=True)
