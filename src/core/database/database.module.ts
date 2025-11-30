@@ -14,7 +14,6 @@ import { Media } from 'src/modules/media/entities/media.entity';
 import { Observation } from 'src/modules/observation/observations/entities/observation.entity';
 import { Upload } from 'src/modules/uploads/entities/upload.entity';
 
-// Import all entities
 
 @Module({
     imports: [
