@@ -87,22 +87,33 @@ jobs:
               pm2 save || true
           fi
           
-          echo "🐳 Building Docker containers..."
-          docker compose build
-          
-          echo "🔄 Restarting services..."
-          docker compose up -d
+          # Detect if PostgreSQL is running on port 5432
+          if lsof -Pi :5432 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+              echo "✅ PostgreSQL detected on port 5432 (using external database)"
+              echo "🐳 Building Docker containers (without database)..."
+              docker compose -f docker-compose.no-db.yml build
+              
+              echo "🔄 Restarting services (without database)..."
+              docker compose -f docker-compose.no-db.yml up -d
+          else
+              echo "⚠️  No PostgreSQL found on port 5432"
+              echo "🐳 Building Docker containers (with database)..."
+              docker compose build
+              
+              echo "🔄 Restarting services (with database)..."
+              docker compose up -d
+          fi
           
           echo "⏳ Waiting for services to be ready..."
           sleep 10
           
           # Check container status
           echo "📊 Container status:"
-          docker compose ps
+          docker compose ps 2>/dev/null || docker compose -f docker-compose.no-db.yml ps
           
           # Run database migrations
           echo "🗄️  Running database migrations..."
-          docker compose exec -T app npm run migration:run || true
+          docker compose exec -T app npm run migration:run 2>/dev/null || docker compose -f docker-compose.no-db.yml exec -T app npm run migration:run || true
           
           # Health check
           echo "🏥 Health check..."
