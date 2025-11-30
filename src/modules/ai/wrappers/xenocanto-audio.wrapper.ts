@@ -15,7 +15,7 @@ export interface BirdAudio {
 @Injectable()
 export class XenoCantoAudioWrapper {
     private readonly logger = new Logger(XenoCantoAudioWrapper.name);
-    private readonly baseUrl = 'https://xeno-canto.org/api/2/recordings';
+    private readonly baseUrl = 'https://www.xeno-canto.org/api/2/recordings';
 
     constructor() {
         this.logger.log('xeno-canto API initialized for bird audio (no API key required)');
@@ -38,10 +38,12 @@ export class XenoCantoAudioWrapper {
             this.logger.log(`Fetching ${limit} audio recordings from xeno-canto for: ${scientificName}`);
 
             // Search for recordings
-            // Query format: "scientific name" quality:A|B (only high quality)
+            // xeno-canto API format: /api/2/recordings?query=genus+species+q>C
+            const query = `${scientificName.replace(' ', '+')}+q>C`; // Quality better than C
+            
             const searchResponse = await axios.get(this.baseUrl, {
                 params: {
-                    query: `${scientificName} q:A q:B`, // Only quality A and B recordings
+                    query: query,
                 },
                 headers: {
                     'User-Agent': 'BirdIdentifierApp/1.0 (arshkazemi7l5o@gmail.com)',
@@ -49,7 +51,12 @@ export class XenoCantoAudioWrapper {
                 timeout: 10000,
             });
 
-            const recordings = (searchResponse.data as any)?.recordings || [];
+            const data = searchResponse.data as any;
+            
+            // Log response for debugging
+            this.logger.log(`xeno-canto API response: numRecordings=${data?.numRecordings}, numSpecies=${data?.numSpecies}`);
+            
+            const recordings = data?.recordings || [];
 
             if (recordings.length === 0) {
                 this.logger.warn(`No audio recordings found on xeno-canto for: ${scientificName}`);
