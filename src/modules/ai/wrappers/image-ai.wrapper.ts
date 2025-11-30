@@ -148,7 +148,7 @@ Rules:
             data.confidence = Math.max(0, Math.min(1, data.confidence));
 
             this.logger.log(
-                `Image identified: ${data.scientificName || 'Unknown'} (${data.confidence})`,
+                `✅ [ImageAI] Bird identified: "${data.scientificName || 'Unknown'}" (confidence: ${data.confidence})`,
             );
 
             return data;

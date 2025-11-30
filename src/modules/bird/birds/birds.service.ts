@@ -422,7 +422,7 @@ export class BirdsService {
 
         const normalizedName = scientificName.trim();
         
-        this.logger.log(`[findOrCreate] Searching for bird: "${normalizedName}"`);
+        this.logger.log(`🔍 [BirdsService.findOrCreate] Searching database for: "${normalizedName}"`);
 
         // Try to find existing bird
         let bird = await this.birdRepo.findOne({
@@ -440,24 +440,25 @@ export class BirdsService {
         });
 
         if (bird) {
-            this.logger.log(`[findOrCreate] Found existing bird: ${bird.scientificName} (ID: ${bird.id}) - NO AI CALL`);
+            this.logger.log(`✅ [BirdsService.findOrCreate] FOUND in database: "${bird.scientificName}" (ID: ${bird.id}) - ⚡ REUSING, NO AI CALL`);
             return bird;
         }
 
         // Create minimal bird if not found
-        this.logger.log(`[findOrCreate] Creating new bird with AI enrichment: ${normalizedName}`);
+        this.logger.log(`❌ [BirdsService.findOrCreate] NOT found in database: "${normalizedName}"`);
+        this.logger.log(`🆕 [BirdsService.findOrCreate] Creating new bird record...`);
 
         // Create bird first
         bird = this.birdRepo.create({
             scientificName: normalizedName,
         });
         const savedBird = await this.birdRepo.save(bird);
-        this.logger.log(`[findOrCreate] Bird created with ID: ${savedBird.id}`);
+        this.logger.log(`✅ [BirdsService.findOrCreate] Bird record created with ID: ${savedBird.id}`);
 
         // Fetch comprehensive info from AI
         let birdInfo: BirdInfo | null = null;
         try {
-            this.logger.log(`[findOrCreate] Calling BirdInfoWrapper.fetchInfo() for "${normalizedName}"...`);
+            this.logger.log(`🤖 [BirdsService.findOrCreate] Calling BirdInfoWrapper.fetchInfo() to get comprehensive data for "${normalizedName}"... (THIS USES TOKENS)`);
             birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
             this.logger.log(`AI info fetched successfully for ${normalizedName}`);
         } catch (err) {
