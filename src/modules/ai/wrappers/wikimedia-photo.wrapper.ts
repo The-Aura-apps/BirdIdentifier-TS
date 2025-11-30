@@ -61,6 +61,9 @@ export class WikimediaPhotoWrapper {
                             iiurlwidth: 800, // Medium size
                             iiurlheight: 600,
                         },
+                        headers: {
+                            'User-Agent': 'BirdIdentifierApp/1.0 (arshkazemi7l5o@gmail.com)',
+                        },
                         timeout: 10000,
                     });
 
