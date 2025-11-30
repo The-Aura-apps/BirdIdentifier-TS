@@ -20,12 +20,13 @@ import { Habitat } from '../habitats/entities/habitat.entity';
 import { CommonName } from '../common-names/entities/common-name.entity';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
+import { FlickrPhotoWrapper } from 'src/modules/ai/wrappers/flickr-photo.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
 import { ConservationStatusService } from '../conservation-status/conservation-status.service';
 import { ConservationStatus } from '../conservation-status/entities/conservation-status.entity';
 import { Taxonomy } from '../taxonomy/entities/taxonomy.entity';
 import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto';
-import { Media } from 'src/modules/media/entities/media.entity';
+import { Media, MediaType } from 'src/modules/media/entities/media.entity';
 import { BirdDistribution } from '../bird-distribution/entities/bird-distribution.entity';
 import { Food } from '../foods/entities/food.entity';
 import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
@@ -54,6 +55,7 @@ export class BirdsService {
         private readonly taxonomyService: TaxonomyService,
         private readonly conservationStatusService: ConservationStatusService,
         private readonly birdInfoWrapper: BirdInfoWrapper,
+        private readonly flickrPhotoWrapper: FlickrPhotoWrapper,
     ) {
         this.loadCatalog();
     }
@@ -819,6 +821,52 @@ export class BirdsService {
 
         // Save the bird with updated relations
         //await this.birdRepo.save(bird);
+        
+        // Fetch photos from Flickr
+        try {
+            const commonName = bird.commonNames?.[0]?.name;
+            this.logger.log(`Fetching photos from Flickr for ${bird.scientificName}...`);
+            
+            const photos = await this.flickrPhotoWrapper.fetchPhotos(
+                bird.scientificName,
+                commonName,
+                3, // Fetch 3 photos
+            );
+
+            if (photos.length > 0) {
+                // Remove existing photos from Flickr to avoid duplicates
+                const existingMedia = await this.mediaRepo.find({ 
+                    where: { bird: { id: bird.id }, source: 'flickr' } 
+                });
+                if (existingMedia.length > 0) {
+                    await this.mediaRepo.remove(existingMedia);
+                }
+
+                // Create media entries for fetched photos
+                const mediaEntities = photos.map((photo, index) =>
+                    this.mediaRepo.create({
+                        storageKey: photo.url, // Use URL as storageKey for external photos
+                        type: MediaType.Photo,
+                        source: 'flickr',
+                        caption: photo.title,
+                        attribution: `${photo.author} - ${photo.license}`,
+                        orderIndex: index,
+                        metadata: {
+                            thumbnailKey: photo.thumbnail,
+                        },
+                        bird: bird,
+                    }),
+                );
+
+                await this.mediaRepo.save(mediaEntities);
+                this.logger.log(`Added ${photos.length} photos from Flickr for bird ${birdId}`);
+            } else {
+                this.logger.warn(`No Flickr photos found for ${bird.scientificName}`);
+            }
+        } catch (err) {
+            this.logger.error(`Failed to fetch Flickr photos for bird ${birdId}: ${err.message}`);
+        }
+
         this.logger.log(`Bird ${birdId} enrichment completed successfully`);
     }
 
