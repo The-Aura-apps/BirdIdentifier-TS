@@ -76,10 +76,10 @@ Required JSON Structure:
     "genus": "Actual genus name"
   },
   "conservationStatus": {
-    "code": "MUST BE ONE OF: EX, EW, CR, EN, VU, NT, LC, DD, or NE",
+    "code": "MUST BE ONE OF: LC,NT,VU,EN,CR,EW,EX,DD,NE",
     "fullName": "Full conservation status name",
     "description": "Brief description of conservation status and main threats",
-    "severityLevel": 0,
+    "severityLevel": LC=1, NT=2, VU=3, DD=4, EN=5, NE=6, CR=7, EW=8, EX=9,
     "authority": "IUCN"
   },
   "commonNames": [
@@ -97,22 +97,29 @@ Required JSON Structure:
       "name": "Common name in another language if applicable",
       "language": "es/fr/de/etc",
       "region": "Country or region"
+    },
+    {
+      "name": "Common name in another language if applicable",
+      "language": "es/fr/de/etc",
+      "region": "Country or region"
+    },
+    {
+      "name": "Common name in another language if applicable",
+      "language": "es/fr/de/etc",
+      "region": "Country or region"
     }
   ],
   "habitats": ["Select from: Desert, Forest, Grassland, Savanna, Scrub, Subterranean, Wetlands, Marine - include all that apply"],
   "birdFoods": [
     {
-      "name": "Seeds",
-      "description": "Specific types of seeds consumed, foraging method, and seasonal importance"
+      "name": "",
+      "description": ""
     },
     {
-      "name": "Insects",
-      "description": "Types of insects, hunting methods, and when primarily consumed"
+      "name": "",
+      "description": ""
     },
-    {
-      "name": "Fruits",
-      "description": "Fruit types, dispersal role, seasonal availability"
-    }
+
   ],
   "distributions": [
     {
