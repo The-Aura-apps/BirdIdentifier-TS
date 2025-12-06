@@ -100,7 +100,7 @@ export class UploadsService {
             throw new BadRequestException('Device ID required');
         }
 
-        this.logger.log(`Processing ${type} upload for device: ${deviceId}`);
+        this.logger.log(`Processing ${type} upload for device: ${deviceId} (SYNCHRONOUS - will wait for bird data)`);
 
         try {
             const checksum = crypto.createHash('sha256').update(file.buffer).digest('hex');
@@ -150,10 +150,10 @@ export class UploadsService {
                 }
 
                 // No successful observation found, process normally
-                this.logger.log('Duplicate file but no successful bird identification found, processing with AI...');
+                this.logger.log('Duplicate file but no successful bird identification found, processing with AI (SYNCHRONOUS)...');
                 
-                // Link it with an observation (will trigger AI processing)
-                const observation = await this.observationService.create({
+                // Create observation and WAIT for AI processing to complete
+                const observation = await this.observationService.createAndProcessSync({
                     deviceId,
                     type,
                     uploadId: existingRepo.id,
@@ -163,14 +163,6 @@ export class UploadsService {
                     upload: existingRepo,
                     observation,
                 };
-
-                /*                 return {
-                    upload: existingUpload,
-                    observation,
-                    isDuplicate: true
-                };
-            }
- */
             }
 
             // Create new upload
@@ -185,15 +177,15 @@ export class UploadsService {
             const savedRepo = await this.uploadRepo.save(upload);
             this.logger.log(`File saved with id: ${savedRepo.id}`);
 
-            // Link it with an observation
-            const observation = await this.observationService.create({
+            // Create observation and WAIT for AI processing to complete
+            const observation = await this.observationService.createAndProcessSync({
                 deviceId,
                 type,
                 uploadId: savedRepo.id,
             });
 
             this.logger.log(
-                `Observation created with id: ${observation.id} for upload: ${savedRepo.id}`,
+                `Observation completed with id: ${observation.id} for upload: ${savedRepo.id}, bird: ${observation.bird?.scientificName || 'none'}`,
             );
 
             return {

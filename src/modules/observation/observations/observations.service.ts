@@ -94,6 +94,59 @@ export class ObservationsService {
     }
 
     /**
+     * Create observation and process synchronously (WAIT for bird data)
+     * Used by upload endpoint to return complete bird data in same response
+     */
+    async createAndProcessSync(dto: CreateObservationDto): Promise<Observation> {
+        this.logger.log(`Creating observation for device: ${dto.deviceId} (SYNCHRONOUS MODE)`);
+
+        // Validate upload exists and has file data
+        if (!dto.uploadId) {
+            throw new BadRequestException('Upload ID is required');
+        }
+
+        const observation = this.observationsRepo.create({
+            deviceId: dto.deviceId,
+            type: dto.type,
+            uploadId: dto.uploadId,
+            status: ObservationStatus.PENDING,
+        });
+
+        const saved = await this.observationsRepo.save(observation);
+        this.logger.log(`Observation created: ${saved.id}, starting synchronous processing...`);
+
+        // Process immediately and WAIT for completion
+        await this.processObservation(saved.id);
+
+        // Reload observation with all relations
+        const completed = await this.observationsRepo.findOne({
+            where: { id: saved.id },
+            relations: {
+                bird: {
+                    commonNames: true,
+                    taxonomy: true,
+                    conservationStatus: true,
+                    habitats: true,
+                    birdFoods: { food: true },
+                    distributions: true,
+                    media: true,
+                },
+                upload: true,
+            },
+        });
+
+        if (!completed) {
+            throw new NotFoundException(`Observation ${saved.id} not found after processing`);
+        }
+
+        this.logger.log(
+            `Observation ${completed.id} processed synchronously: status=${completed.status}, bird=${completed.bird?.scientificName || 'none'}`
+        );
+
+        return completed;
+    }
+
+    /**
      * Process observation in background
      */
     private async processObservationBackground(id: string): Promise<void> {
@@ -112,8 +165,9 @@ export class ObservationsService {
 
     /**
      * Process observation with AI
+     * Made public to support synchronous processing
      */
-    private async processObservation(id: string) {
+    async processObservation(id: string) {
         this.logger.log(`Processing observation: ${id}`);
 
         const observation = await this.observationsRepo.findOne({
