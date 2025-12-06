@@ -23,6 +23,9 @@ import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto'
 
 import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
 import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
+import { CatalogSuggestionDto } from './dto/catalog-suggestion.dto';
+import { BirdSummaryDto } from './dto/bird-summary.dto';
+import { BatchFetchBirdsDto, BatchFetchResultDto } from './dto/batch-fetch.dto';
 
 @ApiTags('birds')
 @Controller('birds')
@@ -49,13 +52,101 @@ export class BirdsController {
         description: 'Fast search through Clements catalog. Returns up to 20 suggestions.',
     })
     @ApiQuery({
-        name: 'spa',
+        name: 'q',
         required: true,
         type: String,
         description: 'Search query (common name or scientific name)',
     })
     searchCatalog(@Query('q') query: string): { scientificName: string; englishName: string }[] {
         return this.birdService.searchCatalog(query);
+    }
+
+    /**
+     * 📱 Mobile-Friendly: Search catalog with database status
+     * GET /birds/catalog/select?q=robin
+     */
+    @Get('catalog/select')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: '📱 Mobile: Search catalog with DB status indicators',
+        description: 'Returns suggestions with isInDatabase flag and estimated fetch time. Perfect for mobile apps to show loading states.',
+    })
+    @ApiQuery({
+        name: 'q',
+        required: true,
+        type: String,
+        description: 'Search query (common name or scientific name)',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'List of suggestions with database status',
+        type: [CatalogSuggestionDto],
+    })
+    async searchCatalogWithStatus(@Query('q') query: string): Promise<CatalogSuggestionDto[]> {
+        return this.birdService.searchCatalogWithStatus(query);
+    }
+
+    /**
+     * Search catalog and fetch full bird data
+     * GET /birds/catalog/fetch/:scientificName
+     */
+    @Get('catalog/fetch/:scientificName')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Fetch full bird data from catalog search',
+        description: 'Validates scientific name exists in Clements catalog, then returns full bird data from database or fetches via AI if not exists.',
+    })
+    @ApiParam({
+        name: 'scientificName',
+        required: true,
+        type: String,
+        description: 'Scientific name of the bird (must exist in catalog)',
+    })
+    async searchCatalogAndFetch(@Param('scientificName') scientificName: string): Promise<Bird> {
+        return this.birdService.searchCatalogAndFetchBird(scientificName);
+    }
+
+    /**
+     * 📱 Mobile-Friendly: Batch fetch multiple birds
+     * POST /birds/catalog/batch-fetch
+     */
+    @Post('catalog/batch-fetch')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: '📱 Mobile: Fetch up to 10 birds in one request',
+        description: 'Reduces network round-trips by fetching multiple birds at once. Returns success/error for each bird.',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Batch fetch results',
+        type: [BatchFetchResultDto],
+    })
+    async batchFetchBirds(@Body() dto: BatchFetchBirdsDto): Promise<BatchFetchResultDto[]> {
+        return this.birdService.batchFetchBirds(dto.scientificNames);
+    }
+
+    /**
+     * 📱 Mobile-Friendly: Get bird summary by ID
+     * GET /birds/:id/summary
+     */
+    @Get(':id/summary')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: '📱 Mobile: Get bird summary with essential info',
+        description: 'Returns mobile-optimized summary with thumbnail, primary name, and key stats at top level.',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Bird ID',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Mobile-friendly bird summary',
+        type: BirdSummaryDto,
+    })
+    async getBirdSummary(@Param('id') id: string): Promise<BirdSummaryDto> {
+        const bird = await this.birdService.findOne(id);
+        return this.birdService.toBirdSummary(bird);
     }
 
     @Get('scientific/:scientificName')
