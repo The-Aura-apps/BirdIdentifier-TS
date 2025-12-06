@@ -32,9 +32,6 @@ import { BirdDistribution } from '../bird-distribution/entities/bird-distributio
 import { Food } from '../foods/entities/food.entity';
 import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
 import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
-import { CatalogSuggestionDto } from './dto/catalog-suggestion.dto';
-import { BirdSummaryDto } from './dto/bird-summary.dto';
-import { BatchFetchResultDto } from './dto/batch-fetch.dto';
 
 @Injectable()
 export class BirdsService {
@@ -83,109 +80,6 @@ export class BirdsService {
             this.logger.error('Failed to load bird catalog!', err);
             process.exit(1);
         }
-    }
-
-    /**
-     * Search catalog with database status
-     * Mobile-friendly: shows which birds need AI fetch vs instant return
-     * @param query - Search string (common name or scientific name)
-     * @returns Array of suggestions with database status
-     */
-    async searchCatalogWithStatus(query: string): Promise<CatalogSuggestionDto[]> {
-        if (!query?.trim()) {
-            return [];
-        }
-
-        const results = this.fuse.search(query.trim());
-        const suggestions = results.slice(0, 20).map((r) => ({
-            scientificName: r.item.scientificName,
-            englishName: r.item.englishName,
-        }));
-
-        // Check which birds exist in database
-        const scientificNames = suggestions.map((s) => s.scientificName);
-        const existingBirds = await this.birdRepo.find({
-            where: { scientificName: In(scientificNames) },
-            select: ['scientificName'],
-        });
-
-        const existingSet = new Set(existingBirds.map((b) => b.scientificName));
-
-        return suggestions.map((s) => ({
-            scientificName: s.scientificName,
-            englishName: s.englishName,
-            isInDatabase: existingSet.has(s.scientificName),
-            estimatedFetchTimeSeconds: existingSet.has(s.scientificName) ? null : 15,
-        }));
-    }
-
-    /**
-     * Convert Bird entity to mobile-friendly summary
-     */
-    async toBirdSummary(bird: Bird): Promise<BirdSummaryDto> {
-        const primaryCommonName =
-            bird.commonNames?.find((cn) => cn.language === 'en')?.name ||
-            bird.scientificName;
-
-        const thumbnailUrl = bird.media?.find((m) => m.type === MediaType.Photo)?.storageKey || null;
-
-        const shortDescription =
-            bird.description && bird.description.length > 200
-                ? bird.description.substring(0, 197) + '...'
-                : bird.description;
-
-        const averageSizeCm = bird.size?.lengthCm
-            ? (bird.size.lengthCm.min + bird.size.lengthCm.max) / 2
-            : null;
-
-        return {
-            id: bird.id,
-            scientificName: bird.scientificName,
-            primaryCommonName,
-            thumbnailUrl,
-            shortDescription,
-            conservationCode: bird.conservationStatus?.code || null,
-            conservationStatus: bird.conservationStatus?.fullName || null,
-            family: bird.taxonomy?.family || null,
-            averageSizeCm,
-            observationCount: bird.observations?.length || 0,
-            mediaCount: bird.media?.length || 0,
-        };
-    }
-
-    /**
-     * Batch fetch multiple birds (max 10 at a time)
-     * Mobile-friendly: Reduces network round-trips
-     */
-    async batchFetchBirds(scientificNames: string[]): Promise<BatchFetchResultDto[]> {
-        this.logger.log(`[batchFetchBirds] Fetching ${scientificNames.length} birds...`);
-
-        const results: BatchFetchResultDto[] = [];
-
-        // Process sequentially to avoid overwhelming AI API
-        for (const scientificName of scientificNames) {
-            try {
-                const bird = await this.searchCatalogAndFetchBird(scientificName);
-                results.push({
-                    scientificName,
-                    success: true,
-                    error: null,
-                    bird,
-                });
-            } catch (error) {
-                this.logger.error(
-                    `[batchFetchBirds] Failed to fetch ${scientificName}: ${error.message}`,
-                );
-                results.push({
-                    scientificName,
-                    success: false,
-                    error: error.message,
-                    bird: null,
-                });
-            }
-        }
-
-        return results;
     }
 
     /**
