@@ -90,7 +90,24 @@ export class ObservationsService {
             `Observation created with existing bird data: ${saved.id} (bird: ${dto.birdId})`
         );
 
-        return saved;
+        // Reload with full bird relations for consistent response
+        const fullObservation = await this.observationsRepo.findOne({
+            where: { id: saved.id },
+            relations: {
+                bird: {
+                    commonNames: true,
+                    taxonomy: true,
+                    conservationStatus: true,
+                    habitats: true,
+                    birdFoods: { food: true },
+                    distributions: true,
+                    media: true,
+                },
+                upload: true,
+            },
+        });
+
+        return fullObservation || saved;
     }
 
     /**
