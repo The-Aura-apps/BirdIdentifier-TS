@@ -80,7 +80,7 @@ export class ImageAiWrapper {
 
             this.logger.log(`Processing image (${file.length} bytes, ${mimeType})`);
 
-            const prompt = `Identify the bird species. Return ONLY JSON:
+            const prompt = `Identify the **bird** species. Return ONLY JSON:
 {
   "scientificName": "Genus species",
   "confidence": 0.xx
@@ -91,7 +91,8 @@ Confidence guidelines:
 - 0.7-0.89: Good visibility, confident
 - Below 0.7: Poor quality or uncertain
 
-Be honest with confidence based on image quality and visible features.`;
+Be honest with confidence based on image quality and visible features.
+And Make Sure to return just bird species not anything else`;
 
             // Call GPT-4o-mini
             const response = await this.client.chat.completions.create({
