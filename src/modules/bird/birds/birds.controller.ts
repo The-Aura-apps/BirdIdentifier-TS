@@ -126,6 +126,130 @@ export class BirdsController {
         });
     }
 
+    // Habitat filtering and search endpoints - MUST be before :id route
+    @Get('filter-by-habitat')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Filter birds by habitat and search by bird name',
+        description: 'First filters birds by specific habitat ID, then searches within those birds by their common or scientific name. Returns paginated results.',
+    })
+    @ApiQuery({
+        name: 'habitatId',
+        required: true,
+        type: Number,
+        description: 'Habitat ID to filter by',
+        example: 1,
+    })
+    @ApiQuery({
+        name: 'search',
+        required: false,
+        type: String,
+        description: 'Bird name to search for (common name or scientific name)',
+        example: 'robin',
+    })
+    @ApiQuery({
+        name: 'page',
+        required: false,
+        type: Number,
+        description: 'Page number',
+        example: 1,
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Items per page',
+        example: 20,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns paginated list of birds filtered by habitat and searched by name',
+    })
+    filterByHabitatAndSearch(
+        @Query('habitatId') habitatId: string,
+        @Query('search') search: string,
+        @Query('page') page = '1',
+        @Query('limit') limit = '20',
+    ): Promise<{
+        data: Bird[];
+        total: number;
+        habitat: string;
+    }> {
+        return this.birdService.filterByHabitatAndSearch(+habitatId, search, {
+            page: Number(page),
+            limit: Number(limit),
+        });
+    }
+
+    @Get('search-by-habitat')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Search birds by habitat name',
+        description: 'Search for birds by habitat name (partial match). Returns paginated results.',
+    })
+    @ApiQuery({
+        name: 'name',
+        required: true,
+        type: String,
+        description: 'Habitat name to search for (partial match)',
+        example: 'forest',
+    })
+    @ApiQuery({
+        name: 'page',
+        required: false,
+        type: Number,
+        description: 'Page number',
+        example: 1,
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Items per page',
+        example: 20,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns paginated list of birds matching the habitat search',
+    })
+    searchBirdsByHabitat(
+        @Query('name') name: string,
+        @Query('page') page = '1',
+        @Query('limit') limit = '20',
+    ): Promise<{
+        data: Bird[];
+        total: number;
+        habitat: string;
+    }> {
+        return this.birdService.searchBirdsByHabitatName(name, {
+            page: Number(page),
+            limit: Number(limit),
+        });
+    }
+
+    @Get('by-habitat/:habitatId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Filter birds by specific habitat ID',
+        description: 'Returns all birds that live in the specified habitat',
+    })
+    @ApiParam({
+        name: 'habitatId',
+        description: 'Habitat ID',
+        type: Number,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns array of birds living in the habitat',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Habitat not found',
+    })
+    getBirdsByHabitat(@Param('habitatId') habitatId: string): Promise<Bird[]> {
+        return this.birdService.getBirdsByHabitat(+habitatId);
+    }
+
     @Get('scientific/:scientificName')
     @HttpCode(HttpStatus.OK)
     findByScientificName(
@@ -229,7 +353,7 @@ export class BirdsController {
     @Get('habitat/:habitatId')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
-        summary: 'Get birds by habitat',
+        summary: 'Get birds by habitat (deprecated - use /by-habitat/:habitatId)',
     })
     @ApiParam({
         name: 'habitatId',

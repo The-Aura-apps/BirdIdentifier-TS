@@ -1472,4 +1472,146 @@ export class BirdsService {
         this.logger.log(`Distribution added to bird ${birdId}`);
         return saved;
     }
+
+    /**
+     * Get all birds by habitat ID
+     */
+    async getBirdsByHabitat(habitatId: number): Promise<Bird[]> {
+        const habitat = await this.habitatRepo.findOne({
+            where: { id: habitatId },
+            relations: ['birds', 'birds.commonNames', 'birds.taxonomy', 'birds.conservationStatus', 'birds.media'],
+        });
+
+        if (!habitat) {
+            throw new NotFoundException(`Habitat with ID ${habitatId} not found`);
+        }
+
+        this.logger.log(`Found ${habitat.birds?.length || 0} birds for habitat ${habitatId}`);
+        return habitat.birds || [];
+    }
+
+    /**
+     * Filter birds by habitat and search by bird name
+     */
+    async filterByHabitatAndSearch(
+        habitatId: number,
+        search: string,
+        options: {
+            page?: number;
+            limit?: number;
+        } = {},
+    ): Promise<{
+        data: Bird[];
+        total: number;
+        habitat: string;
+    }> {
+        const { page = 1, limit = 20 } = options;
+
+        // First, get the habitat to verify it exists
+        const habitat = await this.habitatRepo.findOne({
+            where: { id: habitatId },
+        });
+
+        if (!habitat) {
+            throw new NotFoundException(`Habitat with ID ${habitatId} not found`);
+        }
+
+        // Build the query
+        let queryBuilder = this.birdRepo
+            .createQueryBuilder('bird')
+            .innerJoin('bird.habitats', 'habitat')
+            .leftJoinAndSelect('bird.commonNames', 'commonName')
+            .leftJoinAndSelect('bird.taxonomy', 'taxonomy')
+            .leftJoinAndSelect('bird.conservationStatus', 'conservationStatus')
+            .leftJoinAndSelect('bird.media', 'media')
+            .where('habitat.id = :habitatId', { habitatId });
+
+        // Add search filter if provided
+        if (search && search.trim().length > 0) {
+            queryBuilder = queryBuilder.andWhere(
+                '(LOWER(bird.scientificName) LIKE LOWER(:search) OR LOWER(commonName.name) LIKE LOWER(:search))',
+                { search: `%${search.trim()}%` }
+            );
+        }
+
+        // Apply pagination and get results
+        const [data, total] = await queryBuilder
+            .skip((page - 1) * limit)
+            .take(limit)
+            .orderBy('bird.scientificName', 'ASC')
+            .getManyAndCount();
+
+        this.logger.log(
+            `Filtered ${total} birds in habitat ${habitatId} (${habitat.name})${search ? ` matching "${search}"` : ''}`,
+        );
+
+        return {
+            data,
+            total,
+            habitat: habitat.name,
+        };
+    }
+
+    /**
+     * Search birds by habitat name (partial match)
+     */
+    async searchBirdsByHabitatName(
+        habitatName: string,
+        options: {
+            page?: number;
+            limit?: number;
+        } = {},
+    ): Promise<{
+        data: Bird[];
+        total: number;
+        habitat: string;
+    }> {
+        const { page = 1, limit = 20 } = options;
+
+        if (!habitatName || habitatName.trim().length === 0) {
+            throw new BadRequestException('Habitat name is required');
+        }
+
+        // Find habitats that match the search term
+        const habitats = await this.habitatRepo
+            .createQueryBuilder('habitat')
+            .where('LOWER(habitat.name) LIKE LOWER(:name)', {
+                name: `%${habitatName.trim()}%`,
+            })
+            .getMany();
+
+        if (habitats.length === 0) {
+            return {
+                data: [],
+                total: 0,
+                habitat: habitatName,
+            };
+        }
+
+        const habitatIds = habitats.map(h => h.id);
+
+        // Get all birds that have any of these habitats with pagination
+        const [data, total] = await this.birdRepo
+            .createQueryBuilder('bird')
+            .leftJoinAndSelect('bird.habitats', 'habitat')
+            .leftJoinAndSelect('bird.commonNames', 'commonName')
+            .leftJoinAndSelect('bird.taxonomy', 'taxonomy')
+            .leftJoinAndSelect('bird.conservationStatus', 'conservationStatus')
+            .leftJoinAndSelect('bird.media', 'media')
+            .where('habitat.id IN (:...habitatIds)', { habitatIds })
+            .skip((page - 1) * limit)
+            .take(limit)
+            .orderBy('bird.scientificName', 'ASC')
+            .getManyAndCount();
+
+        this.logger.log(
+            `Found ${total} birds matching habitat search "${habitatName}" (${habitats.length} habitats matched)`,
+        );
+
+        return {
+            data,
+            total,
+            habitat: habitats.map(h => h.name).join(', '),
+        };
+    }
 }
