@@ -34,8 +34,31 @@ export class UploadsController {
             type,
         );
 
-        // Return only the bird data
-        return result.observation.bird;
+        // Check for errors or low confidence
+        if (result.observation.status === 'failed') {
+            return {
+                success: false,
+                error: result.observation.errorMessage || 'Bird identification failed',
+                confidence: result.observation.confidence,
+                status: result.observation.status,
+                observation: {
+                    id: result.observation.id,
+                    createdAt: result.observation.createdAt,
+                },
+            };
+        }
+
+        // Return bird data on success
+        return {
+            success: true,
+            bird: result.observation.bird,
+            confidence: result.observation.confidence,
+            status: result.observation.status,
+            observation: {
+                id: result.observation.id,
+                createdAt: result.observation.createdAt,
+            },
+        };
     }
 
     @Get(':id')

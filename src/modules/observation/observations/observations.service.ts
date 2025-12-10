@@ -259,15 +259,19 @@ export class ObservationsService {
                 );
             }
         } else if (aiResponse.status === 'uncertain') {
-            // Store uncertain result but don't link to a bird
-            observation.status = ObservationStatus.COMPLETED;
-            observation.aiResult = aiResponse;
-            observation.confidence = aiResponse.confidence;
-            observation.bird = null;
-            observation.birdId = null;
+            // Low confidence - mark as failed with clear message
+            const confidencePercent = ((aiResponse.confidence || 0) * 100).toFixed(1);
+            const errorMessage = `Low confidence detection (${confidencePercent}%). Minimum required is 70%. Detected species: ${aiResponse.result?.scientificName || 'Unknown'}`;
+            
+            this.logger.warn(`Observation ${observation.id}: ${errorMessage}`);
+            
+            observation.markAsFailed(errorMessage, aiResponse);
         } else {
-            // Failed
-            observation.markAsFailed(aiResponse.error || 'AI processing failed', aiResponse);
+            // Failed - clear error message
+            const errorMessage = aiResponse.error || 'AI processing failed: Unable to identify bird species';
+            this.logger.error(`Observation ${observation.id} failed: ${errorMessage}`);
+            
+            observation.markAsFailed(errorMessage, aiResponse);
         }
 
         await this.observationsRepo.save(observation);

@@ -37,7 +37,7 @@ export class AiService {
                 return {
                     status: 'failed',
                     confidence: null,
-                    error: `Invalid file type: ${normalizedType}`,
+                    error: `Invalid file type "${normalizedType}". Only image and audio files are supported.`,
                 };
             }
 
@@ -47,7 +47,7 @@ export class AiService {
                 return {
                     status: 'failed',
                     confidence: null,
-                    error: 'File size exceeds 10MB limit',
+                    error: `File size (${(fileData.length / 1024 / 1024).toFixed(2)}MB) exceeds the 10MB limit.`,
                 };
             }
 
@@ -55,7 +55,7 @@ export class AiService {
                 return {
                     status: 'failed',
                     confidence: null,
-                    error: 'Empty file provided',
+                    error: 'Empty file provided. Please upload a valid image or audio file.',
                 };
             }
 
@@ -70,7 +70,7 @@ export class AiService {
                 return {
                     status: 'failed',
                     confidence: null,
-                    error: 'AI returned no result',
+                    error: 'AI could not analyze the file. The image or audio may be unclear or corrupted.',
                 };
             }
 
@@ -80,7 +80,7 @@ export class AiService {
                 return {
                     status: 'failed',
                     confidence: null,
-                    error: 'No bird species identified',
+                    error: 'No bird species could be identified in the uploaded file. Please try a clearer image or audio recording.',
                 };
             }
 
@@ -88,8 +88,9 @@ export class AiService {
 
             // Low confidence = uncertain
             if (confidence < this.MIN_CONFIDENCE) {
+                const confidencePercent = (confidence * 100).toFixed(1);
                 this.logger.log(
-                    `Low confidence (${confidence}) for ${identification.scientificName}`,
+                    `Low confidence (${confidencePercent}%) for ${identification.scientificName}`,
                 );
                 return {
                     status: 'uncertain',
