@@ -1477,16 +1477,23 @@ export class BirdsService {
      * Get all birds by habitat ID
      */
     async getBirdsByHabitat(habitatId: number): Promise<Bird[]> {
+        this.logger.log(`[getBirdsByHabitat] Fetching birds for habitat ID: ${habitatId}`);
+        
         const habitat = await this.habitatRepo.findOne({
             where: { id: habitatId },
-            relations: ['birds', 'birds.commonNames', 'birds.taxonomy', 'birds.conservationStatus', 'birds.media'],
+            relations: ['birds', 'birds.commonNames', 'birds.taxonomy', 'birds.conservationStatus', 'birds.media', 'birds.habitats'],
         });
 
         if (!habitat) {
             throw new NotFoundException(`Habitat with ID ${habitatId} not found`);
         }
 
-        this.logger.log(`Found ${habitat.birds?.length || 0} birds for habitat ${habitatId}`);
+        this.logger.log(`[getBirdsByHabitat] Found ${habitat.birds?.length || 0} birds for habitat ${habitatId}`);
+        
+        if (habitat.birds && habitat.birds.length > 0) {
+            this.logger.log(`[getBirdsByHabitat] First bird habitats count: ${habitat.birds[0].habitats?.length || 0}`);
+        }
+        
         return habitat.birds || [];
     }
 
