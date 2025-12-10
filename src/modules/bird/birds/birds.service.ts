@@ -1520,6 +1520,7 @@ export class BirdsService {
         let queryBuilder = this.birdRepo
             .createQueryBuilder('bird')
             .innerJoin('bird.habitats', 'habitat')
+            .leftJoinAndSelect('bird.habitats', 'habitats')
             .leftJoinAndSelect('bird.commonNames', 'commonName')
             .leftJoinAndSelect('bird.taxonomy', 'taxonomy')
             .leftJoinAndSelect('bird.conservationStatus', 'conservationStatus')
