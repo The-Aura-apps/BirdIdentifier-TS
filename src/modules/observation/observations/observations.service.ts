@@ -300,6 +300,33 @@ export class ObservationsService {
         return observation.map((obs) => obs.bird!);
     }
 
+    async findSimplifiedHistory(deviceId: string): Promise<any[]> {
+        const observations = await this.observationsRepo.find({
+            where: {
+                deviceId,
+                status: ObservationStatus.COMPLETED,
+            },
+            relations: {
+                bird: {
+                    commonNames: true,
+                    media: true,
+                },
+            },
+            order: {
+                createdAt: 'DESC',
+            },
+        });
+
+        return observations
+            .filter((obs) => obs.bird)
+            .map((obs) => ({
+                birdId: obs.bird!.id,
+                scientificName: obs.bird!.scientificName,
+                commonName: obs.bird!.commonNames?.[0]?.name || null,
+                image: obs.bird!.media?.[0]?.getDisplayUrl() || null,
+            }));
+    }
+
     async findOne(id: string) {
         return this.observationsRepo.findOne({
             where: { id },

@@ -69,6 +69,38 @@ export class ObservationsController {
         return this.observationsService.findByDevice(deviceId);
     }
 
+    @Get('history-simple/:deviceId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Get simplified user bird search history',
+        description: 'Returns bird ID, scientific name, one common name, and image for each observation. Only includes completed observations with bird data.',
+    })
+    @ApiParam({
+        name: 'deviceId',
+        description: 'Device/User ID',
+        type: String,
+        example: 'device-123-abc',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns array with birdId, scientificName, commonName, and image',
+        schema: {
+            example: [
+                {
+                    birdId: 123,
+                    scientificName: 'Turdus migratorius',
+                    commonName: 'American Robin',
+                    image: 'https://example.com/robin.jpg'
+                }
+            ]
+        }
+    })
+    getSimplifiedHistory(@Param('deviceId') deviceId: string): Promise<any[]> {
+        return this.observationsService.findSimplifiedHistory(deviceId);
+    }
+
+    
+
     @Get(':id')
     @ApiOperation({
         summary: 'Get observation by ID',
