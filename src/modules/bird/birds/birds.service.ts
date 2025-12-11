@@ -1514,8 +1514,7 @@ export class BirdsService {
         return (habitat.birds || []).map(bird => ({
             birdId: bird.id,
             scientificName: bird.scientificName,
-            commonName: bird.commonNames?.[0]?.name || null,
-            image: bird.media?.[0]?.getDisplayUrl() || null,
+            image: bird.media?.[0]?.storageKey || null,
         }));
     }
 

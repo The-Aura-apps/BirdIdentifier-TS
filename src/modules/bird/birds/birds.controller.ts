@@ -254,7 +254,7 @@ export class BirdsController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
         summary: 'Get simplified birds by habitat ID',
-        description: 'Returns bird ID, scientific name, one common name, and image for all birds in the specified habitat',
+        description: 'Returns bird ID, scientific name, and image URL for all birds in the specified habitat',
     })
     @ApiParam({
         name: 'habitatId',
@@ -264,14 +264,13 @@ export class BirdsController {
     })
     @ApiResponse({
         status: 200,
-        description: 'Returns array with birdId, scientificName, commonName, and image',
+        description: 'Returns array with birdId, scientificName, and image',
         schema: {
             example: [
                 {
                     birdId: 123,
                     scientificName: 'Turdus migratorius',
-                    commonName: 'American Robin',
-                    image: 'http://localhost:3000/uploads/birds/robin.jpg'
+                    image: 'https://upload.wikimedia.org/wikipedia/commons/robin.jpg'
                 }
             ]
         }

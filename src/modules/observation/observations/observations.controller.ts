@@ -73,7 +73,7 @@ export class ObservationsController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
         summary: 'Get simplified user bird search history',
-        description: 'Returns bird ID, scientific name, one common name, and image for each observation. Only includes completed observations with bird data.',
+        description: 'Returns bird ID, scientific name, and image URL for each observation. Only includes completed observations with bird data.',
     })
     @ApiParam({
         name: 'deviceId',
@@ -83,14 +83,13 @@ export class ObservationsController {
     })
     @ApiResponse({
         status: 200,
-        description: 'Returns array with birdId, scientificName, commonName, and image',
+        description: 'Returns array with birdId, scientificName, and image',
         schema: {
             example: [
                 {
                     birdId: 123,
                     scientificName: 'Turdus migratorius',
-                    commonName: 'American Robin',
-                    image: 'https://example.com/robin.jpg'
+                    image: 'https://upload.wikimedia.org/wikipedia/commons/robin.jpg'
                 }
             ]
         }

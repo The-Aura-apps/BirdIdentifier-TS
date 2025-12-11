@@ -322,8 +322,7 @@ export class ObservationsService {
             .map((obs) => ({
                 birdId: obs.bird!.id,
                 scientificName: obs.bird!.scientificName,
-                commonName: obs.bird!.commonNames?.[0]?.name || null,
-                image: obs.bird!.media?.[0]?.getDisplayUrl() || null,
+                image: obs.bird!.media?.[0]?.storageKey || null,
             }));
     }
 
