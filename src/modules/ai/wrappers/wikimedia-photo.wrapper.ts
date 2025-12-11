@@ -23,32 +23,24 @@ export class WikimediaPhotoWrapper {
      * Fetch bird photos from Wikimedia Commons
      * @param scientificName Scientific name of the bird
      * @param commonName Common name (optional, improves results)
-     * @param limit Number of photos to fetch (min: 1, max: 6, default: 3)
-     * @returns Array of bird photos
+     * @returns Single bird photo or null
      */
     async fetchPhotos(
         scientificName: string,
         commonName?: string,
-        limit: number = 3,
-    ): Promise<BirdPhoto[]> {
-        // Clamp limit between 1 and 6
-        limit = Math.max(1, Math.min(6, limit));
-        
+    ): Promise<BirdPhoto | null> {
         try {
             // Search query: use scientific name for better accuracy
-            const searchTerms = [
-                scientificName,
-                commonName ? `${commonName} bird` : null,
-            ].filter(Boolean);
+            const searchTerms = [scientificName, commonName ? `${commonName} bird` : null].filter(
+                Boolean,
+            );
 
-            this.logger.log(`Fetching ${limit} photos from Wikimedia Commons for: ${scientificName}`);
+            this.logger.log(
+                `Fetching 1 photo from Wikimedia Commons for: ${scientificName}`,
+            );
 
-            const birdPhotos: BirdPhoto[] = [];
-
-            // Try each search term until we get enough photos
+            // Try each search term until we get a photo
             for (const searchTerm of searchTerms) {
-                if (birdPhotos.length >= limit) break;
-
                 try {
                     // Search for images
                     const searchResponse = await axios.get(this.baseUrl, {
@@ -58,7 +50,7 @@ export class WikimediaPhotoWrapper {
                             generator: 'search',
                             gsrnamespace: 6, // File namespace
                             gsrsearch: searchTerm,
-                            gsrlimit: limit * 2, // Get extra to filter
+                            gsrlimit: 5, // Get few to pick the best one
                             prop: 'imageinfo',
                             iiprop: 'url|extmetadata|size',
                             iiurlwidth: 800, // Medium size
@@ -75,8 +67,6 @@ export class WikimediaPhotoWrapper {
 
                     // Process each image
                     for (const pageId of Object.keys(pages)) {
-                        if (birdPhotos.length >= limit) break;
-
                         const page = pages[pageId];
                         const imageInfo = page.imageinfo?.[0];
 
@@ -88,38 +78,40 @@ export class WikimediaPhotoWrapper {
                         // Get metadata
                         const metadata = imageInfo.extmetadata || {};
                         const artist = metadata.Artist?.value?.replace(/<[^>]*>/g, '') || 'Unknown';
-                        const license = metadata.LicenseShortName?.value || 
-                                      metadata.License?.value || 
-                                      'CC BY-SA';
+                        const license =
+                            metadata.LicenseShortName?.value ||
+                            metadata.License?.value ||
+                            'CC BY-SA';
 
-                        birdPhotos.push({
+                        const birdPhoto: BirdPhoto = {
                             url: imageInfo.url,
                             thumbnail: imageInfo.thumburl || imageInfo.url,
                             title: page.title?.replace('File:', '') || 'Untitled',
                             author: artist,
                             license: license,
-                            source: imageInfo.descriptionurl || `https://commons.wikimedia.org/wiki/${page.title}`,
-                        });
+                            source:
+                                imageInfo.descriptionurl ||
+                                `https://commons.wikimedia.org/wiki/${page.title}`,
+                        };
 
-                        this.logger.log(`Fetched photo ${birdPhotos.length}/${limit}: ${page.title}`);
+                        this.logger.log(`Fetched photo: ${page.title}`);
+                        return birdPhoto; // Return first valid photo
                     }
                 } catch (err) {
-                    this.logger.warn(`Failed to search Wikimedia with term "${searchTerm}": ${err.message}`);
+                    this.logger.warn(
+                        `Failed to search Wikimedia with term "${searchTerm}": ${err.message}`,
+                    );
                     continue;
                 }
             }
 
-            if (birdPhotos.length === 0) {
-                this.logger.warn(`No photos found on Wikimedia Commons for: ${scientificName}`);
-            } else {
-                this.logger.log(`Successfully fetched ${birdPhotos.length} photos for ${scientificName}`);
-            }
-
-            return birdPhotos;
-
+            this.logger.warn(`No photos found on Wikimedia Commons for: ${scientificName}`);
+            return null;
         } catch (err) {
-            this.logger.error(`Failed to fetch Wikimedia photos for ${scientificName}: ${err.message}`);
-            return [];
+            this.logger.error(
+                `Failed to fetch Wikimedia photos for ${scientificName}: ${err.message}`,
+            );
+            return null;
         }
     }
 }

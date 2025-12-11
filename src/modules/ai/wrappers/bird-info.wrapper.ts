@@ -177,7 +177,7 @@ SPECIFIC FIELD REQUIREMENTS:
 - Include multiple countries where the bird is found
 
 **birdFoods requirements**:
-- Include 3-8 food items
+- Include 0-8 food items
 - Common food categories: Seeds, Insects, Fruits, Nectar, Small Mammals, Fish, Carrion, Berries, Nuts, Aquatic Plants, Crustaceans, Mollusks, Worms, Grains, Vegetation
 - Be specific about species preferences and foraging behavior
 

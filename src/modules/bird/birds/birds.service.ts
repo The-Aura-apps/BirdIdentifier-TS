@@ -863,15 +863,14 @@ export class BirdsService {
         // Fetch photos from Wikimedia Commons
         try {
             const commonName = bird.commonNames?.[0]?.name;
-            this.logger.log(`Fetching photos from Wikimedia Commons for ${bird.scientificName}...`);
+            this.logger.log(`Fetching photo from Wikimedia Commons for ${bird.scientificName}...`);
             
-            const photos = await this.wikimediaPhotoWrapper.fetchPhotos(
+            const photo = await this.wikimediaPhotoWrapper.fetchPhotos(
                 bird.scientificName,
                 commonName,
-                5, // Fetch 1-6 photos (default: 5)
             );
 
-            if (photos.length > 0) {
+            if (photo) {
                 // Remove existing photos from Wikimedia to avoid duplicates
                 const existingMedia = await this.mediaRepo.find({ 
                     where: { bird: { id: bird.id }, source: 'wikimedia' } 
@@ -880,29 +879,27 @@ export class BirdsService {
                     await this.mediaRepo.remove(existingMedia);
                 }
 
-                // Create media entries for fetched photos
-                const mediaEntities = photos.map((photo, index) =>
-                    this.mediaRepo.create({
-                        storageKey: photo.url, // Use URL as storageKey for external photos
-                        type: MediaType.Photo,
-                        source: 'wikimedia',
-                        caption: photo.title,
-                        attribution: `${photo.author} - ${photo.license}`,
-                        orderIndex: index,
-                        metadata: {
-                            thumbnailKey: photo.thumbnail,
-                        },
-                        bird: bird,
-                    }),
-                );
+                // Create media entry for the photo
+                const mediaEntity = this.mediaRepo.create({
+                    storageKey: photo.url, // Use URL as storageKey for external photos
+                    type: MediaType.Photo,
+                    source: 'wikimedia',
+                    caption: photo.title,
+                    attribution: `${photo.author} - ${photo.license}`,
+                    orderIndex: 0,
+                    metadata: {
+                        thumbnailKey: photo.thumbnail,
+                    },
+                    bird: bird,
+                });
 
-                await this.mediaRepo.save(mediaEntities);
-                this.logger.log(`Added ${photos.length} photos from Wikimedia Commons for bird ${birdId}`);
+                await this.mediaRepo.save(mediaEntity);
+                this.logger.log(`Added 1 photo from Wikimedia Commons for bird ${birdId}`);
             } else {
-                this.logger.warn(`No Wikimedia photos found for ${bird.scientificName}`);
+                this.logger.warn(`No Wikimedia photo found for ${bird.scientificName}`);
             }
         } catch (err) {
-            this.logger.error(`Failed to fetch Wikimedia photos for bird ${birdId}: ${err.message}`);
+            this.logger.error(`Failed to fetch Wikimedia photo for bird ${birdId}: ${err.message}`);
         }
 
         // Fetch audio recordings from xeno-canto
