@@ -1495,6 +1495,31 @@ export class BirdsService {
     }
 
     /**
+     * Get simplified birds by habitat ID (only ID, scientific name, one common name, and image)
+     */
+    async getSimplifiedBirdsByHabitat(habitatId: number): Promise<any[]> {
+        this.logger.log(`[getSimplifiedBirdsByHabitat] Fetching simplified birds for habitat ID: ${habitatId}`);
+        
+        const habitat = await this.habitatRepo.findOne({
+            where: { id: habitatId },
+            relations: ['birds', 'birds.commonNames', 'birds.media'],
+        });
+
+        if (!habitat) {
+            throw new NotFoundException(`Habitat with ID ${habitatId} not found`);
+        }
+
+        this.logger.log(`[getSimplifiedBirdsByHabitat] Found ${habitat.birds?.length || 0} birds for habitat ${habitatId}`);
+        
+        return (habitat.birds || []).map(bird => ({
+            birdId: bird.id,
+            scientificName: bird.scientificName,
+            commonName: bird.commonNames?.[0]?.name || null,
+            image: bird.media?.[0]?.getDisplayUrl() || null,
+        }));
+    }
+
+    /**
      * Filter birds by habitat and search by bird name
      */
     async filterByHabitatAndSearch(

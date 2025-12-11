@@ -250,6 +250,40 @@ export class BirdsController {
         return this.birdService.getBirdsByHabitat(+habitatId);
     }
 
+    @Get('by-habitat-simple/:habitatId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Get simplified birds by habitat ID',
+        description: 'Returns bird ID, scientific name, one common name, and image for all birds in the specified habitat',
+    })
+    @ApiParam({
+        name: 'habitatId',
+        description: 'Habitat ID',
+        type: Number,
+        example: 2,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns array with birdId, scientificName, commonName, and image',
+        schema: {
+            example: [
+                {
+                    birdId: 123,
+                    scientificName: 'Turdus migratorius',
+                    commonName: 'American Robin',
+                    image: 'http://localhost:3000/uploads/birds/robin.jpg'
+                }
+            ]
+        }
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Habitat not found',
+    })
+    getSimplifiedBirdsByHabitat(@Param('habitatId') habitatId: string): Promise<any[]> {
+        return this.birdService.getSimplifiedBirdsByHabitat(+habitatId);
+    }
+
     @Get('scientific/:scientificName')
     @HttpCode(HttpStatus.OK)
     findByScientificName(
