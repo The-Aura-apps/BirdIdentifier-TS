@@ -16,6 +16,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiQuery } from '@nestjs/
 import { ObservationsService } from './observations.service';
 import { Observation } from './entities/observation.entity';
 import { CreateObservationDto } from './dto/create-observation.dto';
+import { Bird } from '@/modules/bird/birds/entities/bird.entity';
 
 @ApiTags('observations')
 @Controller('observations')
@@ -64,7 +65,7 @@ export class ObservationsController {
         status: 200,
         description: 'Returns array of observations with bird data',
     })
-    getUserHistory(@Param('deviceId') deviceId: string): Promise<Observation[]> {
+    getUserHistory(@Param('deviceId') deviceId: string): Promise<Bird[]> {
         return this.observationsService.findByDevice(deviceId);
     }
 
@@ -82,22 +83,22 @@ export class ObservationsController {
         return this.observationsService.findOne(id);
     }
 
-    @Get('device/:deviceId')
-    @ApiOperation({
-        summary: 'Get observations by device (deprecated - use /history/:deviceId)',
-        description: 'Returns all observations for a specific device. Use /history/:deviceId instead.',
-    })
-    @ApiParam({
-        name: 'deviceId',
-        description: 'Device ID',
-        type: String,
-    })
-    findByDevice(
-        @Param('deviceId')
-        deviceId: string,
-    ): Promise<Observation[]> {
-        return this.observationsService.findByDevice(deviceId);
-    }
+    // @Get('device/:deviceId')
+    // @ApiOperation({
+    //     summary: 'Get observations by device (deprecated - use /history/:deviceId)',
+    //     description: 'Returns all observations for a specific device. Use /history/:deviceId instead.',
+    // })
+    // @ApiParam({
+    //     name: 'deviceId',
+    //     description: 'Device ID',
+    //     type: String,
+    // })
+    // findByDevice(
+    //     @Param('deviceId')
+    //     deviceId: string,
+    // ): Promise<Observation[]> {
+    //     return this.observationsService.findByDevice(deviceId);
+    // }
 
     @Patch(':id')
     @ApiOperation({

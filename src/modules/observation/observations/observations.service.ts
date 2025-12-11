@@ -6,6 +6,7 @@ import { BirdsService } from 'src/modules/bird/birds/birds.service';
 import { AiService } from 'src/modules/ai/ai.service';
 import { CreateObservationDto } from './dto/create-observation.dto';
 import { BirdAiResponse, isIdentified, isFailed } from 'src/modules/ai/types';
+import { Bird } from '@/modules/bird/birds/entities/bird.entity';
 
 @Injectable()
 export class ObservationsService {
@@ -286,16 +287,17 @@ export class ObservationsService {
         });
     }
 
-    async findByDevice(deviceId: string): Promise<Observation[]> {
-        return await this.observationsRepo.find({
+    async findByDevice(deviceId: string): Promise<Bird[]> {
+        const observation = await this.observationsRepo.find({
             where: {
                 deviceId,
             },
-            relations: ['bird', 'upload'],
+            relations: ['bird'],
             order: {
                 createdAt: 'DESC',
             },
         });
+        return observation.map((obs) => obs.bird!);
     }
 
     async findOne(id: string) {
