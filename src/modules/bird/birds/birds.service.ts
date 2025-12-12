@@ -316,7 +316,6 @@ export class BirdsService {
                 id: Number(id),
             },
             relations: [
-                'observations',
                 'media',
                 'commonNames',
                 'conservationStatus',
