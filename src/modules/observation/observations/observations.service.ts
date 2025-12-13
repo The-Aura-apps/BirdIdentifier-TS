@@ -326,6 +326,42 @@ export class ObservationsService {
             }));
     }
 
+    async findUniqueUserHistory(deviceId: string): Promise<any[]> {
+        const observations = await this.observationsRepo.find({
+            where: {
+                deviceId,
+                status: ObservationStatus.COMPLETED,
+            },
+            relations: {
+                bird: {
+                    media: true,
+                },
+            },
+            order: {
+                createdAt: 'DESC',
+            },
+        });
+
+        // Filter unique birds - keep only first occurrence (most recent)
+        const seenBirdIds = new Set<number>();
+        const uniqueBirds = observations
+            .filter((obs) => obs.bird && obs.bird.id)
+            .filter((obs) => {
+                if (seenBirdIds.has(obs.bird!.id)) {
+                    return false; // Skip duplicates
+                }
+                seenBirdIds.add(obs.bird!.id);
+                return true; // Keep first occurrence
+            })
+            .map((obs) => ({
+                birdId: obs.bird!.id,
+                scientificName: obs.bird!.scientificName,
+                image: obs.bird!.media?.[0]?.storageKey || null,
+            }));
+
+        return uniqueBirds;
+    }
+
     async findOne(id: string) {
         return this.observationsRepo.findOne({
             where: { id },

@@ -66,7 +66,8 @@ export class BirdsController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
         summary: 'Fetch full bird data from catalog search',
-        description: 'Validates scientific name exists in Clements catalog, then returns full bird data from database or fetches via AI if not exists.',
+        description:
+            'Validates scientific name exists in Clements catalog, then returns full bird data from database or fetches via AI if not exists.',
     })
     @ApiParam({
         name: 'scientificName',
@@ -83,6 +84,7 @@ export class BirdsController {
     async getBirdByScientificName(@Param('scientificName') scientificName: string): Promise<Bird> {
         return this.birdService.findOrCreate(scientificName);
     }
+
 
     @Get()
     @HttpCode(HttpStatus.OK)
@@ -131,7 +133,8 @@ export class BirdsController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
         summary: 'Filter birds by habitat and search by bird name',
-        description: 'First filters birds by specific habitat ID, then searches within those birds by their common or scientific name. Returns paginated results.',
+        description:
+            'First filters birds by specific habitat ID, then searches within those birds by their common or scientific name. Returns paginated results.',
     })
     @ApiQuery({
         name: 'habitatId',
@@ -254,7 +257,8 @@ export class BirdsController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
         summary: 'Get simplified birds by habitat ID',
-        description: 'Returns bird ID, scientific name, and image URL for all birds in the specified habitat',
+        description:
+            'Returns bird ID, scientific name, and image URL for all birds in the specified habitat',
     })
     @ApiParam({
         name: 'habitatId',
@@ -270,10 +274,10 @@ export class BirdsController {
                 {
                     birdId: 123,
                     scientificName: 'Turdus migratorius',
-                    image: 'https://upload.wikimedia.org/wikipedia/commons/robin.jpg'
-                }
-            ]
-        }
+                    image: 'https://upload.wikimedia.org/wikipedia/commons/robin.jpg',
+                },
+            ],
+        },
     })
     @ApiResponse({
         status: 404,
@@ -319,6 +323,8 @@ export class BirdsController {
     ): Promise<void> {
         return this.birdService.remove(id);
     }
+
+
 
     // Observation count
     @Get(':id/observation-count')

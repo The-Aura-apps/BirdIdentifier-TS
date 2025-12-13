@@ -98,6 +98,40 @@ export class ObservationsController {
         return this.observationsService.findSimplifiedHistory(deviceId);
     }
 
+    @Get('history-unique/:deviceId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Get unique user bird search history',
+        description: 'Returns each unique bird only once, even if searched multiple times. Shows bird ID, scientific name, and image URL. Only includes completed observations with bird data.',
+    })
+    @ApiParam({
+        name: 'deviceId',
+        description: 'Device/User ID',
+        type: String,
+        example: '111a',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns array with unique birds (birdId, scientificName, and image)',
+        schema: {
+            example: [
+                {
+                    birdId: 123,
+                    scientificName: 'Turdus migratorius',
+                    image: 'https://upload.wikimedia.org/wikipedia/commons/robin.jpg'
+                },
+                {
+                    birdId: 456,
+                    scientificName: 'Passer domesticus',
+                    image: 'https://upload.wikimedia.org/wikipedia/commons/sparrow.jpg'
+                }
+            ]
+        }
+    })
+    getUniqueUserHistory(@Param('deviceId') deviceId: string): Promise<any[]> {
+        return this.observationsService.findUniqueUserHistory(deviceId);
+    }
+
     
 
     @Get(':id')
