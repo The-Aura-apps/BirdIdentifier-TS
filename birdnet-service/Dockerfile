@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir \
     flask \
     numpy \
     librosa \
+    resampy \
+    soundfile \
+    audioread \
     tensorflow-cpu \
     birdnetlib
 
