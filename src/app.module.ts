@@ -19,6 +19,7 @@ import { ConservationStatusModule } from './modules/bird/conservation-status/con
 import { CommonNamesModule } from './modules/bird/common-names/common-names.module';
 import { TaxonomyModule } from './modules/bird/taxonomy/taxonomy.module';
 import { MediaModule } from './modules/media/media.module';
+import { DeviceSettingsModule } from './modules/device-settings/device-settings.module';
 //import { IngestModule } from './modules/ingest/ingest.module';
 
 @Module({
@@ -45,6 +46,7 @@ import { MediaModule } from './modules/media/media.module';
         ConservationStatusModule,
         CommonNamesModule,
         MediaModule,
+        DeviceSettingsModule,
         //IngestModule,
         //NotificationModule,
     ],

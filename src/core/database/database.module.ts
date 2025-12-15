@@ -13,6 +13,7 @@ import { Taxonomy } from 'src/modules/bird/taxonomy/entities/taxonomy.entity';
 import { Media } from 'src/modules/media/entities/media.entity';
 import { Observation } from 'src/modules/observation/observations/entities/observation.entity';
 import { Upload } from 'src/modules/uploads/entities/upload.entity';
+import { DeviceSettings } from 'src/modules/device-settings/entities/device-settings.entity';
 
 
 @Module({
@@ -40,6 +41,7 @@ import { Upload } from 'src/modules/uploads/entities/upload.entity';
                     Observation,
                     Upload,
                     Media,
+                    DeviceSettings,
                 ],
                 synchronize: configService.get<boolean>('database.synchronize'),
                 logging: configService.get<boolean>('database.logging'),
