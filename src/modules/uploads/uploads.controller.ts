@@ -7,18 +7,128 @@ import {
     Param,
     Res,
     Body,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiConsumes,
+    ApiBody,
+    ApiParam,
+} from '@nestjs/swagger';
 import { UploadsService } from './uploads.service';
 import type { Response } from 'express';
 import type { FileUploadDto } from './dto/upload.dto';
 
+@ApiTags('Uploads')
 @Controller('uploads')
 export class UploadsController {
     constructor(private readonly uploadsService: UploadsService) {}
 
     @Post()
     @UseInterceptors(FileInterceptor('file'))
+    @ApiOperation({
+        summary: 'Upload image or audio file for bird identification',
+        description:
+            'Upload an image or audio file to identify a bird. The system will analyze the file using AI (OpenAI Vision for images, BirdNET for audio) and return bird information with confidence score. Requires deviceId to track user observations.',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'File upload with metadata',
+        schema: {
+            type: 'object',
+            required: ['file', 'deviceId', 'type'],
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Image file (JPEG, PNG) or audio file (MP3, WAV, M4A, FLAC)',
+                },
+                deviceId: {
+                    type: 'string',
+                    description: 'Unique device identifier for tracking user observations',
+                    example: 'device-123-abc',
+                },
+                type: {
+                    type: 'string',
+                    enum: ['image', 'audio'],
+                    description: 'Type of file being uploaded',
+                    example: 'image',
+                },
+            },
+        },
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'File uploaded and bird identified successfully',
+        schema: {
+            example: {
+                success: true,
+                bird: {
+                    id: 123,
+                    scientificName: 'Turdus migratorius',
+                    englishName: 'American Robin',
+                    description: 'A medium-sized songbird...',
+                    diet: 'Omnivore',
+                    wingspan: '12-16 inches',
+                    length: '9-11 inches',
+                    weight: '77g',
+                    image: 'https://upload.wikimedia.org/wikipedia/commons/robin.jpg',
+                    habitat: [
+                        {
+                            id: 1,
+                            name: 'Forest',
+                            description: 'Woodland areas',
+                        },
+                    ],
+                    taxonomy: {
+                        kingdom: 'Animalia',
+                        phylum: 'Chordata',
+                        class: 'Aves',
+                        order: 'Passeriformes',
+                        family: 'Turdidae',
+                        genus: 'Turdus',
+                        species: 'migratorius',
+                    },
+                },
+                confidence: 0.92,
+                status: 'completed',
+                observation: {
+                    id: 'uuid-here',
+                    createdAt: '2025-12-16T10:30:00.000Z',
+                },
+            },
+        },
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid file type or missing required fields',
+        schema: {
+            example: {
+                statusCode: 400,
+                message: 'Invalid file type. Only images and audio files are allowed.',
+                error: 'Bad Request',
+            },
+        },
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Bird identification failed or low confidence',
+        schema: {
+            example: {
+                success: false,
+                error: 'Could not identify bird with sufficient confidence',
+                confidence: 0.45,
+                status: 'failed',
+                observation: {
+                    id: 'uuid-here',
+                    createdAt: '2025-12-16T10:30:00.000Z',
+                },
+            },
+        },
+    })
     async uploadFile(
         @UploadedFile() file: FileUploadDto,
         @Body('deviceId') deviceId: string,
@@ -62,8 +172,60 @@ export class UploadsController {
     }
 
     @Get(':id')
+    @ApiOperation({
+        summary: 'Download uploaded file by ID',
+        description:
+            'Retrieve the original uploaded file (image or audio) by its upload ID. Returns the file with appropriate content-type header.',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Upload ID',
+        type: Number,
+        example: 1,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'File retrieved successfully',
+        content: {
+            'image/jpeg': {
+                schema: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+            'image/png': {
+                schema: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+            'audio/mpeg': {
+                schema: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+            'audio/wav': {
+                schema: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'File not found',
+        schema: {
+            example: {
+                statusCode: 404,
+                message: 'Upload with ID 999 not found',
+                error: 'Not Found',
+            },
+        },
+    })
     async downloadFile(
-        @Param('id')
+        @Param('id', ParseIntPipe)
         id: number,
         @Res()
         res: Response,

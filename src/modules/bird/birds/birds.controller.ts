@@ -30,11 +30,7 @@ export class BirdsController {
     constructor(private readonly birdService: BirdsService) {}
 
     @Post()
-    @HttpCode(HttpStatus.CREATED)
-    create(
-        @Body()
-        dto: CreateBirdDto,
-    ): Promise<Bird> {
+    create(@Body() dto: CreateBirdDto): Promise<Bird> {
         return this.birdService.create(dto);
     }
 
@@ -46,13 +42,38 @@ export class BirdsController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
         summary: 'Search bird catalog for typeahead/autocomplete',
-        description: 'Fast search through Clements catalog. Returns up to 20 suggestions.',
+        description: 'Fast in-memory search through 11,145 bird species from Clements Checklist. Returns up to 20 matching suggestions for autocomplete.',
     })
     @ApiQuery({
         name: 'q',
         required: true,
         type: String,
         description: 'Search query (common name or scientific name)',
+        example: 'robin',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns array of matching birds with scientific and English names',
+        schema: {
+            example: [
+                {
+                    scientificName: 'Turdus migratorius',
+                    englishName: 'American Robin',
+                },
+                {
+                    scientificName: 'Erithacus rubecula',
+                    englishName: 'European Robin',
+                },
+                {
+                    scientificName: 'Petroica longipes',
+                    englishName: 'North Island Robin',
+                },
+            ],
+        },
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Missing or invalid query parameter',
     })
     searchCatalog(@Query('q') query: string): { scientificName: string; englishName: string }[] {
         return this.birdService.searchCatalog(query);
@@ -65,22 +86,80 @@ export class BirdsController {
     @Get('catalog/fetch/:scientificName')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
-        summary: 'Fetch full bird data from catalog search',
+        summary: 'Fetch full bird data by scientific name',
         description:
-            'Validates scientific name exists in Clements catalog, then returns full bird data from database or fetches via AI if not exists.',
+            'Validates scientific name exists in Clements catalog (11,145 species), then returns complete bird data from database. If bird not in database, fetches details via OpenAI including description, diet, taxonomy, images, and audio.',
     })
     @ApiParam({
         name: 'scientificName',
         required: true,
         type: String,
-        description: 'Scientific name of the bird (must exist in catalog)',
+        description: 'Scientific name of the bird (must exist in Clements catalog)',
+        example: 'Turdus migratorius',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns complete bird data with taxonomy, habitat, media, and distribution',
+        schema: {
+            example: {
+                id: 123,
+                scientificName: 'Turdus migratorius',
+                englishName: 'American Robin',
+                description: 'A medium-sized songbird with gray-brown upperparts, rusty-orange breast, and white throat with dark streaks.',
+                diet: 'Omnivore - earthworms, insects, berries',
+                wingspan: '12-16 inches',
+                length: '9-11 inches',
+                weight: '77g',
+                image: 'https://upload.wikimedia.org/wikipedia/commons/robin.jpg',
+                audioUrl: 'https://xeno-canto.org/sounds/robin.mp3',
+                createdAt: '2025-12-16T10:30:00.000Z',
+                updatedAt: '2025-12-16T10:30:00.000Z',
+                taxonomy: {
+                    kingdom: 'Animalia',
+                    phylum: 'Chordata',
+                    class: 'Aves',
+                    order: 'Passeriformes',
+                    family: 'Turdidae',
+                    genus: 'Turdus',
+                    species: 'migratorius',
+                },
+                habitat: [
+                    {
+                        id: 1,
+                        name: 'Forest',
+                        description: 'Woodland and forest areas',
+                    },
+                    {
+                        id: 3,
+                        name: 'Urban',
+                        description: 'Parks, gardens, lawns',
+                    },
+                ],
+                conservationStatus: {
+                    code: 'LC',
+                    description: 'Least Concern',
+                },
+                media: [],
+                distributions: [],
+            },
+        },
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Scientific name not found in Clements catalog',
+        schema: {
+            example: {
+                statusCode: 404,
+                message: 'Scientific name "Invalid Name" not found in bird catalog',
+                error: 'Not Found',
+            },
+        },
     })
     async searchCatalogAndFetch(@Param('scientificName') scientificName: string): Promise<Bird> {
         return this.birdService.searchCatalogAndFetchBird(scientificName);
     }
 
     @Get('scientific/:scientificName')
-    @HttpCode(HttpStatus.OK)
     async getBirdByScientificName(@Param('scientificName') scientificName: string): Promise<Bird> {
         return this.birdService.findOrCreate(scientificName);
     }
@@ -88,6 +167,62 @@ export class BirdsController {
 
     @Get()
     @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Get all birds with pagination',
+        description: 'Returns paginated list of all birds in database with full details including taxonomy, habitat, and media.',
+    })
+    @ApiQuery({
+        name: 'page',
+        required: false,
+        type: Number,
+        description: 'Page number',
+        example: 1,
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Items per page',
+        example: 20,
+    })
+    @ApiQuery({
+        name: 'sortBy',
+        required: false,
+        type: String,
+        description: 'Field to sort by',
+        example: 'createdAt',
+    })
+    @ApiQuery({
+        name: 'order',
+        required: false,
+        enum: ['ASC', 'DESC'],
+        description: 'Sort order',
+        example: 'DESC',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Returns paginated bird list with total count',
+        schema: {
+            example: {
+                data: [
+                    {
+                        id: 123,
+                        scientificName: 'Turdus migratorius',
+                        englishName: 'American Robin',
+                        description: 'A medium-sized songbird...',
+                        diet: 'Omnivore',
+                        wingspan: '12-16 inches',
+                        length: '9-11 inches',
+                        weight: '77g',
+                        image: 'https://upload.wikimedia.org/wikipedia/commons/robin.jpg',
+                        audioUrl: 'https://xeno-canto.org/sounds/robin.mp3',
+                        createdAt: '2025-12-16T10:30:00.000Z',
+                    },
+                ],
+                total: 245,
+            },
+        },
+    })
     findAll(
         @Query('page')
         page = '1',
@@ -110,18 +245,7 @@ export class BirdsController {
     }
 
     @Get('search/:query')
-    @HttpCode(HttpStatus.OK)
-    search(
-        @Param('query')
-        query: string,
-        @Query('page')
-        page = '1',
-        @Query('limit')
-        limit = '20',
-    ): Promise<{
-        data: Bird[];
-        total: number;
-    }> {
+    search(@Param('query') query: string, @Query('page') page = '1', @Query('limit') limit = '20'): Promise<{ data: Bird[]; total: number }> {
         return this.birdService.search(query, {
             page: Number(page),
             limit: Number(limit),
@@ -132,23 +256,23 @@ export class BirdsController {
     @Get('filter-by-habitat')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({
-        summary: 'Filter birds by habitat and search by bird name',
+        summary: 'Filter birds by habitat with optional name search',
         description:
-            'First filters birds by specific habitat ID, then searches within those birds by their common or scientific name. Returns paginated results.',
+            'Filters birds by habitat ID, then optionally searches within results by bird name (common or scientific). Returns paginated results with habitat info.',
     })
     @ApiQuery({
         name: 'habitatId',
         required: true,
         type: Number,
         description: 'Habitat ID to filter by',
-        example: 1,
+        example: 5,
     })
     @ApiQuery({
         name: 'search',
         required: false,
         type: String,
-        description: 'Bird name to search for (common name or scientific name)',
-        example: 'robin',
+        description: 'Optional: Bird name to search for (common or scientific name)',
+        example: 'sparrow',
     })
     @ApiQuery({
         name: 'page',
@@ -162,11 +286,34 @@ export class BirdsController {
         required: false,
         type: Number,
         description: 'Items per page',
-        example: 20,
+        example: 10,
     })
     @ApiResponse({
         status: 200,
-        description: 'Returns paginated list of birds filtered by habitat and searched by name',
+        description: 'Returns paginated birds with habitat name',
+        schema: {
+            example: {
+                data: [
+                    {
+                        id: 45,
+                        scientificName: 'Passer domesticus',
+                        englishName: 'House Sparrow',
+                        description: 'Small, chunky bird...',
+                        diet: 'Omnivore - seeds, insects',
+                        wingspan: '8-10 inches',
+                        length: '6 inches',
+                        weight: '27g',
+                        image: 'https://upload.wikimedia.org/wikipedia/commons/sparrow.jpg',
+                    },
+                ],
+                total: 15,
+                habitat: 'Urban',
+            },
+        },
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Habitat not found',
     })
     filterByHabitatAndSearch(
         @Query('habitatId') habitatId: string,
@@ -185,36 +332,6 @@ export class BirdsController {
     }
 
     @Get('search-by-habitat')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Search birds by habitat name',
-        description: 'Search for birds by habitat name (partial match). Returns paginated results.',
-    })
-    @ApiQuery({
-        name: 'name',
-        required: true,
-        type: String,
-        description: 'Habitat name to search for (partial match)',
-        example: 'forest',
-    })
-    @ApiQuery({
-        name: 'page',
-        required: false,
-        type: Number,
-        description: 'Page number',
-        example: 1,
-    })
-    @ApiQuery({
-        name: 'limit',
-        required: false,
-        type: Number,
-        description: 'Items per page',
-        example: 20,
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Returns paginated list of birds matching the habitat search',
-    })
     searchBirdsByHabitat(
         @Query('name') name: string,
         @Query('page') page = '1',
@@ -231,24 +348,6 @@ export class BirdsController {
     }
 
     @Get('by-habitat/:habitatId')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Filter birds by specific habitat ID',
-        description: 'Returns all birds that live in the specified habitat',
-    })
-    @ApiParam({
-        name: 'habitatId',
-        description: 'Habitat ID',
-        type: Number,
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Returns array of birds living in the habitat',
-    })
-    @ApiResponse({
-        status: 404,
-        description: 'Habitat not found',
-    })
     getBirdsByHabitat(@Param('habitatId') habitatId: string): Promise<Bird[]> {
         return this.birdService.getBirdsByHabitat(+habitatId);
     }
@@ -288,7 +387,6 @@ export class BirdsController {
     }
 
     @Get('scientific/:scientificName')
-    @HttpCode(HttpStatus.OK)
     findByScientificName(
         @Param('scientificName')
         scientificName: string,
@@ -297,7 +395,6 @@ export class BirdsController {
     }
 
     @Get(':id')
-    @HttpCode(HttpStatus.OK)
     findOne(
         @Param('id')
         id: string,
@@ -316,7 +413,6 @@ export class BirdsController {
     }
 
     @Delete(':id')
-    @HttpCode(HttpStatus.NO_CONTENT)
     delete(
         @Param('id')
         id: string,
@@ -328,87 +424,39 @@ export class BirdsController {
 
     // Observation count
     @Get(':id/observation-count')
-    @ApiOperation({
-        summary: 'Get observation count for a bird',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
-    getObservationCount(
-        @Param('id')
-        id: string,
-    ): Promise<number> {
+    getObservationCount(@Param('id') id: string): Promise<number> {
         return this.birdService.getObservationCount(id);
     }
 
     // Food relationships
     @Get(':id/foods')
-    @ApiOperation({ summary: 'Get all foods for a bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     getFoods(@Param('id') id: string) {
         return this.birdService.getFoods(+id);
     }
 
     @Post(':id/foods')
-    @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Add food to bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     addFood(@Param('id') id: string, @Body() createBirdFoodDto: CreateBirdFoodDto) {
         return this.birdService.addFood(+id, createBirdFoodDto);
     }
 
     @Put(':birdId/foods/:foodId')
-    @ApiOperation({ summary: 'Update bird-food relationship' })
-    @ApiParam({ name: 'birdId', description: 'Bird ID' })
-    @ApiParam({ name: 'foodId', description: 'Food ID' })
-    updateFood(
-        @Param('birdId') birdId: string,
-        @Param('foodId') foodId: string,
-        @Body() updateBirdFoodDto: UpdateBirdFoodDto,
-    ) {
+    updateFood(@Param('birdId') birdId: string, @Param('foodId') foodId: string, @Body() updateBirdFoodDto: UpdateBirdFoodDto) {
         return this.birdService.updateFood(+birdId, +foodId, updateBirdFoodDto);
     }
 
     @Delete(':birdId/foods/:foodId')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiOperation({ summary: 'Remove food from bird' })
-    @ApiParam({ name: 'birdId', description: 'Bird ID' })
-    @ApiParam({ name: 'foodId', description: 'Food ID' })
     removeFood(@Param('birdId') birdId: string, @Param('foodId') foodId: string) {
         return this.birdService.removeFood(+birdId, +foodId);
     }
 
     @Patch(':birdId/foods/:foodId/toggle-active')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Toggle food active status for bird' })
-    @ApiParam({ name: 'birdId', description: 'Bird ID' })
-    @ApiParam({ name: 'foodId', description: 'Food ID' })
     toggleFoodActive(@Param('birdId') birdId: string, @Param('foodId') foodId: string) {
         return this.birdService.toggleFoodActive(+birdId, +foodId);
     }
 
     // Habitat relationships
     @Get('habitat/:habitatId')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Get birds by habitat (deprecated - use /by-habitat/:habitatId)',
-    })
-    @ApiParam({
-        name: 'habitatId',
-        description: 'Habitat ID',
-    })
-    findByHabitat(
-        @Param('habitatId')
-        habitatId: string,
-        @Query('page')
-        page = '1',
-        @Query('limit')
-        limit = '20',
-    ): Promise<{
-        data: Bird[];
-        total: number;
-    }> {
+    findByHabitat(@Param('habitatId') habitatId: string, @Query('page') page = '1', @Query('limit') limit = '20'): Promise<{ data: Bird[]; total: number }> {
         return this.birdService.findByHabitat(+habitatId, {
             page: Number(page),
             limit: Number(limit),
@@ -416,144 +464,61 @@ export class BirdsController {
     }
 
     @Get(':id/habitats')
-    @ApiOperation({
-        summary: 'Get all habitats for a bird',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
-    getHabitats(
-        @Param('id')
-        id: string,
-    ) {
+    getHabitats(@Param('id') id: string) {
         return this.birdService.getHabitats(+id);
     }
 
     @Post(':id/habitats/:habitatId')
-    @HttpCode(HttpStatus.CREATED)
-    addHabitat(
-        @Param('id')
-        id: string,
-        @Param('habitatId')
-        habitatId: string,
-    ) {
+    addHabitat(@Param('id') id: string, @Param('habitatId') habitatId: string) {
         return this.birdService.addHabitat(+id, +habitatId);
     }
 
     @Delete(':id/habitats/:habitatId')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    removeHabitat(
-        @Param('id')
-        id: string,
-        @Param('habitatId')
-        habitatId: string,
-    ) {
+    removeHabitat(@Param('id') id: string, @Param('habitatId') habitatId: string) {
         return this.birdService.removeHabitat(+id, +habitatId);
     }
 
     // Common names
     @Get(':id/commonNames')
-    @ApiOperation({
-        summary: 'Get all common names for a bird',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
-    getCommonNames(
-        @Param('id')
-        id: string,
-    ) {
+    getCommonNames(@Param('id') id: string) {
         return this.birdService.getCommonNames(+id);
     }
 
     @Post(':id/commonNames')
-    @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({
-        summary: 'Add common name to bird',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
-    addCommonName(
-        @Param('id')
-        id: string,
-        @Body()
-        createCommonNameDto: CreateCommonNameDto,
-    ) {
+    addCommonName(@Param('id') id: string, @Body() createCommonNameDto: CreateCommonNameDto) {
         return this.birdService.addCommonName(+id, createCommonNameDto);
     }
 
     // Media
     @Get(':id/media')
-    @ApiOperation({ summary: 'Get all media for a bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     getMedia(@Param('id') id: string) {
         return this.birdService.getMedia(+id);
     }
 
     @Post(':id/media')
-    @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Add media to bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     addMedia(@Param('id') id: string, @Body() createDto: CreateMediaDto) {
         return this.birdService.addMedia(+id, createDto);
     }
 
     // Taxonomy
     @Get(':id/taxonomy')
-    @ApiOperation({
-        summary: 'Get taxonomy for a bird',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
-    getTaxonomy(
-        @Param('id')
-        id: string,
-    ) {
+    getTaxonomy(@Param('id') id: string) {
         return this.birdService.getTaxonomy(+id);
     }
 
     // Conservation Status
     @Get(':id/conservationStatus')
-    @ApiOperation({
-        summary: 'Get conservation status for a bird',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Bird ID',
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Returns the conservation status of the bird',
-    })
-    @ApiResponse({
-        status: 404,
-        description: 'Bird not found',
-    })
-    getConservationStatus(
-        @Param('id')
-        id: string,
-    ) {
+    getConservationStatus(@Param('id') id: string) {
         return this.birdService.getConservationStatus(+id);
     }
 
     // Distributions
     @Get(':id/distributions')
-    @ApiOperation({ summary: 'Get all distributions for a bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     getDistributions(@Param('id') id: string) {
         return this.birdService.getDistributions(+id);
     }
 
     @Post(':id/distributions')
-    @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({ summary: 'Add distribution to bird' })
-    @ApiParam({ name: 'id', description: 'Bird ID' })
     addDistribution(@Param('id') id: string, @Body() createDto: CreateBirdDistributionDto) {
         return this.birdService.addDistribution(+id, createDto);
     }
