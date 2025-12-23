@@ -20,6 +20,7 @@ import { CommonNamesModule } from './modules/bird/common-names/common-names.modu
 import { TaxonomyModule } from './modules/bird/taxonomy/taxonomy.module';
 import { MediaModule } from './modules/media/media.module';
 import { DeviceSettingsModule } from './modules/device-settings/device-settings.module';
+import { ArticleModule } from './modules/article/article.module';
 //import { IngestModule } from './modules/ingest/ingest.module';
 
 @Module({
@@ -47,6 +48,7 @@ import { DeviceSettingsModule } from './modules/device-settings/device-settings.
         CommonNamesModule,
         MediaModule,
         DeviceSettingsModule,
+        ArticleModule,
         //IngestModule,
         //NotificationModule,
     ],

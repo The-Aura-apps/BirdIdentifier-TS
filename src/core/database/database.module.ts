@@ -14,6 +14,7 @@ import { Media } from 'src/modules/media/entities/media.entity';
 import { Observation } from 'src/modules/observation/observations/entities/observation.entity';
 import { Upload } from 'src/modules/uploads/entities/upload.entity';
 import { DeviceSettings } from 'src/modules/device-settings/entities/device-settings.entity';
+import { Article } from 'src/modules/article/entities/article.entity';
 
 
 @Module({
@@ -42,6 +43,7 @@ import { DeviceSettings } from 'src/modules/device-settings/entities/device-sett
                     Upload,
                     Media,
                     DeviceSettings,
+                    Article,
                 ],
                 synchronize: configService.get<boolean>('database.synchronize'),
                 logging: configService.get<boolean>('database.logging'),
