@@ -48,7 +48,6 @@
         "pg": "^8.11.3",
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.8.1",
-        "sharp": "^0.34.5",
         "typeorm": "^0.3.17",
         "xlsx": "^0.18.5"
     },
@@ -93,5 +92,8 @@
         ],
         "coverageDirectory": "../coverage",
         "testEnvironment": "node"
+    },
+    "optionalDependencies": {
+        "sharp": "^0.33.5"
     }
 }

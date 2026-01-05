@@ -75,8 +75,14 @@ export class AudioAiWrapper {
 
         this.logger.log(`Processing audio file (${file.length} bytes)`);
 
-        // Detect audio format
+        // Detect audio format and validate it's actually audio
         const mimeType = this.detectAudioMimeType(file);
+        
+        // Check if user accidentally uploaded an image
+        if (this.isImageFile(file)) {
+            throw new Error('Invalid file type: You uploaded an image file, but audio is required. Please upload a WAV, MP3, FLAC, or OGG audio file.');
+        }
+        
         const extension = this.getExtensionFromMimeType(mimeType);
 
         this.logger.log(`Detected audio format: ${mimeType} (.${extension})`);
@@ -162,8 +168,18 @@ export class AudioAiWrapper {
                 }
 
                 if (axiosError.response?.status === 400) {
+                    const errorData = axiosError.response.data as any;
+                    const errorMsg = errorData?.error || errorData?.message || 'Invalid audio file';
+                    
+                    // Check for specific error messages
+                    if (errorMsg.includes('could not be opened') || errorMsg.includes('format')) {
+                        throw new Error(
+                            `Invalid audio file format. Please upload a valid WAV, MP3, FLAC, or OGG audio file. Make sure the file is not corrupted.`,
+                        );
+                    }
+                    
                     throw new Error(
-                        `Invalid audio file format. BirdNET supports WAV, MP3, FLAC, and OGG files.`,
+                        `Invalid audio file. BirdNET supports WAV, MP3, FLAC, and OGG files. Error: ${errorMsg}`,
                     );
                 }
 
@@ -298,6 +314,36 @@ export class AudioAiWrapper {
         // Default to WAV (most common for bird recordings)
         this.logger.warn('Could not detect audio format, defaulting to WAV');
         return 'audio/wav';
+    }
+
+    /**
+     * Check if file is an image (to prevent wrong file type uploads)
+     */
+    private isImageFile(buffer: Buffer): boolean {
+        if (buffer.length < 4) return false;
+
+        // JPEG
+        if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+            return true;
+        }
+
+        // PNG
+        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+            return true;
+        }
+
+        // GIF
+        if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
+            return true;
+        }
+
+        // WebP
+        if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+            buffer.length >= 12 && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
