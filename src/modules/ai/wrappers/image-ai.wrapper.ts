@@ -185,11 +185,13 @@ And Make Sure to return just bird species not anything else`;
                 }
                 
                 if (error.message?.includes('timeout')) {
-                    throw new Error('Image analysis timed out. Please try with a smaller image.');\n                }
+                    throw new Error('Image analysis timed out. Please try with a smaller image.');
+                }
                 
                 // Re-throw with original message if it's already descriptive
                 if (error.message && !error.message.includes('undefined')) {
-                    throw new Error(`Image analysis failed: ${error.message}`);\n                }
+                    throw new Error(`Image analysis failed: ${error.message}`);
+                }
                 
                 throw new Error('Failed to analyze image. Please ensure the image is clear and contains a bird.');
             }

@@ -1,5 +1,4 @@
 #!/bin/bash
-# Quick test script for BirdIdentifier Backend
 
 echo "============================================"
 echo "BirdIdentifier Backend - Quick Test"
