@@ -119,8 +119,15 @@ export class AudioAiWrapper {
                 lastError = err as Error;
                 const axiosError = err as AxiosLikeError;
 
+                // Extract meaningful error message
+                let errorMessage = lastError.message;
+                if (axiosError.response?.data) {
+                    const responseData = axiosError.response.data as any;
+                    errorMessage = responseData.message || responseData.error || errorMessage;
+                }
+
                 this.logger.warn(
-                    `BirdNET request failed (attempt ${attempt}/${this.MAX_RETRIES}): ${lastError.message}`,
+                    `BirdNET request failed (attempt ${attempt}/${this.MAX_RETRIES}): ${errorMessage}`,
                 );
 
                 // Check if we should retry
@@ -133,22 +140,41 @@ export class AudioAiWrapper {
                 }
 
                 // No more retries, handle the error
-                this.logger.error(`Audio AI identification failed: ${lastError.message}`, lastError.stack);
+                this.logger.error(`Audio AI identification failed: ${errorMessage}`, lastError.stack);
 
                 // Check for specific network errors and provide helpful messages
                 if (axiosError.code === 'ECONNREFUSED') {
                     throw new Error(
-                        'BirdNET service unavailable. Please ensure the service is running.',
+                        'BirdNET service is not running. Please start the BirdNET server at ' + this.birdnetUrl,
                     );
                 }
 
                 if (axiosError.code === 'ENOTFOUND') {
                     throw new Error(
-                        `BirdNET service not found at ${this.birdnetUrl}. Check BIRDNET_URL configuration.`,
+                        `BirdNET service not found at ${this.birdnetUrl}. Check BIRDNET_URL in your .env file.`,
                     );
                 }
 
-                throw err;
+                if (axiosError.code === 'ETIMEDOUT') {
+                    throw new Error(
+                        'BirdNET service timed out. The audio file may be too large or the service is overloaded.',
+                    );
+                }
+
+                if (axiosError.response?.status === 400) {
+                    throw new Error(
+                        `Invalid audio file format. BirdNET supports WAV, MP3, FLAC, and OGG files.`,
+                    );
+                }
+
+                if (axiosError.response?.status === 413) {
+                    throw new Error(
+                        `Audio file is too large. Maximum size is ${this.MAX_AUDIO_SIZE / 1024 / 1024}MB.`,
+                    );
+                }
+
+                // Re-throw with better error message
+                throw new Error(`BirdNET analysis failed: ${errorMessage}`);
             }
         }
 

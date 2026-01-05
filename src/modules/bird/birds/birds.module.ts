@@ -12,7 +12,8 @@ import { BirdFoodsModule } from '../bird-foods/bird-foods.module';
 import { HabitatsModule } from '../habitats/habitats.module';
 import { CommonNamesModule } from '../common-names/common-names.module';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
-import { WikimediaPhotoWrapper } from 'src/modules/ai/wrappers/wikimedia-photo.wrapper';
+import { INaturalistPhotoWrapper } from 'src/modules/ai/wrappers/inaturalist-photo.wrapper';
+import { PexelsPhotoWrapper } from 'src/modules/ai/wrappers/pexels-photo.wrapper';
 import { XenoCantoAudioWrapper } from 'src/modules/ai/wrappers/xenocanto-audio.wrapper';
 import { Taxonomy } from '../taxonomy/entities/taxonomy.entity';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
@@ -40,7 +41,7 @@ import { Media } from 'src/modules/media/entities/media.entity';
         CommonNamesModule,
     ],
     controllers: [BirdsController],
-    providers: [BirdsService, BirdInfoWrapper, WikimediaPhotoWrapper, XenoCantoAudioWrapper],
+    providers: [BirdsService, BirdInfoWrapper, INaturalistPhotoWrapper, PexelsPhotoWrapper, XenoCantoAudioWrapper],
     exports: [BirdsService, TypeOrmModule],
 })
 export class BirdsModule {}

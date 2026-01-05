@@ -20,7 +20,8 @@ import { Habitat } from '../habitats/entities/habitat.entity';
 import { CommonName } from '../common-names/entities/common-name.entity';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
-import { WikimediaPhotoWrapper } from 'src/modules/ai/wrappers/wikimedia-photo.wrapper';
+import { INaturalistPhotoWrapper } from 'src/modules/ai/wrappers/inaturalist-photo.wrapper';
+import { PexelsPhotoWrapper } from 'src/modules/ai/wrappers/pexels-photo.wrapper';
 import { XenoCantoAudioWrapper } from 'src/modules/ai/wrappers/xenocanto-audio.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
 import { ConservationStatusService } from '../conservation-status/conservation-status.service';
@@ -56,7 +57,8 @@ export class BirdsService {
         private readonly taxonomyService: TaxonomyService,
         private readonly conservationStatusService: ConservationStatusService,
         private readonly birdInfoWrapper: BirdInfoWrapper,
-        private readonly wikimediaPhotoWrapper: WikimediaPhotoWrapper,
+        private readonly iNaturalistPhotoWrapper: INaturalistPhotoWrapper,
+        private readonly pexelsPhotoWrapper: PexelsPhotoWrapper,
         private readonly xenoCantoAudioWrapper: XenoCantoAudioWrapper,
     ) {
         this.loadCatalog();
@@ -859,20 +861,34 @@ export class BirdsService {
         // Save the bird with updated relations
         //await this.birdRepo.save(bird);
         
-        // Fetch photos from Wikimedia Commons
+        // Fetch photos from Pexels (primary) and iNaturalist (fallback)
         try {
             const commonName = bird.commonNames?.[0]?.name;
-            this.logger.log(`Fetching photo from Wikimedia Commons for ${bird.scientificName}...`);
-            
-            const photo = await this.wikimediaPhotoWrapper.fetchPhotos(
+            let photo = null;
+            let source = '';
+
+            // Try Pexels first (high-quality professional photos)
+            this.logger.log(`Fetching photo from Pexels for ${bird.scientificName}...`);
+            photo = await this.pexelsPhotoWrapper.fetchPhotos(
                 bird.scientificName,
                 commonName,
             );
+            source = 'pexels';
+
+            // Fallback to iNaturalist if Pexels fails (free, unlimited, bird-specific)
+            if (!photo) {
+                this.logger.log(`Trying iNaturalist as fallback for ${bird.scientificName}...`);
+                photo = await this.iNaturalistPhotoWrapper.fetchPhotos(
+                    bird.scientificName,
+                    commonName,
+                );
+                source = 'inaturalist';
+            }
 
             if (photo) {
-                // Remove existing photos from Wikimedia to avoid duplicates
+                // Remove existing photos from external sources to avoid duplicates
                 const existingMedia = await this.mediaRepo.find({ 
-                    where: { bird: { id: bird.id }, source: 'wikimedia' } 
+                    where: { bird: { id: bird.id }, source: In(['wikimedia', 'inaturalist', 'pexels']) } 
                 });
                 if (existingMedia.length > 0) {
                     await this.mediaRepo.remove(existingMedia);
@@ -882,7 +898,7 @@ export class BirdsService {
                 const mediaEntity = this.mediaRepo.create({
                     storageKey: photo.url, // Use URL as storageKey for external photos
                     type: MediaType.Photo,
-                    source: 'wikimedia',
+                    source: source,
                     caption: photo.title,
                     attribution: `${photo.author} - ${photo.license}`,
                     orderIndex: 0,
@@ -893,12 +909,12 @@ export class BirdsService {
                 });
 
                 await this.mediaRepo.save(mediaEntity);
-                this.logger.log(`Added 1 photo from Wikimedia Commons for bird ${birdId}`);
+                this.logger.log(`Added 1 photo from ${source} for bird ${birdId}`);
             } else {
-                this.logger.warn(`No Wikimedia photo found for ${bird.scientificName}`);
+                this.logger.warn(`No photos found for ${bird.scientificName} from any source`);
             }
         } catch (err) {
-            this.logger.error(`Failed to fetch Wikimedia photo for bird ${birdId}: ${err.message}`);
+            this.logger.error(`Failed to fetch photos for bird ${birdId}: ${err.message}`);
         }
 
         // Fetch audio recordings from xeno-canto

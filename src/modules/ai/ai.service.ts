@@ -62,9 +62,20 @@ export class AiService {
             this.logger.log(`Processing ${normalizedType} file (${fileData.length} bytes)`);
 
             // Identify bird species using appropriate wrapper
-            const identification = await (normalizedType === 'image'
-                ? this.imageAi.identify(fileData)
-                : this.audioAi.identify(fileData));
+            let identification: IdentificationResult;
+            try {
+                identification = await (normalizedType === 'image'
+                    ? this.imageAi.identify(fileData)
+                    : this.audioAi.identify(fileData));
+            } catch (err) {
+                const error = err as Error;
+                this.logger.error(`AI processing failed: ${error.message}`, error.stack);
+                return {
+                    status: 'failed',
+                    confidence: null,
+                    error: error.message || 'Failed to process the file. Please try again.',
+                };
+            }
 
             if (!identification) {
                 return {

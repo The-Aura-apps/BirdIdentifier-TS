@@ -1,6 +1,6 @@
 // core/configs/env.config.ts
 import { plainToInstance } from 'class-transformer';
-import { IsString, IsNumber } from 'class-validator';
+import { IsString, IsNumber, IsOptional } from 'class-validator';
 import { validateSync } from 'class-validator';
 
 class EnvVariables {
@@ -9,6 +9,10 @@ class EnvVariables {
 
     @IsNumber()
     PORT: number;
+
+    @IsString()
+    @IsOptional()
+    PEXELS_API_KEY?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>) {

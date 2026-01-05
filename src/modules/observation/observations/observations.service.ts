@@ -223,11 +223,14 @@ export class ObservationsService {
             await this.handleAiResponse(observation, aiResponse);
             this.logger.log(`Observation processed successfully: ${id}`);
         } catch (err) {
-            this.logger.error(`Failed to process observation ${id}: ${err.message}`, err.stack);
+            const error = err as Error;
+            const errorMessage = error.message || 'Unknown error occurred during processing';
+            
+            this.logger.error(`Observation ${id} failed: ${errorMessage}`, error.stack);
 
             await this.observationsRepo.update(id, {
                 status: ObservationStatus.FAILED,
-                errorMessage: err.message,
+                errorMessage: errorMessage,
                 updatedAt: new Date(),
             });
         }

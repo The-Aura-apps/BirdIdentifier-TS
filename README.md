@@ -28,7 +28,14 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/bird-idf-x1
 DB_USER=postgres
 BIRDNET_URL=http://localhost:8080
 OPENAI_API_KEY=your-openai-api-key
+PEXELS_API_KEY=your-pexels-api-key  # Optional: Get free key at https://www.pexels.com/api/
 ```
+
+**Note on Photo APIs:**
+- **Pexels**: Primary photo source (high-quality professional photos, requires free API key)
+- **iNaturalist**: Fallback with unlimited bird-specific photos (free, no API key needed)
+- To get a Pexels API key: Register at https://www.pexels.com/api/ (only email needed, free for commercial use)
+- Without a Pexels key, the system will automatically use iNaturalist only
 
 ### 2. Start BirdNET Server
 
