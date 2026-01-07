@@ -95,19 +95,20 @@ export class ImageAiWrapper {
 
             this.logger.log(`Sending to OpenAI: ${(compressedImage.length / 1024).toFixed(0)}KB`);
 
-            const prompt = `Identify the **bird** species. Return ONLY JSON:
+            const prompt = `Identify the bird species OR breed/variety. Return ONLY JSON:
 {
-  "scientificName": "Genus species",
+  "scientificName": "Genus species" OR "Gallus gallus domesticus (Ayam Cemani)",
   "confidence": 0.xx
 }
 
-Confidence guidelines:
-- 0.9+: Clear photo, certain identification
-- 0.7-0.89: Good visibility, confident
-- Below 0.7: Poor quality or uncertain
+IMPORTANT:
+- For domestic breeds (chickens, pigeons, ducks): Include breed name in parentheses after scientific name
+- For wild birds: Use standard scientific name (Genus species)
+- Examples: "Gallus gallus domesticus (Ayam Cemani)", "Passer domesticus", "Columba livia (Racing Homer)"
 
-Be honest with confidence based on image quality and visible features.
-And Make Sure to return just bird species not anything else`;
+Confidence: 0.9+ (clear), 0.7-0.89 (good), <0.7 (poor/uncertain)
+
+Return ONLY bird species/breeds, nothing else.`;
 
             // Call GPT-4o-mini
             const response = await this.client.chat.completions.create({

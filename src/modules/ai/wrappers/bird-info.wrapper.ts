@@ -35,166 +35,67 @@ export class BirdInfoWrapper {
         const normalizedName = scientificName.trim();
         this.logger.log(`Fetching comprehensive bird info from AI: ${normalizedName}`);
 
-        const prompt = `You are an expert ornithological database API. Provide comprehensive, detailed information about the bird species: "${normalizedName}"
+        const prompt = `Provide comprehensive data for bird: "${normalizedName}"
 
-CRITICAL INSTRUCTIONS:
-1. Return ONLY valid JSON - no markdown, no explanations, no apologies
-2. Be specific and detailed - avoid vague statements
-3. Provide actual measurements, dates, and quantitative data
-4. Use ONLY the allowed values for enums (habitats, conservation codes, seasons)
-5. Fill ALL fields with relevant data - do not leave fields empty unless truly unknown
+Return ONLY valid JSON (no markdown, no explanations):
 
-Required JSON Structure:
 {
   "scientificName": "${normalizedName}",
-  "description": "2-3 detailed paragraphs describing the bird's appearance, distinguishing features, and general characteristics. Be specific about colors, patterns, and physical traits.",
-  "behavior": "2-3 detailed paragraphs about behavior patterns, social structure, vocalizations, territorial behavior, and daily activities. Include specific examples.",
-  "nestingHabits": "Detailed description of nesting behavior: where they nest, nest construction materials and methods, nesting season (specific months), clutch size, incubation period in days, and parental care details.",
-  "feedingHabits": "Detailed description of feeding behavior: foraging techniques, preferred feeding times, hunting/gathering methods, and seasonal dietary changes.",
-  "eggsDescription": "Detailed description of eggs: color, size, markings, texture, typical clutch size (e.g., '3-5 eggs'), and any unique characteristics.",
-  "coolFacts": ["Fascinating fact 1 with specific details", "Interesting behavior or adaptation with examples", "Unique characteristic or record", "Cultural or historical significance", "Conservation story or success"],
+  "description": "2-3 paragraphs: appearance, colors, patterns, distinguishing features",
+  "behavior": "2-3 paragraphs: social structure, vocalizations, territorial behavior, daily activities",
+  "nestingHabits": "Where they nest, materials, season (months), clutch size, incubation days, parental care",
+  "feedingHabits": "Foraging techniques, preferred times, hunting methods, seasonal changes",
+  "eggsDescription": "Color, size, markings, texture, clutch size (e.g., '3-5 eggs')",
+  "coolFacts": ["5 fascinating facts with specific details"],
   "size": {
-    "lengthCm": {
-      "min": 00.0,
-      "max": 00.0
-    },
-    "wingspanCm": {
-      "min": 00.0,
-      "max": 00.0
-    },
-    "weightGrams": {
-      "min": 00.0,
-      "max": 00.0
-    }
+    "lengthCm": {"min": 0, "max": 0},
+    "wingspanCm": {"min": 0, "max": 0},
+    "weightGrams": {"min": 0, "max": 0}
   },
-  "lifeExpectancyYears": 0.0,
+  "lifeExpectancyYears": 0,
   "taxonomy": {
     "phylum": "Chordata",
     "class": "Aves",
-    "order": "Actual order name",
-    "family": "Actual family name",
-    "genus": "Actual genus name"
+    "order": "OrderName",
+    "family": "FamilyName",
+    "genus": "GenusName"
   },
   "conservationStatus": {
-    "code": "MUST BE ONE OF: LC,NT,VU,EN,CR,EW,EX,DD,NE",
-    "fullName": "Full conservation status name",
-    "description": "Brief description of conservation status and main threats",
-    "severityLevel": LC=1, NT=2, VU=3, DD=4, EN=5, NE=6, CR=7, EW=8, EX=9,
+    "code": "LC|NT|VU|EN|CR|EW|EX|DD|NE",
+    "fullName": "Full name",
+    "description": "Brief status and threats",
+    "severityLevel": 1-9,
     "authority": "IUCN"
   },
   "commonNames": [
-    {
-      "name": "Primary English common name",
-      "language": "en",
-      "region": "General or specific region"
-    },
-    {
-      "name": "Alternative common name if exists",
-      "language": "en",
-      "region": "Regional variant"
-    },
-    {
-      "name": "Common name in another language if applicable",
-      "language": "es/fr/de/etc",
-      "region": "Country or region"
-    },
-    {
-      "name": "Common name in another language if applicable",
-      "language": "es/fr/de/etc",
-      "region": "Country or region"
-    },
-    {
-      "name": "Common name in another language if applicable",
-      "language": "es/fr/de/etc",
-      "region": "Country or region"
-    }
+    {"name": "English name", "language": "en", "region": "Region"},
+    {"name": "Alt/regional", "language": "en/es/fr", "region": "Region"}
   ],
-  "habitats": ["Select from: Desert, Forest, Grassland, Savanna, Scrub, Subterranean, Wetlands, Marine - include all that apply"],
+  "habitats": ["Desert|Forest|Grassland|Savanna|Scrub|Subterranean|Wetlands|Marine"],
   "birdFoods": [
-    {
-      "name": "",
-      "description": ""
-    },
-    {
-      "name": "",
-      "description": ""
-    },
-
+    {"name": "FoodType", "description": "Details"}
   ],
   "distributions": [
     {
-      "month": 1,
-      "season": "MUST BE ONE OF: breeding, non-breeding, year-round, or migration",
-      "location": {
-        "country": "Primary country name",
-        "region": "Specific region or state",
-        "coordinates": {
-          "lat": 00.00,
-          "lng": 00.00
-        }
-      },
-      "presenceScore": 0.0,
-      "description": "Describe presence and behavior during this period",
-      "countries": ["Country1", "Country2", "Country3"]
+      "month": 1-12,
+      "season": "breeding|non-breeding|year-round|migration",
+      "location": {"country": "Name", "region": "Area", "coordinates": {"lat": 0, "lng": 0}},
+      "presenceScore": 0.0-1.0,
+      "description": "Behavior during period",
+      "countries": ["Country1", "Country2"]
     }
   ]
 }
 
-SPECIFIC FIELD REQUIREMENTS:
-
-**habitats**: ONLY use these exact values (select all that apply):
-- "Desert" - arid, sandy, or rocky dry regions
-- "Forest" - wooded areas (deciduous, coniferous, tropical)
-- "Grassland" - prairies, meadows, open grass areas
-- "Savanna" - tropical grasslands with scattered trees
-- "Scrub" - brushland, chaparral, shrubland
-- "Subterranean" - caves, burrows, underground
-- "Wetlands" - marshes, swamps, bogs, wetlands
-- "Marine" - coastal, oceanic, or marine areas
-
-**conservationStatus.code**: ONLY use these IUCN codes:
-- EX = Extinct (severityLevel: 9)
-- EW = Extinct in the Wild (severityLevel: 8)
-- CR = Critically Endangered (severityLevel: 7)
-- EN = Endangered (severityLevel: 6)
-- VU = Vulnerable (severityLevel: 5)
-- NT = Near Threatened (severityLevel: 4)
-- LC = Least Concern (severityLevel: 3)
-- DD = Data Deficient (severityLevel: 2)
-- NE = Not Evaluated (severityLevel: 1)
-
-**distributions.season**: ONLY use these values:
-- "breeding" - nesting/reproduction period
-- "non-breeding" - outside breeding season
-- "year-round" - resident year-round
-- "migration" - during migration passages
-
-**distributions requirements**:
-- Provide at least 3-6 distribution entries covering different months
-- Include breeding range, wintering range, and migration routes if applicable
-- presenceScore should be 0.0 to 1.0 (0.9+ = primary range, 0.5-0.8 = common, 0.1-0.4 = rare)
-- Coordinates should be approximate center of range
-- Include multiple countries where the bird is found
-
-**birdFoods requirements**:
-- Include 0-8 food items
-- Common food categories: Seeds, Insects, Fruits, Nectar, Small Mammals, Fish, Carrion, Berries, Nuts, Aquatic Plants, Crustaceans, Mollusks, Worms, Grains, Vegetation
-- Be specific about species preferences and foraging behavior
-
-**commonNames requirements**:
-- Include at least the primary English common name
-- Add regional variants if they exist
-- Include names in other languages if commonly used
-- Specify the region where each name is used
-
-**Size measurements**:
-- Always provide ranges (min and max)
-- Length = bill tip to tail tip in cm
-- Wingspan = tip to tip with wings extended in cm
-- Weight in grams
-- If exact ranges unknown, provide reasonable estimates based on similar species
-
-Return ONLY the JSON object. Ensure all numeric values are numbers, not strings.`;
+RULES:
+- Fill ALL fields with detailed, specific data
+- habitats: Use exact values (Desert, Forest, Grassland, Savanna, Scrub, Subterranean, Wetlands, Marine)
+- conservationStatus.code: EX(9), EW(8), CR(7), EN(6), VU(5), NT(4), LC(3), DD(2), NE(1)
+- distributions: 3-6 entries, presenceScore 0.9+=primary, 0.5-0.8=common, <0.5=rare
+- birdFoods: 3-8 items (Seeds, Insects, Fruits, Nectar, Fish, etc.)
+- commonNames: Include English + regional/language variants
+- Measurements: Actual ranges (length/wingspan in cm, weight in grams)
+- All numbers as numbers, not strings`;
 
         try {
             const response = await this.client.chat.completions.create({
