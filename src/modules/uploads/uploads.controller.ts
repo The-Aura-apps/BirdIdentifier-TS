@@ -8,6 +8,7 @@ import {
     Res,
     Body,
     ParseIntPipe,
+    BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -234,5 +235,76 @@ export class UploadsController {
         res.setHeader('Content-Type', file.mimeType);
         res.setHeader('Content-Disposition', `attachment; filename=${file.fileName}`);
         res.send(file.fileData);
+    }
+
+    @Post('identify-and-refresh')
+    @UseInterceptors(FileInterceptor('file'))
+    @ApiOperation({
+        summary: 'Identify bird and refresh data from APIs',
+        description:
+            'Upload a bird image to identify the species, then fetch fresh data from all APIs (OpenAI, iNaturalist, Pexels) and update/replace existing data in the database. This ensures you always get the latest bird information, even if the bird already exists.',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'Image file to identify bird',
+        schema: {
+            type: 'object',
+            required: ['file'],
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Bird image (JPEG, PNG)',
+                },
+            },
+        },
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'Bird identified and data refreshed successfully',
+        schema: {
+            example: {
+                success: true,
+                message: 'Bird identified and data refreshed from APIs',
+                bird: {
+                    id: 123,
+                    scientificName: 'Turdus migratorius',
+                    description: 'Fresh data from OpenAI...',
+                    commonNames: [{ name: 'American Robin', language: 'en' }],
+                    taxonomy: { order: 'Passeriformes', family: 'Turdidae' },
+                    habitats: ['Forest', 'Grassland'],
+                    media: [
+                        { type: 'image', source: 'inaturalist', storageKey: 'https://...' },
+                        { type: 'image', source: 'pexels', storageKey: 'https://...' },
+                    ],
+                },
+                confidence: 0.95,
+                dataRefreshed: true,
+            },
+        },
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid file or identification failed',
+        schema: {
+            example: {
+                success: false,
+                error: 'Could not identify bird from image',
+                confidence: 0.3,
+            },
+        },
+    })
+    async identifyAndRefresh(@UploadedFile() file: FileUploadDto) {
+        if (!file) {
+            throw new BadRequestException('No file uploaded');
+        }
+
+        const result = await this.uploadsService.identifyAndRefreshBird({
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            buffer: file.buffer,
+        });
+
+        return result;
     }
 }

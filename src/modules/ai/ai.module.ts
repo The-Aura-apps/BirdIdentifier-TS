@@ -11,6 +11,6 @@ import { ConfigModule } from '@nestjs/config';
 @Module({
     imports: [forwardRef(() => BirdsModule), ConfigModule],
     providers: [AiService, ImageAiWrapper, AudioAiWrapper, BirdInfoWrapper, WikimediaPhotoWrapper, XenoCantoAudioWrapper],
-    exports: [AiService, WikimediaPhotoWrapper, XenoCantoAudioWrapper],
+    exports: [AiService, ImageAiWrapper, BirdInfoWrapper, WikimediaPhotoWrapper, XenoCantoAudioWrapper],
 })
 export class AiModule {}

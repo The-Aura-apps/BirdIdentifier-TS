@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Upload } from './entities/upload.entity';
 import { ObservationsService } from 'src/modules/observation/observations/observations.service';
+import { ImageAiWrapper } from '../ai/wrappers/image-ai.wrapper';
+import { BirdsService } from '../bird/birds/birds.service';
 import * as crypto from 'crypto';
 import { FileUploadDto } from './dto/upload.dto';
 
@@ -14,6 +16,8 @@ export class UploadsService {
         @InjectRepository(Upload)
         private readonly uploadRepo: Repository<Upload>,
         private readonly observationService: ObservationsService,
+        private readonly imageAiWrapper: ImageAiWrapper,
+        private readonly birdsService: BirdsService,
     ) {}
 
     // async identifyBird(file: FileUploadDto, deviceId: string, type: 'image' | 'audio') {
@@ -233,5 +237,92 @@ export class UploadsService {
     async getFileInfo(id: number) {
         const file = await this.getFile(id);
         return file.getFileInfo();
+    }
+
+    /**
+     * Identify bird from image and refresh data from APIs
+     * Always fetches fresh data even if bird exists in database
+     */
+    async identifyAndRefreshBird(file: FileUploadDto) {
+        if (!file?.buffer) {
+            this.logger.error('Upload attempted without file buffer');
+            throw new BadRequestException('No file provided');
+        }
+
+        // Validate file type (only images)
+        if (!file.mimetype.startsWith('image/')) {
+            throw new BadRequestException('Only image files are allowed');
+        }
+
+        this.logger.log('🔍 Starting bird identification and data refresh...');
+
+        try {
+            // Step 1: Identify the bird using AI
+            this.logger.log('Step 1: Identifying bird species from image...');
+            const identificationResult = await this.imageAiWrapper.identify(file.buffer);
+
+            if (!identificationResult?.scientificName) {
+                this.logger.warn('Bird identification failed - no scientific name returned');
+                return {
+                    success: false,
+                    error: 'Could not identify bird from image',
+                    confidence: identificationResult?.confidence || 0,
+                };
+            }
+
+            const { scientificName, confidence } = identificationResult;
+            this.logger.log(`✓ Bird identified: ${scientificName} (confidence: ${confidence})`);
+
+            // Step 2: Check if bird exists in database
+            this.logger.log('Step 2: Checking if bird exists in database...');
+            let bird = await this.birdsService.findByScientificName(scientificName);
+
+            if (bird) {
+                this.logger.log(`✓ Bird found in database (ID: ${bird.id}), will refresh data`);
+
+                // Step 3: Force refresh data from APIs
+                this.logger.log('Step 3: Fetching fresh data from all APIs (OpenAI, iNaturalist, Pexels)...');
+                await this.birdsService.refreshBirdData(bird.id);
+
+                // Get updated bird data
+                bird = await this.birdsService.findOne(String(bird.id));
+                this.logger.log('✓ Bird data refreshed successfully');
+
+                return {
+                    success: true,
+                    message: 'Bird identified and data refreshed from APIs',
+                    bird,
+                    confidence,
+                    dataRefreshed: true,
+                    existedBefore: true,
+                };
+            } else {
+                // Step 3: Create new bird with API data
+                this.logger.log('Step 3: Bird not found, creating new entry with API data...');
+                bird = await this.birdsService.createBirdWithAIData(scientificName);
+                this.logger.log(`✓ New bird created (ID: ${bird.id}) with fresh API data`);
+
+                return {
+                    success: true,
+                    message: 'Bird identified and created with fresh API data',
+                    bird,
+                    confidence,
+                    dataRefreshed: true,
+                    existedBefore: false,
+                };
+            }
+        } catch (err) {
+            this.logger.error(`Failed to identify and refresh bird: ${err.message}`, err.stack);
+            
+            if (err instanceof BadRequestException || err instanceof NotFoundException) {
+                throw err;
+            }
+
+            return {
+                success: false,
+                error: err.message || 'Failed to process bird identification',
+                confidence: 0,
+            };
+        }
     }
 }

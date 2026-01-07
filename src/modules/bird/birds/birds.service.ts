@@ -337,7 +337,7 @@ export class BirdsService {
     /**
      * Find bird by scientific name
      */
-    async findByScientificName(scientificName: string): Promise<Bird> {
+    async findByScientificName(scientificName: string): Promise<Bird | null> {
         if (!scientificName) {
             throw new BadRequestException('Scientific name is required');
         }
@@ -357,11 +357,7 @@ export class BirdsService {
             ],
         });
 
-        if (!bird) {
-            throw new NotFoundException(`Bird with scientific name "${scientificName}" not found`);
-        }
-
-        return bird;
+        return bird || null;
     }
 
     /**
@@ -819,7 +815,7 @@ export class BirdsService {
         // Handle Habitats (ManyToMany) - Place this AFTER all other saves
         if (birdInfo.habitats && Array.isArray(birdInfo.habitats) && birdInfo.habitats.length > 0) {
             try {
-                // ✅ Reload the bird to ensure clean state
+                //  Reload the bird to ensure clean state
                 const birdWithHabitats = await this.birdRepo.findOne({
                     where: { id: birdId },
                     relations: ['habitats'],
@@ -965,6 +961,148 @@ export class BirdsService {
         */
 
         this.logger.log(`Bird ${birdId} enrichment completed successfully`);
+    }
+
+    /**
+     * Refresh bird data by fetching fresh information from APIs
+     * Deletes existing relations and replaces with new data
+     */
+    async refreshBirdData(birdId: number): Promise<Bird> {
+        this.logger.log(` Refreshing bird data for ID: ${birdId}`);
+
+        // Find the bird
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+            relations: [
+                'commonNames',
+                'media',
+                'conservationStatus',
+                'habitats',
+                'taxonomy',
+                'distributions',
+                'birdFoods',
+            ],
+        });
+
+        if (!bird) {
+            throw new NotFoundException(`Bird with ID ${birdId} not found`);
+        }
+
+        const scientificName = bird.scientificName;
+        this.logger.log(`Refreshing data for: ${scientificName}`);
+
+        try {
+            // Step 1: Fetch fresh data from AI
+            this.logger.log('Fetching fresh bird info from OpenAI...');
+            const birdInfo = await this.birdInfoWrapper.fetchInfo(scientificName);
+
+            // Step 2: Delete existing relations to replace them
+            this.logger.log('Removing old data...');
+
+            // Delete common names
+            if (bird.commonNames && bird.commonNames.length > 0) {
+                await this.commonNameRepo.remove(bird.commonNames);
+            }
+
+            // Delete media (from all sources)
+            if (bird.media && bird.media.length > 0) {
+                await this.mediaRepo.remove(bird.media);
+            }
+
+            // Delete distributions
+            if (bird.distributions && bird.distributions.length > 0) {
+                await this.distributionRepo.remove(bird.distributions);
+            }
+
+            // Delete bird-food relations
+            if (bird.birdFoods && bird.birdFoods.length > 0) {
+                await this.birdFoodRepo.remove(bird.birdFoods);
+            }
+
+            // Note: We keep taxonomy and conservation status entities as they might be shared
+
+            // Step 3: Re-enrich with fresh data
+            this.logger.log('Adding fresh data from APIs...');
+            await this.enrichBirdData(birdId, birdInfo);
+
+            // Step 4: Reload bird with all new data
+            const refreshedBird = await this.birdRepo.findOne({
+                where: { id: birdId },
+                relations: [
+                    'commonNames',
+                    'media',
+                    'conservationStatus',
+                    'habitats',
+                    'taxonomy',
+                    'distributions',
+                    'birdFoods',
+                    'birdFoods.food',
+                ],
+            });
+
+            this.logger.log(` Bird data refreshed successfully for: ${scientificName}`);
+            return refreshedBird!;
+        } catch (err) {
+            this.logger.error(`Failed to refresh bird data for ${scientificName}: ${err.message}`, err.stack);
+            throw err;
+        }
+    }
+
+    /**
+     * Create a new bird with fresh AI data
+     * Used when bird doesn't exist in database
+     */
+    async createBirdWithAIData(scientificName: string): Promise<Bird> {
+        const normalizedName = scientificName.trim();
+        this.logger.log(` Creating new bird with AI data: ${normalizedName}`);
+
+        // Check if bird already exists
+        const existing = await this.birdRepo.findOne({
+            where: { scientificName: normalizedName },
+        });
+
+        if (existing) {
+            this.logger.warn(`Bird already exists (ID: ${existing.id}), refreshing instead...`);
+            return this.refreshBirdData(existing.id);
+        }
+
+        try {
+            // Step 1: Fetch bird info from AI
+            this.logger.log('Fetching bird info from OpenAI...');
+            const birdInfo = await this.birdInfoWrapper.fetchInfo(normalizedName);
+
+            // Step 2: Create minimal bird record
+            const bird = this.birdRepo.create({
+                scientificName: normalizedName,
+            });
+            const savedBird = await this.birdRepo.save(bird);
+            this.logger.log(`Bird record created with ID: ${savedBird.id}`);
+
+            // Step 3: Enrich with API data
+            this.logger.log('Enriching with API data (OpenAI, iNaturalist, Pexels)...');
+            await this.enrichBirdData(savedBird.id, birdInfo);
+
+            // Step 4: Reload with all relations
+            const enrichedBird = await this.birdRepo.findOne({
+                where: { id: savedBird.id },
+                relations: [
+                    'commonNames',
+                    'media',
+                    'conservationStatus',
+                    'habitats',
+                    'taxonomy',
+                    'distributions',
+                    'birdFoods',
+                    'birdFoods.food',
+                ],
+            });
+
+            this.logger.log(` Bird created and enriched successfully: ${normalizedName}`);
+            return enrichedBird!;
+        } catch (err) {
+            this.logger.error(`Failed to create bird with AI data for ${normalizedName}: ${err.message}`, err.stack);
+            throw err;
+        }
     }
 
     /**
