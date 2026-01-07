@@ -918,6 +918,9 @@ export class BirdsService {
         }
 
         // Fetch audio recordings from xeno-canto
+        // TODO: Fix XenoCanto API integration (API v2 shut down, v3 has issues)
+        // Uncomment when XenoCanto API is working properly
+        /*
         try {
             this.logger.log(`Fetching audio recordings from xeno-canto for ${bird.scientificName}...`);
             
@@ -959,6 +962,7 @@ export class BirdsService {
         } catch (err) {
             this.logger.error(`Failed to fetch xeno-canto audio for bird ${birdId}: ${err.message}`);
         }
+        */
 
         this.logger.log(`Bird ${birdId} enrichment completed successfully`);
     }
