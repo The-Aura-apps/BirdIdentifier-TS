@@ -128,22 +128,22 @@ def analyze():
             except Exception as e:
                 logger.warning(f"Failed to delete temp file: {e}")
 
+print("=" * 50)
+print("BirdNET-Analyzer Server")
+print("=" * 50)
+print("Initializing BirdNET model...")
+
+if not initialize_analyzer():
+    print("ERROR: Failed to initialize BirdNET!")
+    print("Server will start but /analyze endpoint will not work")
+else:
+    print("✓ BirdNET model loaded successfully")
+
+print("=" * 50)
+print("Server running on http://0.0.0.0:8080")
+print("Health check: http://localhost:8080/health")
+print("Analyze endpoint: POST http://localhost:8080/analyze")
+print("=" * 50)
+
 if __name__ == '__main__':
-    print("=" * 50)
-    print("BirdNET-Analyzer Server")
-    print("=" * 50)
-    print("Initializing BirdNET model...")
-    
-    if not initialize_analyzer():
-        print("ERROR: Failed to initialize BirdNET!")
-        print("Server will start but /analyze endpoint will not work")
-    else:
-        print("✓ BirdNET model loaded successfully")
-    
-    print("=" * 50)
-    print("Server running on http://0.0.0.0:8080")
-    print("Health check: http://localhost:8080/health")
-    print("Analyze endpoint: POST http://localhost:8080/analyze")
-    print("=" * 50)
-    
     app.run(host='0.0.0.0', port=8080, debug=False)

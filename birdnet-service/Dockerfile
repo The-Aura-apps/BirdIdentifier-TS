@@ -2,32 +2,19 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies for audio processing
 RUN apt-get update && apt-get install -y \
     libsndfile1 \
     ffmpeg \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --no-cache-dir \
-    flask \
-    numpy \
-    librosa \
-    resampy \
-    soundfile \
-    audioread \
-    tensorflow-cpu \
-    birdnetlib
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the server script
 COPY birdnet-server.py .
 
-# Download BirdNET model (will be cached in the image)
 RUN mkdir -p /app/models
 
-# Expose port
 EXPOSE 8080
 
-# Run the server
-CMD ["python", "birdnet-server.py"]
+CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:8080", "--timeout", "120", "birdnet-server:app"]

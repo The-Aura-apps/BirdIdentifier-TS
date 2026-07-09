@@ -48,16 +48,13 @@ import { Article } from 'src/modules/article/entities/article.entity';
                 synchronize: configService.get<boolean>('database.synchronize'),
                 logging: configService.get<boolean>('database.logging'),
                 // Production optimizations
-                ...(process.env.NODE_ENV === 'production' && {
-                    extra: {
-                        max: 20,
-                        idleTimeoutMillis: 30000,
-                        connectionTimeoutMillis: 2000,
-                    },
-                    ssl: {
-                        rejectUnauthorized: false,
-                    },
-                }),
+
+                extra: {
+                    max: 20,
+                    idleTimeoutMillis: 30000,
+                    connectionTimeoutMillis: 2000,
+                },
+                ssl: false,
             }),
         }),
     ],
