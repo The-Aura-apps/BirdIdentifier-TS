@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BirdsService } from 'src/modules/bird/birds/birds.service';
 import { AiService } from 'src/modules/ai/ai.service';
 import { CreateObservationDto } from './dto/create-observation.dto';
+import { UpdateObservationDto } from './dto/update-observation.dto';
 import { BirdAiResponse, isIdentified, isFailed } from 'src/modules/ai/types';
 import { Bird } from '@/modules/bird/birds/entities/bird.entity';
 
@@ -381,24 +382,19 @@ export class ObservationsService {
         });
     }
 
-    async update(id: string, partial: Partial<Observation>): Promise<Observation> {
+    async update(id: string, dto: UpdateObservationDto): Promise<Observation> {
         const obs = await this.findOne(id);
 
-        if (partial.status && partial.status !== obs.status) {
-            if (!this.validateStatusTransition(obs.status, partial.status)) {
+        if (dto.status && dto.status !== obs.status) {
+            if (!this.validateStatusTransition(obs.status, dto.status)) {
                 throw new BadRequestException(
-                    `Invalid status transition from ${obs.status} to ${partial.status}`,
+                    `Invalid status transition from ${obs.status} to ${dto.status}`,
                 );
             }
+            obs.status = dto.status;
         }
 
-        delete partial['id'];
-        delete partial['createdAt'];
-        delete partial['uploadId'];
-
-        Object.assign(obs, partial, {
-            updatedAt: new Date(),
-        });
+        obs.updatedAt = new Date();
         return this.observationsRepo.save(obs);
     }
 

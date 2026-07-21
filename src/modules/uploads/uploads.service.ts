@@ -205,37 +205,38 @@ export class UploadsService {
         }
     }
 
-    // Chane name this shet function
-    async getFile(id: number): Promise<Upload> {
-        if (!id || id < 1) {
-            throw new BadRequestException('Invalid file ID');
+    // Looks up a file by its content checksum rather than its sequential DB id,
+    // so download URLs can't be walked (/uploads/1, /uploads/2, ...).
+    async getFile(checksum: string): Promise<Upload> {
+        if (!checksum || !/^[a-f0-9]{64}$/i.test(checksum)) {
+            throw new BadRequestException('Invalid file checksum');
         }
 
         try {
             const file = await this.uploadRepo.findOne({
                 where: {
-                    id,
+                    checksum,
                 },
             });
 
             if (!file) {
-                this.logger.warn(`File not found: ${id}`);
-                throw new NotFoundException(`File with id ${id} not found`);
+                this.logger.warn(`File not found: ${checksum}`);
+                throw new NotFoundException(`File with checksum ${checksum} not found`);
             }
 
-            this.logger.log(`File retrieved: ${id}`);
+            this.logger.log(`File retrieved: ${checksum}`);
             return file;
         } catch (err) {
             if (err instanceof NotFoundException) {
                 throw err;
             }
-            this.logger.error(`Error retrieving file ${id}: ${err.message}`);
+            this.logger.error(`Error retrieving file ${checksum}: ${err.message}`);
             throw err;
         }
     }
     // Helper method to get file info without the binary data
-    async getFileInfo(id: number) {
-        const file = await this.getFile(id);
+    async getFileInfo(checksum: string) {
+        const file = await this.getFile(checksum);
         return file.getFileInfo();
     }
 

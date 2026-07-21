@@ -11,6 +11,7 @@ import {
     Query,
     Patch,
     UseGuards,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { BirdsService } from './birds.service';
@@ -316,7 +317,7 @@ export class BirdsController {
         description: 'Habitat not found',
     })
     filterByHabitatAndSearch(
-        @Query('habitatId') habitatId: string,
+        @Query('habitatId', ParseIntPipe) habitatId: number,
         @Query('search') search: string,
         @Query('page') page = '1',
         @Query('limit') limit = '20',
@@ -325,7 +326,7 @@ export class BirdsController {
         total: number;
         habitat: string;
     }> {
-        return this.birdService.filterByHabitatAndSearch(+habitatId, search, {
+        return this.birdService.filterByHabitatAndSearch(habitatId, search, {
             page: Number(page),
             limit: Number(limit),
         });
@@ -348,8 +349,8 @@ export class BirdsController {
     }
 
     @Get('by-habitat/:habitatId')
-    getBirdsByHabitat(@Param('habitatId') habitatId: string): Promise<Bird[]> {
-        return this.birdService.getBirdsByHabitat(+habitatId);
+    getBirdsByHabitat(@Param('habitatId', ParseIntPipe) habitatId: number): Promise<Bird[]> {
+        return this.birdService.getBirdsByHabitat(habitatId);
     }
 
     @Get('by-habitat-simple/:habitatId')
@@ -382,8 +383,8 @@ export class BirdsController {
         status: 404,
         description: 'Habitat not found',
     })
-    getSimplifiedBirdsByHabitat(@Param('habitatId') habitatId: string): Promise<any[]> {
-        return this.birdService.getSimplifiedBirdsByHabitat(+habitatId);
+    getSimplifiedBirdsByHabitat(@Param('habitatId', ParseIntPipe) habitatId: number): Promise<any[]> {
+        return this.birdService.getSimplifiedBirdsByHabitat(habitatId);
     }
 
     @Get('scientific/:scientificName')
@@ -430,96 +431,100 @@ export class BirdsController {
 
     // Food relationships
     @Get(':id/foods')
-    getFoods(@Param('id') id: string) {
-        return this.birdService.getFoods(+id);
+    getFoods(@Param('id', ParseIntPipe) id: number) {
+        return this.birdService.getFoods(id);
     }
 
     @Post(':id/foods')
-    addFood(@Param('id') id: string, @Body() createBirdFoodDto: CreateBirdFoodDto) {
-        return this.birdService.addFood(+id, createBirdFoodDto);
+    addFood(@Param('id', ParseIntPipe) id: number, @Body() createBirdFoodDto: CreateBirdFoodDto) {
+        return this.birdService.addFood(id, createBirdFoodDto);
     }
 
     @Put(':birdId/foods/:foodId')
-    updateFood(@Param('birdId') birdId: string, @Param('foodId') foodId: string, @Body() updateBirdFoodDto: UpdateBirdFoodDto) {
-        return this.birdService.updateFood(+birdId, +foodId, updateBirdFoodDto);
+    updateFood(
+        @Param('birdId', ParseIntPipe) birdId: number,
+        @Param('foodId', ParseIntPipe) foodId: number,
+        @Body() updateBirdFoodDto: UpdateBirdFoodDto,
+    ) {
+        return this.birdService.updateFood(birdId, foodId, updateBirdFoodDto);
     }
 
     @Delete(':birdId/foods/:foodId')
-    removeFood(@Param('birdId') birdId: string, @Param('foodId') foodId: string) {
-        return this.birdService.removeFood(+birdId, +foodId);
+    removeFood(@Param('birdId', ParseIntPipe) birdId: number, @Param('foodId', ParseIntPipe) foodId: number) {
+        return this.birdService.removeFood(birdId, foodId);
     }
 
     @Patch(':birdId/foods/:foodId/toggle-active')
-    toggleFoodActive(@Param('birdId') birdId: string, @Param('foodId') foodId: string) {
-        return this.birdService.toggleFoodActive(+birdId, +foodId);
+    toggleFoodActive(@Param('birdId', ParseIntPipe) birdId: number, @Param('foodId', ParseIntPipe) foodId: number) {
+        return this.birdService.toggleFoodActive(birdId, foodId);
     }
 
     // Habitat relationships
     @Get('habitat/:habitatId')
-    findByHabitat(@Param('habitatId') habitatId: string, @Query('page') page = '1', @Query('limit') limit = '20'): Promise<{ data: Bird[]; total: number }> {
-        return this.birdService.findByHabitat(+habitatId, {
+    findByHabitat(@Param('habitatId', ParseIntPipe) habitatId: number, @Query('page') page = '1', @Query('limit') limit = '20'): Promise<{ data: Bird[]; total: number }> {
+        return this.birdService.findByHabitat(habitatId, {
             page: Number(page),
             limit: Number(limit),
         });
     }
 
     @Get(':id/habitats')
-    getHabitats(@Param('id') id: string) {
-        return this.birdService.getHabitats(+id);
+    getHabitats(@Param('id', ParseIntPipe) id: number) {
+        return this.birdService.getHabitats(id);
     }
 
     @Post(':id/habitats/:habitatId')
-    addHabitat(@Param('id') id: string, @Param('habitatId') habitatId: string) {
-        return this.birdService.addHabitat(+id, +habitatId);
+    addHabitat(@Param('id', ParseIntPipe) id: number, @Param('habitatId', ParseIntPipe) habitatId: number) {
+        return this.birdService.addHabitat(id, habitatId);
     }
 
     @Delete(':id/habitats/:habitatId')
-    removeHabitat(@Param('id') id: string, @Param('habitatId') habitatId: string) {
-        return this.birdService.removeHabitat(+id, +habitatId);
+    removeHabitat(@Param('id', ParseIntPipe) id: number, @Param('habitatId', ParseIntPipe) habitatId: number) {
+        return this.birdService.removeHabitat(id, habitatId);
     }
 
     // Common names
     @Get(':id/commonNames')
-    getCommonNames(@Param('id') id: string) {
-        return this.birdService.getCommonNames(+id);
+    getCommonNames(@Param('id', ParseIntPipe) id: number) {
+        return this.birdService.getCommonNames(id);
     }
 
     @Post(':id/commonNames')
-    addCommonName(@Param('id') id: string, @Body() createCommonNameDto: CreateCommonNameDto) {
-        return this.birdService.addCommonName(+id, createCommonNameDto);
+    addCommonName(@Param('id', ParseIntPipe) id: number, @Body() createCommonNameDto: CreateCommonNameDto) {
+        return this.birdService.addCommonName(id, createCommonNameDto);
     }
 
     // Media
     @Get(':id/media')
-    getMedia(@Param('id') id: string) {
-        return this.birdService.getMedia(+id);
+    getMedia(@Param('id', ParseIntPipe) id: number) {
+        return this.birdService.getMedia(id);
     }
 
     @Post(':id/media')
-    addMedia(@Param('id') id: string, @Body() createDto: CreateMediaDto) {
-        return this.birdService.addMedia(+id, createDto);
+    addMedia(@Param('id', ParseIntPipe) id: number, @Body() createDto: CreateMediaDto) {
+        return this.birdService.addMedia(id, createDto);
     }
 
     // Taxonomy
     @Get(':id/taxonomy')
-    getTaxonomy(@Param('id') id: string) {
-        return this.birdService.getTaxonomy(+id);
+    getTaxonomy(@Param('id', ParseIntPipe) id: number) {
+        return this.birdService.getTaxonomy(id);
     }
 
     // Conservation Status
     @Get(':id/conservationStatus')
-    getConservationStatus(@Param('id') id: string) {
-        return this.birdService.getConservationStatus(+id);
+    getConservationStatus(@Param('id', ParseIntPipe) id: number) {
+        return this.birdService.getConservationStatus(id);
     }
 
     // Distributions
     @Get(':id/distributions')
-    getDistributions(@Param('id') id: string) {
-        return this.birdService.getDistributions(+id);
+    getDistributions(@Param('id', ParseIntPipe) id: number) {
+        return this.birdService.getDistributions(id);
     }
 
     @Post(':id/distributions')
-    addDistribution(@Param('id') id: string, @Body() createDto: CreateBirdDistributionDto) {
-        return this.birdService.addDistribution(+id, createDto);
+    addDistribution(@Param('id', ParseIntPipe) id: number, @Body() createDto: CreateBirdDistributionDto) {
+        return this.birdService.addDistribution(id, createDto);
     }
 }

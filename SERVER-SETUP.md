@@ -359,28 +359,3 @@ df -h
 docker system prune -a
 ```
 
----
-
-## Next Steps
-
-After completing this setup:
-
-1. **Update GitHub Secrets** (see CI/CD-SETUP.md)
-2. **Test CI/CD Pipeline** - Push a small change to trigger auto-deployment
-3. **Monitor Logs** - Check `docker compose logs -f` regularly
-4. **Set Up Monitoring** - Consider adding tools like Portainer for visual Docker management
-
----
-
-## Rollback to Old Setup (If Needed)
-
-If you need to go back to PM2:
-
-```bash
-# Stop Docker
-docker compose down
-
-# Start PM2 (old way)
-pm2 start ecosystem.config.js
-pm2 save
-```

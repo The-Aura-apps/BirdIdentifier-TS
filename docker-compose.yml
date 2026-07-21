@@ -24,8 +24,8 @@ services:
       dockerfile: Dockerfile
     container_name: birdnet-service
     restart: unless-stopped
-    ports:
-      - "8080:8080"
+    # No host port published: only the `app` container talks to this,
+    # over the internal bird-network at http://birdnet:8080.
     networks:
       - bird-network
     healthcheck:
@@ -42,9 +42,15 @@ services:
     container_name: bird-api
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "4000:3000"  # Changed: host 3000 is in Windows' reserved port range
     environment:
       DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      PORT: 3000
       BIRDNET_URL: http://birdnet:8080
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       NODE_ENV: production

@@ -16,6 +16,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiQuery } from '@nestjs/
 import { ObservationsService } from './observations.service';
 import { Observation } from './entities/observation.entity';
 import { CreateObservationDto } from './dto/create-observation.dto';
+import { UpdateObservationDto } from './dto/update-observation.dto';
 import { Bird } from '@/modules/bird/birds/entities/bird.entity';
 
 @ApiTags('observations')
@@ -126,8 +127,8 @@ export class ObservationsController {
     // }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() partial: Partial<Observation>): Promise<Observation> {
-        return this.observationsService.update(id, partial);
+    update(@Param('id') id: string, @Body() dto: UpdateObservationDto): Promise<Observation> {
+        return this.observationsService.update(id, dto);
     }
 
     @Delete(':id')

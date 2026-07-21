@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import databaseConfig from './core/configs/database.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,6 +32,9 @@ import { ArticleModule } from './modules/article/article.module';
             envFilePath: '.env',
             load: [databaseConfig],
         }),
+        // Global default: 30 requests/min per IP. Endpoints that trigger paid
+        // third-party AI calls (uploads) override this with a tighter limit.
+        ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
         BirdsModule,
         ObservationsModule,
         AiModule,
@@ -53,6 +58,6 @@ import { ArticleModule } from './modules/article/article.module';
         //NotificationModule,
     ],
     controllers: [AppController],
-    providers: [AppService],
+    providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

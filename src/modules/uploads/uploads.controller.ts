@@ -7,10 +7,10 @@ import {
     Param,
     Res,
     Body,
-    ParseIntPipe,
     BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import {
     ApiTags,
     ApiOperation,
@@ -26,10 +26,19 @@ import type { FileUploadDto } from './dto/upload.dto';
 @ApiTags('Uploads')
 @Controller('uploads')
 export class UploadsController {
+    // Matches AiService.MAX_FILE_SIZE; rejects oversized uploads before they're
+    // fully buffered into memory instead of only checking after the fact.
+    private static readonly MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
     constructor(private readonly uploadsService: UploadsService) {}
 
     @Post()
-    @UseInterceptors(FileInterceptor('file'))
+    // Tighter than the global default: each request here triggers a paid
+    // OpenAI Vision / BirdNET call.
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    @UseInterceptors(
+        FileInterceptor('file', { limits: { fileSize: UploadsController.MAX_UPLOAD_BYTES } }),
+    )
     @ApiOperation({
         summary: 'Upload image or audio file for bird identification',
         description:
@@ -172,17 +181,17 @@ export class UploadsController {
         };
     }
 
-    @Get(':id')
+    @Get(':checksum')
     @ApiOperation({
-        summary: 'Download uploaded file by ID',
+        summary: 'Download uploaded file by checksum',
         description:
-            'Retrieve the original uploaded file (image or audio) by its upload ID. Returns the file with appropriate content-type header.',
+            'Retrieve the original uploaded file (image or audio) by its SHA-256 checksum. Returns the file with appropriate content-type header.',
     })
     @ApiParam({
-        name: 'id',
-        description: 'Upload ID',
-        type: Number,
-        example: 1,
+        name: 'checksum',
+        description: 'SHA-256 checksum of the uploaded file',
+        type: String,
+        example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b85',
     })
     @ApiResponse({
         status: 200,
@@ -220,25 +229,33 @@ export class UploadsController {
         schema: {
             example: {
                 statusCode: 404,
-                message: 'Upload with ID 999 not found',
+                message: 'File with checksum ... not found',
                 error: 'Not Found',
             },
         },
     })
     async downloadFile(
-        @Param('id', ParseIntPipe)
-        id: number,
+        @Param('checksum')
+        checksum: string,
         @Res()
         res: Response,
     ) {
-        const file = await this.uploadsService.getFile(id);
+        const file = await this.uploadsService.getFile(checksum);
+        // Strip quotes/CRLF so the stored original filename can't break header
+        // parsing or inject extra headers.
+        const safeFileName = file.fileName.replace(/["\r\n]/g, '_');
         res.setHeader('Content-Type', file.mimeType);
-        res.setHeader('Content-Disposition', `attachment; filename=${file.fileName}`);
+        res.setHeader('Content-Disposition', `attachment; filename="${safeFileName}"`);
         res.send(file.fileData);
     }
 
     @Post('identify-and-refresh')
-    @UseInterceptors(FileInterceptor('file'))
+    // Tighter than the global default: this hits OpenAI Vision plus a full
+    // iNaturalist/Pexels/OpenAI data refresh on every call.
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    @UseInterceptors(
+        FileInterceptor('file', { limits: { fileSize: UploadsController.MAX_UPLOAD_BYTES } }),
+    )
     @ApiOperation({
         summary: 'Identify bird and refresh data from APIs',
         description:

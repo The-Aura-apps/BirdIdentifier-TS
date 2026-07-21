@@ -5,6 +5,7 @@ Real bird identification from audio using BirdNET deep learning model
 """
 
 from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
 import os
 import tempfile
 import logging
@@ -59,14 +60,18 @@ def analyze():
         return jsonify({'error': 'Empty filename'}), 400
     
     # Get minimum confidence threshold (default 0.1)
-    min_conf = float(request.form.get('min_conf', 0.1))
-    
+    try:
+        min_conf = float(request.form.get('min_conf', 0.1))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid min_conf value, must be a number'}), 400
+
     logger.info(f"Received audio file: {file.filename} (min_conf: {min_conf})")
     
     temp_path = None
     try:
-        # Save audio file temporarily
-        suffix = os.path.splitext(file.filename)[1]
+        # Save audio file temporarily (sanitize client-supplied filename to prevent path traversal)
+        safe_filename = secure_filename(file.filename)
+        suffix = os.path.splitext(safe_filename)[1] or '.wav'
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             temp_path = tmp.name
             file.save(temp_path)

@@ -239,8 +239,10 @@ export class AudioAiWrapper {
         if (data.results.length > 1) {
             this.logger.log(`Found ${data.results.length} detections. Top matches:`);
             data.results.slice(0, 3).forEach((detection: any, index: number) => {
+                const detectionConfidence =
+                    typeof detection.confidence === 'number' ? detection.confidence.toFixed(3) : 'N/A';
                 this.logger.log(
-                    `  ${index + 1}. ${detection.scientific_name} (${detection.confidence.toFixed(3)})`,
+                    `  ${index + 1}. ${detection.scientific_name} (${detectionConfidence})`,
                 );
             });
         }
