@@ -10,7 +10,7 @@ import { ObservationsModule } from './modules/observation/observations/observati
 import { AiModule } from './modules/ai/ai.module';
 import { DatabaseModule } from './core/database/database.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
-//import { NotificationModule } from './modules/observation/notification/notification.module';
+import { NotificationModule } from './modules/observation/notification/notification.module';
 import { FoodsModule } from './modules/bird/foods/foods.module';
 import { HabitatsModule } from './modules/bird/habitats/habitats.module';
 import { BirdFoodsModule } from './modules/bird/bird-foods/bird-foods.module';
@@ -40,6 +40,7 @@ import { ArticleModule } from './modules/article/article.module';
         AiModule,
         DatabaseModule,
         UploadsModule,
+        NotificationModule,
         FoodsModule,
         HabitatsModule,
         BirdFoodsModule,
@@ -55,7 +56,6 @@ import { ArticleModule } from './modules/article/article.module';
         DeviceSettingsModule,
         ArticleModule,
         //IngestModule,
-        //NotificationModule,
     ],
     controllers: [AppController],
     providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

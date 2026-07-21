@@ -149,6 +149,10 @@ RULES:
         }
     }
 
+    private toFiniteNumber(value: unknown, fallback: number): number {
+        return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+    }
+
     /**
      * Validate and transform the API response to match our BirdInfo interface
      */
@@ -218,14 +222,21 @@ RULES:
             warnings.push('distributions field missing or invalid');
         }
 
-        // Validate commonNames
-        if (
-            !data.commonNames ||
-            !Array.isArray(data.commonNames) ||
-            data.commonNames.length === 0
-        ) {
+        // Validate commonNames (each entry must have a real name string)
+        if (Array.isArray(data.commonNames)) {
+            data.commonNames = data.commonNames.filter((c: any) => {
+                if (typeof c?.name !== 'string' || c.name.trim() === '') {
+                    warnings.push(`Dropping commonName entry with invalid name: ${JSON.stringify(c)}`);
+                    return false;
+                }
+                return true;
+            });
+        } else {
+            data.commonNames = [];
+        }
+        if (data.commonNames.length === 0) {
             data.commonNames = [{ name: scientificName, language: 'en', region: 'General' }];
-            warnings.push('commonNames missing, using scientific name');
+            warnings.push('commonNames missing or all invalid, using scientific name');
         }
 
         // Validate birdFoods
@@ -240,14 +251,39 @@ RULES:
             warnings.push('coolFacts not an array');
         }
 
-        // Validate size object
+        // Validate size object, including nested min/max fields (AI can return
+        // strings like "15" or omit a sub-field entirely)
         if (!data.size || typeof data.size !== 'object') {
-            data.size = {
-                lengthCm: { min: 0, max: 0 },
-                wingspanCm: { min: 0, max: 0 },
-                weightGrams: { min: 0, max: 0 },
-            };
+            data.size = {};
             warnings.push('size object missing or invalid');
+        }
+        for (const key of ['lengthCm', 'wingspanCm', 'weightGrams'] as const) {
+            const range = data.size[key];
+            const min = this.toFiniteNumber(range?.min, 0);
+            const max = this.toFiniteNumber(range?.max, 0);
+            if (min !== range?.min || max !== range?.max) {
+                warnings.push(`size.${key} had non-numeric min/max, defaulted to 0`);
+            }
+            data.size[key] = { min, max };
+        }
+
+        // Validate taxonomy — order/family/genus have no DB default, so a
+        // missing/non-string value would otherwise fail as a raw NOT NULL error
+        if (!data.taxonomy || typeof data.taxonomy !== 'object') {
+            data.taxonomy = {};
+            warnings.push('taxonomy object missing or invalid');
+        }
+        for (const key of ['order', 'family', 'genus'] as const) {
+            if (typeof data.taxonomy[key] !== 'string' || data.taxonomy[key].trim() === '') {
+                warnings.push(`taxonomy.${key} missing or invalid, defaulting to "Unknown"`);
+                data.taxonomy[key] = 'Unknown';
+            }
+        }
+        if (typeof data.taxonomy.phylum !== 'string' || data.taxonomy.phylum.trim() === '') {
+            data.taxonomy.phylum = 'Chordata';
+        }
+        if (typeof data.taxonomy.class !== 'string' || data.taxonomy.class.trim() === '') {
+            data.taxonomy.class = 'Aves';
         }
 
         // Log warnings

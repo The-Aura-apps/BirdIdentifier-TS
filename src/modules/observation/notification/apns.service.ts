@@ -1,31 +1,49 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as apn from 'apn';
 
 @Injectable()
 export class ApnsService {
     private readonly logger = new Logger(ApnsService.name);
-    private readonly apnProvider: apn.Provider;
+    private readonly apnProvider: apn.Provider | null = null;
+    private readonly bundleId: string | undefined;
 
-    constructor() {
+    constructor(private readonly configService: ConfigService) {
+        const keyPath = this.configService.get<string>('APNS_KEY_PATH');
+        const keyId = this.configService.get<string>('APNS_KEY_ID');
+        const teamId = this.configService.get<string>('APNS_TEAM_ID');
+        this.bundleId = this.configService.get<string>('APNS_BUNDLE_ID');
+
+        if (!keyPath || !keyId || !teamId || !this.bundleId) {
+            // Push notifications are optional: don't crash app boot just because
+            // APNs credentials haven't been set up yet.
+            this.logger.warn(
+                'APNs not configured (APNS_KEY_PATH/APNS_KEY_ID/APNS_TEAM_ID/APNS_BUNDLE_ID missing) — push notifications disabled',
+            );
+            return;
+        }
+
         this.apnProvider = new apn.Provider({
-            token: {
-                key: process.env.APNS_KEY_PATH!,
-                keyId: process.env.APNS_KEY_ID!,
-                teamId: process.env.APNS_TEAM_ID!,
-            },
-            production: true, // set true in production
+            token: { key: keyPath, keyId, teamId },
+            production: this.configService.get<string>('NODE_ENV') === 'production',
         });
     }
 
     async sendNotification(deviceToken: string, title: string, body: string) {
+        if (!this.apnProvider) {
+            throw new Error(
+                'APNs is not configured — set APNS_KEY_PATH, APNS_KEY_ID, APNS_TEAM_ID, APNS_BUNDLE_ID',
+            );
+        }
+
         const note = new apn.Notification();
 
-        note.topic = process.env.APNS_BUNDLE_ID!;
+        note.topic = this.bundleId!;
         note.alert = {
             title,
             body,
         };
-        note.sound = 'defulte';
+        note.sound = 'default';
         note.badge = 1;
 
         try {

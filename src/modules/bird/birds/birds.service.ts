@@ -378,7 +378,9 @@ export class BirdsService {
             throw new BadRequestException('Invalid pagination parameters');
         }
 
-        const validSortFields = ['createdAt', 'scientificName', 'commonName'];
+        // 'commonName' isn't a real column on `birds` (it lives in the related
+        // common_names table), so it can't be used here without a query-builder join.
+        const validSortFields = ['createdAt', 'scientificName'];
         if (!validSortFields.includes(sortBy)) {
             throw new BadRequestException(`Invalid sort field: ${sortBy}`);
         }

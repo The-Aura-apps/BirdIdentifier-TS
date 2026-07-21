@@ -4,7 +4,6 @@ import { ImageAiWrapper } from './wrappers/image-ai.wrapper';
 import { BirdInfoWrapper } from './wrappers/bird-info.wrapper';
 import { BirdAiResponse, IdentificationResult, BirdInfo } from './types';
 import { BirdsService } from '../bird/birds/birds.service';
-//import { DataCollectorService } from '../data-collector/data-collector.service';
 
 @Injectable()
 export class AiService {
@@ -15,7 +14,6 @@ export class AiService {
         private readonly imageAi: ImageAiWrapper,
         private readonly audioAi: AudioAiWrapper,
         private readonly birdInfo: BirdInfoWrapper,
-        //private readonly dataCollector: DataCollectorService,
         private readonly birdsService: BirdsService,
     ) {}
 
