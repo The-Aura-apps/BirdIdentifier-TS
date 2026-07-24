@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+.git
+.gitignore
+.env
+.env.*
+uploads
+birdnet-uploads
+tmp
+*.log
+coverage
+.nyc_output
+.vscode
+.idea
+venv
+.venv

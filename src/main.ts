@@ -10,11 +10,9 @@ dotenv.config();
 async function bootstrap() {
     // Verify API key is loaded
     if (!process.env.OPENAI_API_KEY) {
-        console.error(' OPENAI_API_KEY not found in environment variables!');
+        console.error('OPENAI_API_KEY not found in environment variables!');
         process.exit(1);
     }
-
-    console.log(' OPENAI_API_KEY loaded:', process.env.OPENAI_API_KEY.substring(0, 10) + '...');
 
     const app = await NestFactory.create(AppModule);
 
@@ -48,7 +46,5 @@ async function bootstrap() {
     const host = process.env.HOST ?? '0.0.0.0';
 
     await app.listen(port, host);
-    console.log(` Application is running on: http://${host}:${port}`);
-
 }
 bootstrap();

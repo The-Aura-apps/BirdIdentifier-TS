@@ -144,6 +144,10 @@ export class UploadsController {
         @Body('deviceId') deviceId: string,
         @Body('type') type: 'image' | 'audio',
     ) {
+        if (!file) {
+            throw new BadRequestException('No file uploaded');
+        }
+
         const result = await this.uploadsService.handleUpload(
             {
                 originalname: file.originalname,
