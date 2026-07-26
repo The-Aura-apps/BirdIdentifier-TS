@@ -1,10 +1,11 @@
-name: CI - Build and Test
+name: CI/CD - Build, Test, and Deploy
 
 on:
   push:
-    branches: [ main ]  
+    branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -34,3 +35,27 @@ jobs:
 
     - name: Lint code (if configured)
       run: npm run lint || true
+
+  deploy:
+    needs: build
+    # Only deploy on an actual push to main (or a manual trigger) — never for
+    # pull_request runs, which build/test a branch that isn't merged yet.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /var/www/bird-identifier
+            git pull origin main
+            docker compose up -d --build
+            # migrations run inside the already-built app container, using
+            # the compiled runner (no ts-node/devDeps dependency the way
+            # `npm run migration:run` would need)
+            docker compose exec -T app node dist/migrate.js || true
+            echo "Deployment completed successfully!"

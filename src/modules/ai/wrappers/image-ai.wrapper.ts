@@ -86,20 +86,22 @@ export class ImageAiWrapper {
 
             this.logger.log(`Sending to OpenAI: ${(compressedImage.length / 1024).toFixed(0)}KB`);
 
-            const prompt = `Identify the bird species OR breed/variety. Return ONLY JSON:
+            const prompt = `You are an expert field ornithologist identifying this bird down to species level, the way you would for a field guide.
+
+Return ONLY JSON in this exact shape:
 {
-  "scientificName": "Genus species" OR "Gallus gallus domesticus (Ayam Cemani)",
+  "visibleFeatures": "What you actually see: size/shape, plumage colors and patterns, facial features (eye color, facial disc shape, ear tufts present/absent, eyebrow/streaking), bill shape and color, leg/foot color and feathering, and any other marks useful for distinguishing similar species",
+  "candidateSpecies": ["most likely species", "next most likely, only if genuinely ambiguous"],
+  "scientificName": "Genus species" OR "Genus species (Common Breed Name)" for domestic/captive birds,
   "confidence": 0.xx
 }
 
-IMPORTANT:
-- For domestic breeds (chickens, pigeons, ducks): Include breed name in parentheses after scientific name
-- For wild birds: Use standard scientific name (Genus species)
-- Examples: "Gallus gallus domesticus (Ayam Cemani)", "Passer domesticus", "Columba livia (Racing Homer)"
-
-Confidence: 0.9+ (clear), 0.7-0.89 (good), <0.7 (poor/uncertain)
-
-Return ONLY bird species/breeds, nothing else.`;
+RULES:
+1. Identify to the MOST SPECIFIC level possible. Never answer with a family/order-level or generic description (e.g. "owl", "hawk", "brown owl", "duck") — if you can tell it's an owl, you can see enough detail to narrow it down further using field marks like facial disc pattern, eye color, ear tufts, size, and streaking vs. barring.
+2. Fill in "visibleFeatures" first and actually use it to reason through what rules similar-looking species in or out, before deciding "scientificName" — do not skip straight to a guess.
+3. If multiple species are genuinely difficult to distinguish from this one image (e.g. some flycatchers, juvenile gulls), list your top candidates in "candidateSpecies" ordered by likelihood, but still commit to your single best guess as "scientificName" with a correspondingly lower confidence — never fall back to a vague/generic name just because you're unsure between a few specific species.
+4. For domestic/captive breeds (chickens, pigeons, ducks, geese): include the breed name in parentheses after the wild-type scientific name, e.g. "Gallus gallus domesticus (Ayam Cemani)", "Columba livia (Racing Homer)".
+5. Confidence: 0.9+ = certain, distinguishing marks clearly visible. 0.7-0.89 = confident with minor ambiguity or partial view. Below 0.7 = genuine uncertainty between specific candidates (still name your best one).`;
 
             // Call GPT-4o-mini
             const response = await this.client.chat.completions.create({
@@ -124,7 +126,10 @@ Return ONLY bird species/breeds, nothing else.`;
                 response_format: {
                     type: 'json_object',
                 },
-                max_tokens: 300, //Extend if needed
+                // Raised from 300: the prompt now asks for a "visibleFeatures"
+                // reasoning field before the species name, which needs more room
+                // than a bare {scientificName, confidence} response did.
+                max_tokens: 600,
             });
 
             // Parse JSON safely
@@ -140,6 +145,19 @@ Return ONLY bird species/breeds, nothing else.`;
             } catch (prsErr) {
                 this.logger.error('Failed to pars OpenAI JSON response', content);
                 throw new Error('Invalid JSON from AI');
+            }
+
+            // Log the model's reasoning for debugging accuracy issues later
+            // (these fields aren't part of IdentificationResult, just diagnostics)
+            const raw = data as unknown as {
+                visibleFeatures?: string;
+                candidateSpecies?: string[];
+            };
+            if (raw.visibleFeatures) {
+                this.logger.debug(`[ImageAI] Visible features: ${raw.visibleFeatures}`);
+            }
+            if (raw.candidateSpecies?.length) {
+                this.logger.debug(`[ImageAI] Candidates: ${raw.candidateSpecies.join(', ')}`);
             }
 
             // Validate and normalize data
