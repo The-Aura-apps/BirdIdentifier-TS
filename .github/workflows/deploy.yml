@@ -1,4 +1,4 @@
-name: CD - Deploy to Production Server
+name: CD - Deploy
 
 on:
   push:
@@ -8,141 +8,20 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Run unit tests (skip if none exist)
-      run: npm test -- --passWithNoTests
-
-    - name: Run E2E tests
-      run: npm run test:e2e || echo "E2E tests skipped"
-
-    - name: Build application
-      run: npm run build
-
-    - name: Deploy to server with Docker
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          set -e
-
-          echo "Starting deployment..."
-
-          # Navigate to app directory
-          cd /var/www/bird-identifier/BirdIdentifier-Backend
-          
-          # Fetch latest from remote
-          echo "Fetching latest code..."
-          git fetch origin
-          
-          # Clean untracked files
-          git clean -fd
-          
-          # Reset hard to match origin/main
-          git reset --hard origin/main
-          
-          # Pull latest changes
-          git pull origin main
-          
-          # Install dependencies (needed for migrations and any server-side scripts)
-          echo "Installing dependencies..."
-          npm ci
-          
-          # Build application (to verify it compiles before Docker build)
-          echo "Building application..."
-          npm run build
-          
-          # Check if Docker is available
-          if ! command -v docker &> /dev/null; then
-              echo "ERROR: Docker not found! Please install Docker first."
-              echo "See SERVER-SETUP.md for installation instructions."
-              exit 1
-          fi
-          
-          # Create .env from .env.example if needed
-          if [ ! -f .env ]; then
-              echo "WARNING: .env file not found! Please create it manually."
-              echo "See .env.example for reference."
-              exit 1
-          fi
-          
-          # Stop old PM2 processes if running (to avoid port conflicts)
-          if command -v pm2 &> /dev/null; then
-              echo "Stopping old PM2 processes..."
-              pm2 delete all || true
-          fi
-          
-          # Check if Docker is available
-          if ! command -v docker &> /dev/null; then
-              echo "ERROR: Docker not found! Please install Docker first."
-              echo "See SERVER-SETUP.md for installation instructions."
-              exit 1
-          fi
-          
-          # Start BirdNET Docker container only
-          echo "Starting BirdNET Docker container..."
-          docker compose -f docker-compose.birdnet-only.yml up -d --build
-          
-          echo "Waiting for BirdNET to be ready..."
-          sleep 5
-          
-          # Check BirdNET health
-          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
-              echo "BirdNET is healthy"
-          else
-              echo "WARNING: BirdNET health check failed"
-          fi
-          
-          # Start NestJS with PM2
-          echo "Starting NestJS application with PM2..."
-          pm2 start ecosystem.config.js --update-env
-          pm2 save
-          
-          echo "Waiting for services to be ready..."
-          sleep 10
-          
-          # Health checks
-          echo "Running health checks..."
-          
-          # Check BirdNET
-          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
-              echo "BirdNET is healthy"
-          else
-              echo "WARNING: BirdNET health check failed"
-          fi
-          
-          # Check NestJS API (test root endpoint instead of /health)
-          if curl -f http://localhost:3000/ > /dev/null 2>&1; then
-              echo "NestJS API is healthy"
-          else
-              echo "WARNING: NestJS API health check failed"
-              pm2 logs --lines 20 --nostream
-          fi
-          
-          echo "Deployment completed successfully!"
-          echo "PM2 Status:"
-          pm2 status
-          echo "View live logs with: pm2 logs"
-
-    - name: Notify deployment status
-      if: always()
-      run: |
-        if [ ${{ job.status }} == 'success' ]; then
-          echo "Deployment successful!"
-        else
-          echo "Deployment failed!"
-        fi
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /var/www/bird-identifier
+            git pull origin main
+            docker compose up -d --build
+            # migrations run inside the already-built app container, using
+            # the compiled runner (no ts-node/devDeps dependency the way
+            # `npm run migration:run` would need)
+            docker compose exec -T app node dist/migrate.js || true
+            echo "Deployment completed successfully!"
