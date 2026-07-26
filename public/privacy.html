@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Bird Identifier</title>
+<style>
+:root {
+  --surface: rgba(255,255,255,0.055);
+  --surface-strong: rgba(255,255,255,0.09);
+  --border: rgba(255,255,255,0.12);
+  --fg: #f4f7f1;
+  --muted: rgba(244,247,241,0.62);
+  --accent: #a8d94a;
+  --accent-dark: #6fae3c;
+  --warn: #f0b429;
+  --warn-bg: rgba(240,180,41,0.14);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--fg);
+  line-height: 1.65;
+  display: flex;
+  justify-content: center;
+  padding: 56px 20px 80px;
+  background:
+    radial-gradient(600px circle at 15% -10%, rgba(255,214,102,0.16), transparent 60%),
+    radial-gradient(700px circle at 90% 5%, rgba(88,214,141,0.16), transparent 55%),
+    radial-gradient(900px circle at 50% 120%, rgba(20,70,45,0.85), transparent 60%),
+    linear-gradient(160deg, #071a10 0%, #0a2416 45%, #051009 100%);
+  background-attachment: fixed;
+}
+.card {
+  width: 100%;
+  max-width: 720px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  padding: 44px 44px 48px;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 28px;
+  transition: background .15s ease;
+}
+.back-link:hover { background: rgba(255,255,255,0.16); }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.3px; }
+.meta { color: var(--muted); font-size: 14px; margin: 0; }
+h2 { font-size: 19px; font-weight: 700; margin-top: 38px; margin-bottom: 12px; }
+p, li { color: var(--fg); }
+p { color: rgba(244,247,241,0.85); }
+ul { padding-left: 20px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.card-box { background: var(--surface-strong); border: 1px solid var(--border); border-radius: 18px; padding: 20px 24px; margin: 24px 0; }
+footer { margin-top: 52px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+footer a { color: var(--muted); }
+footer a:hover { color: var(--accent); }
+.placeholder { background: var(--warn-bg); color: var(--warn); padding: 2px 8px; border-radius: 6px; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="card">
+  <a class="back-link" href="/legal/contact.html" aria-label="Back to Contact">&#8592;</a>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Bird Identifier — Effective July 26, 2026</p>
+
+  <p>This Privacy Policy explains what information Bird Identifier ("the App", "we", "us") collects when you use the app, how it's used, and who it's shared with. We built the App around identifying birds from a photo or an audio recording, and we've tried to collect as little as possible beyond what that actually requires.</p>
+
+  <h2>Information We Collect</h2>
+  <p><strong>Photos and audio recordings you upload.</strong> When you submit a photo or sound recording for identification, we store the file and use it to identify the species. This is the core function of the app.</p>
+  <p><strong>A device identifier.</strong> The App generates a random identifier on your device to associate your identification history with you, without requiring you to create an account, provide an email address, or sign in. This identifier is not tied to your name or other personal information we collect elsewhere.</p>
+  <p><strong>Identification history.</strong> Species you've identified, timestamps, and confidence scores are stored against your device identifier so the App can show you your past results.</p>
+  <p><strong>Purchase information, if you subscribe.</strong> In-app purchases are processed by Apple and by RevenueCat, our subscription management provider. We receive purchase/entitlement status from RevenueCat, not your payment details — Apple handles those directly.</p>
+
+  <h2>How We Use Your Information</h2>
+  <ul>
+    <li>To identify the species in a photo or audio clip you submit</li>
+    <li>To show you your past identification history within the app</li>
+    <li>To improve identification accuracy over time</li>
+    <li>To manage your subscription, if you have one</li>
+  </ul>
+
+  <h2>Third-Party Services We Use</h2>
+  <p>Identifying a bird accurately requires sending your photo to an AI vision service. Here's exactly what goes where:</p>
+  <div class="card-box">
+    <p><strong>OpenAI</strong> — photos & audio you submit are sent to OpenAI's API for species identification. See <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener">OpenAI's Privacy Policy</a>.</p>
+    <p><strong>RevenueCat</strong> — if you subscribe, RevenueCat processes your purchase/subscription status. See <a href="https://www.revenuecat.com/privacy/" target="_blank" rel="noopener">RevenueCat's Privacy Policy</a>.</p>
+  </div>
+
+  <h2>Data Storage &amp; Security</h2>
+  <p>Uploaded photos, audio, and identification history are stored on servers we operate, encrypted in transit via HTTPS. We don't sell your data, and we don't use it for advertising or ad targeting.</p>
+
+  <h2>Data Retention &amp; Your Choices</h2>
+  <p>Because the App doesn't use accounts, there's no login to delete — uninstalling the App stops it from generating new activity. If you'd like previously stored identification history or uploads associated with your device removed, contact us (see below) and we'll delete it.</p>
+
+  <h2>Children's Privacy</h2>
+  <p>The App is not directed at children under 13, and we do not knowingly collect personal information from children under 13.</p>
+
+  <h2>Contact Us</h2>
+  <p>Questions about this policy or a data deletion request? Email <a href="mailto:support@auraapps.org">support@auraapps.org</a> <span class="placeholder">(confirm this inbox exists)</span>.</p>
+
+  <footer>
+    <p><span class="placeholder">Aura Apps</span> · <a href="/legal/terms.html">Terms of Service</a> · <a href="/legal/contact.html">Contact</a></p>
+  </footer>
+</div>
+</body>
+</html>
