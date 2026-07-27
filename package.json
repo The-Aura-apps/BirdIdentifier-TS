@@ -38,7 +38,8 @@
         "migration:run:prod": "npx typeorm migration:run -d dist/data-source.js",
         "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
         "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts",
-        "schema:drop": "npm run typeorm -- schema:drop -d src/data-source.ts"
+        "schema:drop": "npm run typeorm -- schema:drop -d src/data-source.ts",
+        "import:birds": "ts-node -r tsconfig-paths/register src/modules/scripts/bulk-import-birds.ts"
     },
     "dependencies": {
         "@nestjs/common": "^10.0.0",
