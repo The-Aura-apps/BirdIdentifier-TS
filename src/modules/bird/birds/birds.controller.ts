@@ -496,6 +496,15 @@ export class BirdsController {
         return this.birdService.addCommonName(id, createCommonNameDto);
     }
 
+    /**
+     * Re-fetch just the photo for a bird (iNaturalist first, Pexels fallback).
+     * No OpenAI call — cheap way to fix a bird that got an irrelevant photo.
+     */
+    @Post(':id/refresh-photo')
+    refreshPhoto(@Param('id', ParseIntPipe) id: number): Promise<Bird> {
+        return this.birdService.refreshBirdPhoto(id);
+    }
+
     // Media
     @Get(':id/media')
     getMedia(@Param('id', ParseIntPipe) id: number) {

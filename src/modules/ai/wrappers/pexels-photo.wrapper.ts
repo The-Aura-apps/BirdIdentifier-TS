@@ -90,8 +90,18 @@ export class PexelsPhotoWrapper {
                 return null;
             }
 
-            // Get the first photo (Pexels returns curated results)
-            const photo = photos[0];
+            // Pexels is a generic stock-photo site with no species taxonomy — it
+            // returns its "closest" 5 results even when nothing relevant exists
+            // (e.g. a synth or a pill bottle for an obscure bird name), so reject
+            // results whose alt text doesn't actually mention a bird-related term.
+            const relevantPhoto = photos.find((p) => this.looksLikeBirdPhoto(p.alt, commonName));
+            if (!relevantPhoto) {
+                this.logger.warn(
+                    `Pexels results for "${searchQuery}" don't look bird-related, discarding`,
+                );
+                return null;
+            }
+            const photo = relevantPhoto;
 
             const birdPhoto: BirdPhoto = {
                 url: photo.src.large2x || photo.src.large || photo.src.original,
@@ -116,5 +126,23 @@ export class PexelsPhotoWrapper {
             }
             return null;
         }
+    }
+
+    /**
+     * Cheap relevance guard: Pexels' search is generic stock-photo keyword
+     * matching, so a result is only trusted if its alt text mentions "bird"
+     * or a word from the common name (e.g. "Wren", "Storm-Petrel").
+     */
+    private looksLikeBirdPhoto(alt: string | undefined, commonName?: string): boolean {
+        const text = (alt || '').toLowerCase();
+        if (!text) return false;
+        if (text.includes('bird')) return true;
+
+        const nameWords = (commonName || '')
+            .toLowerCase()
+            .split(/[^a-z]+/)
+            .filter((w) => w.length > 3); // skip short filler words like "the", "of"
+
+        return nameWords.some((w) => text.includes(w));
     }
 }

@@ -20,7 +20,7 @@ import { Habitat } from '../habitats/entities/habitat.entity';
 import { CommonName } from '../common-names/entities/common-name.entity';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { BirdInfoWrapper } from 'src/modules/ai/wrappers/bird-info.wrapper';
-import { INaturalistPhotoWrapper } from 'src/modules/ai/wrappers/inaturalist-photo.wrapper';
+import { INaturalistPhotoWrapper, BirdPhoto } from 'src/modules/ai/wrappers/inaturalist-photo.wrapper';
 import { PexelsPhotoWrapper } from 'src/modules/ai/wrappers/pexels-photo.wrapper';
 import { XenoCantoAudioWrapper } from 'src/modules/ai/wrappers/xenocanto-audio.wrapper';
 import { BirdInfo } from 'src/modules/ai/types';
@@ -858,62 +858,8 @@ export class BirdsService {
 
         // Save the bird with updated relations
         //await this.birdRepo.save(bird);
-        
-        // Fetch photos from Pexels (primary) and iNaturalist (fallback)
-        try {
-            const commonName = bird.commonNames?.[0]?.name;
-            let photo = null;
-            let source = '';
 
-            // Try Pexels first (high-quality professional photos)
-            this.logger.log(`Fetching photo from Pexels for ${bird.scientificName}...`);
-            photo = await this.pexelsPhotoWrapper.fetchPhotos(
-                bird.scientificName,
-                commonName,
-            );
-            source = 'pexels';
-
-            // Fallback to iNaturalist if Pexels fails (free, unlimited, bird-specific)
-            if (!photo) {
-                this.logger.log(`Trying iNaturalist as fallback for ${bird.scientificName}...`);
-                photo = await this.iNaturalistPhotoWrapper.fetchPhotos(
-                    bird.scientificName,
-                    commonName,
-                );
-                source = 'inaturalist';
-            }
-
-            if (photo) {
-                // Remove existing photos from external sources to avoid duplicates
-                const existingMedia = await this.mediaRepo.find({ 
-                    where: { bird: { id: bird.id }, source: In(['wikimedia', 'inaturalist', 'pexels']) } 
-                });
-                if (existingMedia.length > 0) {
-                    await this.mediaRepo.remove(existingMedia);
-                }
-
-                // Create media entry for the photo
-                const mediaEntity = this.mediaRepo.create({
-                    storageKey: photo.url, // Use URL as storageKey for external photos
-                    type: MediaType.Photo,
-                    source: source,
-                    caption: photo.title,
-                    attribution: `${photo.author} - ${photo.license}`,
-                    orderIndex: 0,
-                    metadata: {
-                        thumbnailKey: photo.thumbnail,
-                    },
-                    bird: bird,
-                });
-
-                await this.mediaRepo.save(mediaEntity);
-                this.logger.log(`Added 1 photo from ${source} for bird ${birdId}`);
-            } else {
-                this.logger.warn(`No photos found for ${bird.scientificName} from any source`);
-            }
-        } catch (err) {
-            this.logger.error(`Failed to fetch photos for bird ${birdId}: ${err.message}`);
-        }
+        await this.fetchAndAttachPhoto(bird);
 
         // Fetch audio recordings from xeno-canto
         // TODO: Fix XenoCanto API integration (API v2 shut down, v3 has issues)
@@ -963,6 +909,80 @@ export class BirdsService {
         */
 
         this.logger.log(`Bird ${birdId} enrichment completed successfully`);
+    }
+
+    /**
+     * Fetch and attach a species photo, replacing any existing external-source photo.
+     * iNaturalist is tried first: it matches against a real taxon ID restricted to
+     * Aves, so photos are guaranteed to be of the right species. Pexels is a
+     * generic stock-photo keyword search with no species verification, so it's
+     * only used as a fallback (with a relevance guard - see PexelsPhotoWrapper).
+     */
+    private async fetchAndAttachPhoto(bird: Bird): Promise<void> {
+        try {
+            const commonName = bird.commonNames?.[0]?.name;
+            let photo: BirdPhoto | null = null;
+            let source = '';
+
+            this.logger.log(`Fetching photo from iNaturalist for ${bird.scientificName}...`);
+            photo = await this.iNaturalistPhotoWrapper.fetchPhotos(bird.scientificName, commonName);
+            source = 'inaturalist';
+
+            if (!photo) {
+                this.logger.log(`Trying Pexels as fallback for ${bird.scientificName}...`);
+                photo = await this.pexelsPhotoWrapper.fetchPhotos(bird.scientificName, commonName);
+                source = 'pexels';
+            }
+
+            if (photo) {
+                // Remove existing photos from external sources to avoid duplicates
+                const existingMedia = await this.mediaRepo.find({
+                    where: { bird: { id: bird.id }, source: In(['wikimedia', 'inaturalist', 'pexels']) },
+                });
+                if (existingMedia.length > 0) {
+                    await this.mediaRepo.remove(existingMedia);
+                }
+
+                const mediaEntity = this.mediaRepo.create({
+                    storageKey: photo.url, // Use URL as storageKey for external photos
+                    type: MediaType.Photo,
+                    source: source,
+                    caption: photo.title,
+                    attribution: `${photo.author} - ${photo.license}`,
+                    orderIndex: 0,
+                    metadata: {
+                        thumbnailKey: photo.thumbnail,
+                    },
+                    bird: bird,
+                });
+
+                await this.mediaRepo.save(mediaEntity);
+                this.logger.log(`Added 1 photo from ${source} for bird ${bird.id}`);
+            } else {
+                this.logger.warn(`No photos found for ${bird.scientificName} from any source`);
+            }
+        } catch (err) {
+            this.logger.error(`Failed to fetch photos for bird ${bird.id}: ${err.message}`);
+        }
+    }
+
+    /**
+     * Re-fetch just the photo for a bird that's already fully enriched — no
+     * OpenAI call, so it's the cheap way to fix a bird that got a bad/irrelevant
+     * photo without re-spending tokens on its text data.
+     */
+    async refreshBirdPhoto(birdId: number): Promise<Bird> {
+        const bird = await this.birdRepo.findOne({
+            where: { id: birdId },
+            relations: ['commonNames', 'media'],
+        });
+
+        if (!bird) {
+            throw new NotFoundException(`Bird with ID ${birdId} not found`);
+        }
+
+        await this.fetchAndAttachPhoto(bird);
+        return this.findOne(String(birdId));
     }
 
     /**
