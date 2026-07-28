@@ -10,16 +10,19 @@ import {
     HttpStatus,
     UseInterceptors,
     ClassSerializerInterceptor,
+    UseGuards,
 } from '@nestjs/common';
 
 import { ConservationStatusService } from './conservation-status.service';
 import { ConservationStatus, ConservationStatusCode } from './entities/conservation-status.entity';
 import { CreateConservationStatusDto } from './dto/create-conservation-status.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @ApiTags('Conservation Status')
 @Controller('conservation-status')
 @UseInterceptors(ClassSerializerInterceptor)
+@UseGuards(AdminApiKeyGuard)
 export class ConservationStatusController {
     constructor(private readonly conservationStatusService: ConservationStatusService) {}
 

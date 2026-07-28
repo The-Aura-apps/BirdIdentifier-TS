@@ -9,15 +9,18 @@ import {
     HttpCode,
     HttpStatus,
     Query,
+    UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { Habitat } from './entities/habitat.entity';
 import { CreateHabitatDto } from './dto/create-habitat.dto';
 import { UpdateHabitatDto } from './dto/update-habitat.dto';
 import { HabitatService } from './habitats.service';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @ApiTags('Habitats')
 @Controller('habitats')
+@UseGuards(AdminApiKeyGuard)
 export class HabitatController {
     constructor(private readonly habitatService: HabitatService) {}
 

@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Query, Body } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, UseGuards } from '@nestjs/common';
 import { TaxonomyService } from './taxonomy.service';
 import { CreateTaxonomyDto } from './dto/create-taxonomy.dto';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @Controller('taxonomy')
+@UseGuards(AdminApiKeyGuard)
 export class TaxonomyController {
     constructor(private readonly taxonomyService: TaxonomyService) {}
 

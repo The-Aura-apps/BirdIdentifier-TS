@@ -24,9 +24,11 @@ import { CreateCommonNameDto } from '../common-names/dto/create-common-name.dto'
 
 import { CreateBirdDistributionDto } from '../bird-distribution/dto/create-bird-distribution.dto';
 import { CreateMediaDto } from 'src/modules/media/dto/create-media.dto';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @ApiTags('birds')
 @Controller('birds')
+@UseGuards(AdminApiKeyGuard)
 export class BirdsController {
     constructor(private readonly birdService: BirdsService) {}
 

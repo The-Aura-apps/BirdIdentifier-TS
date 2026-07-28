@@ -9,13 +9,16 @@ import {
     HttpCode,
     HttpStatus,
     Query,
+    UseGuards,
 } from '@nestjs/common';
 import { FoodService } from './foods.service';
 import { Food } from './entities/food.entity';
 import { CreateFoodDto } from './dto/create-food.dto';
 import { UpdateFoodDto } from './dto/update-food.dto';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @Controller('foods')
+@UseGuards(AdminApiKeyGuard)
 export class FoodController {
     constructor(private readonly foodService: FoodService) {}
 

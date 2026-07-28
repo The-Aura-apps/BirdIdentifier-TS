@@ -8,15 +8,18 @@ import {
     Delete,
     HttpCode,
     HttpStatus,
+    UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { BirdDistributionService } from './bird-distribution.service';
 import { BirdDistribution } from './entities/bird-distribution.entity';
 import { CreateBirdDistributionDto } from './dto/create-bird-distribution.dto';
 import { UpdateBirdDistributionDto } from './dto/update-bird-distribution.dto';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @ApiTags('bird-distribution')
 @Controller('bird-distribution')
+@UseGuards(AdminApiKeyGuard)
 export class BirdDistributionController {
     constructor(private readonly distributionService: BirdDistributionService) {}
 

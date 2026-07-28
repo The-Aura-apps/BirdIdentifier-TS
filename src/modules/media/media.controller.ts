@@ -10,15 +10,18 @@ import {
     HttpStatus,
     Query,
     Patch,
+    UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { MediaService } from './media.service';
 import { Media } from './entities/media.entity';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @ApiTags('media')
 @Controller('media')
+@UseGuards(AdminApiKeyGuard)
 export class MediaController {
     constructor(private readonly mediaService: MediaService) {}
 

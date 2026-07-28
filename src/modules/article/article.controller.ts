@@ -6,11 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto, UpdateArticleDto } from './dto';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @Controller('articles')
+@UseGuards(AdminApiKeyGuard)
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 

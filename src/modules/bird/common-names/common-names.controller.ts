@@ -8,13 +8,16 @@ import {
     Delete,
     HttpCode,
     HttpStatus,
+    UseGuards,
 } from '@nestjs/common';
 import { CommonNamesService } from './common-names.service';
 import { CommonName } from './entities/common-name.entity';
 import { CreateCommonNameDto } from './dto/create-common-name.dto';
 import { UpdateCommonNameDto } from './dto/update-common-name.dto';
+import { AdminApiKeyGuard } from 'src/core/guards/admin-api-key.guard';
 
 @Controller('common-names')
+@UseGuards(AdminApiKeyGuard)
 export class CommonNamesController {
     constructor(private readonly commonNamesService: CommonNamesService) {}
 
