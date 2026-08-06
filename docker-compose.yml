@@ -64,6 +64,10 @@ services:
       - bird-network
     volumes:
       - ./uploads:/app/uploads
+      # APNs .p8 signing key — lives outside the git repo entirely (it's a
+      # secret), mounted read-only. APNS_KEY_PATH in .env must point at the
+      # path *inside* the container (right side below), not the host path.
+      - /var/www/bird-identifier-secrets:/app/secrets:ro
 
 networks:
   bird-network:
