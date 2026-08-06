@@ -2,6 +2,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as dotenv from 'dotenv';
 
 // Load environment variables BEFORE creating the app
@@ -14,7 +15,14 @@ async function bootstrap() {
         process.exit(1);
     }
 
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+    // Requests arrive via nginx, so the socket address is always the proxy.
+    // Trusting exactly 1 hop makes req.ip the real client IP (the value nginx
+    // appends to X-Forwarded-For), which is what rate limiting buckets on.
+    // Without this, every user shares a single bucket. Using 1 rather than
+    // `true` means a client can't spoof X-Forwarded-For to dodge the limit.
+    app.set('trust proxy', 1);
 
     // Enable CORS
     app.enableCors({

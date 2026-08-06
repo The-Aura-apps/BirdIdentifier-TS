@@ -32,9 +32,34 @@ import { ArticleModule } from './modules/article/article.module';
             envFilePath: '.env',
             load: [databaseConfig],
         }),
-        // Global default: 30 requests/min per IP. Endpoints that trigger paid
-        // third-party AI calls (uploads) override this with a tighter limit.
-        ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
+        // Two limits apply to every request; a request must pass both.
+        //
+        //  device — the real per-user limit, keyed on the `x-device-id` header
+        //           the app sends. Needed because mobile carriers put many
+        //           users behind one IP (CGNAT), so an IP-only limit would
+        //           make legitimate users block each other. Falls back to IP
+        //           when the header is absent, so unknown clients still get
+        //           the tighter limit rather than an unlimited one.
+        //
+        //  ip     — deliberately looser, and exists because `x-device-id` is
+        //           client-supplied and trivially rotated. This is the ceiling
+        //           an attacker still hits after spoofing device IDs.
+        //
+        // Endpoints that trigger paid third-party AI calls (uploads) tighten
+        // both of these further.
+        ThrottlerModule.forRoot([
+            {
+                name: 'device',
+                ttl: 60000,
+                limit: 30,
+                getTracker: (req) => (req.headers?.['x-device-id'] as string) || req.ip,
+            },
+            {
+                name: 'ip',
+                ttl: 60000,
+                limit: 120,
+            },
+        ]),
         BirdsModule,
         ObservationsModule,
         AiModule,

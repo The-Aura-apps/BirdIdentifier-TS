@@ -33,9 +33,14 @@ export class UploadsController {
     constructor(private readonly uploadsService: UploadsService) {}
 
     @Post()
-    // Tighter than the global default: each request here triggers a paid
-    // OpenAI Vision / BirdNET call.
-    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    // Tighter than the global defaults: each request here triggers a paid
+    // OpenAI Vision / BirdNET call. 5/min is the realistic per-user ceiling;
+    // the looser ip limit absorbs many real users sharing a carrier IP while
+    // still capping anyone rotating device IDs from a single address.
+    @Throttle({
+        device: { limit: 20, ttl: 60000 },
+        ip: { limit: 40, ttl: 60000 },
+    })
     @UseInterceptors(
         FileInterceptor('file', { limits: { fileSize: UploadsController.MAX_UPLOAD_BYTES } }),
     )
@@ -254,9 +259,12 @@ export class UploadsController {
     }
 
     @Post('identify-and-refresh')
-    // Tighter than the global default: this hits OpenAI Vision plus a full
+    // Tighter than the global defaults: this hits OpenAI Vision plus a full
     // iNaturalist/Pexels/OpenAI data refresh on every call.
-    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    @Throttle({
+        device: { limit: 20, ttl: 60000 },
+        ip: { limit: 40, ttl: 60000 },
+    })
     @UseInterceptors(
         FileInterceptor('file', { limits: { fileSize: UploadsController.MAX_UPLOAD_BYTES } }),
     )
